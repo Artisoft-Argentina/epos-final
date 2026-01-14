@@ -61,6 +61,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('facturas/{factura}/entregas', [\App\Http\Controllers\EntregaController::class, 'store'])->name('entregas.store');
     Route::delete('entregas/{entrega}', [\App\Http\Controllers\EntregaController::class, 'destroy'])->name('entregas.destroy');
 
+    Route::get('chat', [\App\Http\Controllers\ChatController::class, 'index'])->name('chat.index');
+    Route::post('chat/send', [\App\Http\Controllers\ChatController::class, 'send'])->name('chat.send');
+
 
 
     Route::get('facturas/{factura}/pdf', [\App\Http\Controllers\FacturaPdfController::class, 'generate'])->name('facturas.pdf');
