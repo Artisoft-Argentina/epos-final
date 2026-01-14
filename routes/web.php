@@ -4,11 +4,19 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', function () {
-    return redirect()->route('login');
+    return redirect()->route('shop.index');
 })->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard')->middleware(['redirect.role', 'role:admin,superadmin']);
+    // Redirigir clientes a su dashboard
+    Route::get('dashboard', function () {
+        if (auth()->user()->role->role === 'cliente') {
+            return redirect()->route('client.dashboard');
+        }
+        return redirect()->route('admin.dashboard');
+    })->name('dashboard');
+    
+    Route::get('admin/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])->name('admin.dashboard')->middleware(['role:admin,superadmin']);
     Route::get('dashboard/export', [\App\Http\Controllers\DashboardController::class, 'exportExcel'])->name('dashboard.export')->middleware(['role:admin,superadmin']);
 
     // Rutas solo para superadmin
@@ -60,6 +68,33 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('afip/consultar-cuit', [\App\Http\Controllers\ClienteController::class, 'consultarCuit'])->name('afip.consultar-cuit');
 
 
+});
+
+// Rutas públicas del e-commerce
+Route::get('shop', [\App\Http\Controllers\EcommerceController::class, 'index'])->name('shop.index');
+Route::post('cart/{articulo}', [\App\Http\Controllers\EcommerceController::class, 'addToCart'])->name('cart.add');
+Route::get('cart', [\App\Http\Controllers\EcommerceController::class, 'cart'])->name('cart.index');
+Route::delete('cart', [\App\Http\Controllers\EcommerceController::class, 'clearCart'])->name('cart.clear');
+Route::patch('cart/{cartItem}', [\App\Http\Controllers\EcommerceController::class, 'updateCartItem'])->name('cart.update');
+Route::delete('cart/{cartItem}', [\App\Http\Controllers\EcommerceController::class, 'removeCartItem'])->name('cart.remove');
+
+// Rutas de checkout - requieren autenticación
+Route::middleware(['auth'])->group(function () {
+    Route::get('checkout', [\App\Http\Controllers\CheckoutController::class, 'index'])->name('checkout.index');
+    Route::post('checkout/payment', [\App\Http\Controllers\CheckoutController::class, 'createPayment'])->name('checkout.payment');
+    Route::get('checkout/success', [\App\Http\Controllers\CheckoutController::class, 'success'])->name('checkout.success');
+    Route::get('checkout/failure', [\App\Http\Controllers\CheckoutController::class, 'failure'])->name('checkout.failure');
+    Route::get('checkout/pending', [\App\Http\Controllers\CheckoutController::class, 'pending'])->name('checkout.pending');
+    Route::get('payment/{paymentId}/status', [\App\Http\Controllers\CheckoutController::class, 'getPaymentStatus'])->name('payment.status');
+    
+    Route::get('my-purchases', [\App\Http\Controllers\UserPurchaseController::class, 'index'])->name('user.purchases');
+    
+    // Rutas para clientes
+    Route::middleware(['role:cliente'])->group(function () {
+        Route::get('client/dashboard', [\App\Http\Controllers\ClientDashboardController::class, 'index'])->name('client.dashboard');
+        Route::get('client/profile', [\App\Http\Controllers\ClientDashboardController::class, 'profile'])->name('client.profile');
+        Route::put('client/profile', [\App\Http\Controllers\ClientDashboardController::class, 'updateProfile'])->name('client.profile.update');
+    });
 });
 
 require __DIR__.'/settings.php';

@@ -29,9 +29,34 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request): RedirectResponse
     {
+        $sessionId = $request->session()->getId();
+        
         $request->authenticate();
 
         $request->session()->regenerate();
+        
+        // Fusionar carrito de sesión con carrito de usuario
+        $userId = auth()->id();
+        $sessionCartItems = \App\Models\Cart::where('session_id', $sessionId)
+            ->whereNull('user_id')
+            ->get();
+
+        foreach ($sessionCartItems as $sessionItem) {
+            $userCartItem = \App\Models\Cart::where('user_id', $userId)
+                ->where('articulo_id', $sessionItem->articulo_id)
+                ->first();
+
+            if ($userCartItem) {
+                $userCartItem->quantity += $sessionItem->quantity;
+                $userCartItem->save();
+                $sessionItem->delete();
+            } else {
+                $sessionItem->update([
+                    'user_id' => $userId,
+                    'session_id' => null
+                ]);
+            }
+        }
 
         return redirect()->intended(route('dashboard', absolute: false));
     }

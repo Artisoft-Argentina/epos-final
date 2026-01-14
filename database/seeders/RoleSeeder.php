@@ -26,5 +26,11 @@ class RoleSeeder extends Seeder
             'permission' => 'view_products,create_sales',
             'description' => 'Vendedor con permisos de ventas',
         ]);
+
+        Role::create([
+            'role' => 'cliente',
+            'permission' => 'view_shop,create_orders',
+            'description' => 'Cliente del e-commerce',
+        ]);
     }
 }

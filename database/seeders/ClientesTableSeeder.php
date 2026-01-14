@@ -3,6 +3,8 @@
 namespace Database\Seeders;
 
 use App\Models\Cliente;
+use App\Models\User;
+use App\Models\Role;
 use Illuminate\Database\Seeder;
 
 class ClientesTableSeeder extends Seeder
@@ -14,6 +16,8 @@ class ClientesTableSeeder extends Seeder
      */
     public function run()
     {
+        $clienteRole = Role::where('role', 'cliente')->first();
+
         $clientes = [
             [
                 'razonsocial' => 'CONSUMIDOR FINAL',
@@ -139,7 +143,17 @@ class ClientesTableSeeder extends Seeder
         ];
 
         foreach ($clientes as $cliente) {
-            Cliente::create($cliente);
+            $clienteCreado = Cliente::create($cliente);
+            
+            // Crear usuario solo si el cliente tiene email
+            if ($clienteCreado->email) {
+                User::create([
+                    'name' => $clienteCreado->razonsocial,
+                    'email' => $clienteCreado->email,
+                    'password' => bcrypt('asdf1234'),
+                    'role_id' => $clienteRole->id,
+                ]);
+            }
         }
     }
 }

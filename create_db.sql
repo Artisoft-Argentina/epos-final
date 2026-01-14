@@ -1,0 +1,3 @@
+CREATE DATABASE IF NOT EXISTS nueva_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+GRANT ALL PRIVILEGES ON nueva_db.* TO 'gepetto_user'@'%';
+FLUSH PRIVILEGES;
