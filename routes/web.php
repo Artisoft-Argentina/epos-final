@@ -64,6 +64,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('chat', [\App\Http\Controllers\ChatController::class, 'index'])->name('chat.index');
     Route::post('chat/send', [\App\Http\Controllers\ChatController::class, 'send'])->name('chat.send');
 
+    Route::get('asistente-compras', [\App\Http\Controllers\AsistenteComprasController::class, 'index'])->name('asistente-compras.index');
+    Route::post('asistente-compras/process', [\App\Http\Controllers\AsistenteComprasController::class, 'processPdf'])->name('asistente-compras.process');
+
 
 
     Route::get('facturas/{factura}/pdf', [\App\Http\Controllers\FacturaPdfController::class, 'generate'])->name('facturas.pdf');
