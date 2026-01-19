@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use App\Services\PdfProcessorService;
 
@@ -22,11 +23,28 @@ class AsistenteComprasController extends Controller
 
     public function processPdf(Request $request)
     {
-        $request->validate([
-            'pdf' => 'required|file|mimes:pdf|max:10240',
+        // Log para debugging
+        Log::info('Request recibido', [
+            'has_file' => $request->hasFile('file'),
+            'files' => array_keys($request->allFiles()),
+            'file_valid' => $request->hasFile('file') && $request->file('file')->isValid(),
         ]);
 
-        $file = $request->file('pdf');
+        try {
+            $request->validate([
+                'file' => 'required|file|max:10240',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::error('Validación fallida', ['errors' => $e->errors()]);
+            return response()->json([
+                'success' => false,
+                'error' => 'Error de validación',
+                'message' => $e->getMessage(),
+                'errors' => $e->errors(),
+            ], 422);
+        }
+
+        $file = $request->file('file');
         $fullPath = $file->getRealPath();
 
         try {
@@ -44,9 +62,14 @@ class AsistenteComprasController extends Controller
                 'data' => $result,
             ]);
         } catch (\Exception $e) {
+            Log::error('Error procesando archivo', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            
             return response()->json([
                 'success' => false,
-                'error' => 'Error al procesar el PDF: ' . $e->getMessage(),
+                'error' => 'Error al procesar el archivo: ' . $e->getMessage(),
             ], 500);
         }
     }

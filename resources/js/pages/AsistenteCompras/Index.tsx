@@ -3,7 +3,7 @@ import { Head } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Upload, FileText, Loader2, CheckCircle2, XCircle, Package } from 'lucide-react';
+import { Upload, FileText, Loader2, CheckCircle2, XCircle, Package, Camera, Image } from 'lucide-react';
 
 interface PdfResult {
     tipo_documento: string;
@@ -34,14 +34,29 @@ export default function AsistenteComprasIndex() {
     const [result, setResult] = useState<PdfResult | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [inventoryResult, setInventoryResult] = useState<any>(null);
+    const [preview, setPreview] = useState<string | null>(null);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
-            setFile(e.target.files[0]);
+            const selectedFile = e.target.files[0];
+            setFile(selectedFile);
             setResult(null);
             setError(null);
             setInventoryResult(null);
+            
+            // Preview para imágenes
+            if (selectedFile.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onloadend = () => setPreview(reader.result as string);
+                reader.readAsDataURL(selectedFile);
+            } else {
+                setPreview(null);
+            }
         }
+    };
+
+    const handleCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
+        handleFileChange(e);
     };
 
     const handleUpload = async () => {
@@ -50,27 +65,35 @@ export default function AsistenteComprasIndex() {
         setLoading(true);
         setError(null);
         const formData = new FormData();
-        formData.append('pdf', file);
+        formData.append('file', file);
 
         try {
             const response = await fetch('/asistente-compras/process', {
                 method: 'POST',
                 headers: {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                    'Accept': 'application/json',
                 },
                 body: formData,
             });
 
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                const text = await response.text();
+                console.error('Respuesta no-JSON:', text);
+                throw new Error('La respuesta no es JSON válido');
+            }
+
             const data = await response.json();
             
-            if (data.success) {
+            if (response.ok && data.success) {
                 setResult(data.data);
             } else {
-                setError(data.error || 'Error al procesar el PDF');
+                setError(data.error || data.message || 'Error al procesar el archivo');
             }
         } catch (error) {
             console.error('Error:', error);
-            setError('Error al procesar el PDF');
+            setError(error instanceof Error ? error.message : 'Error al procesar el archivo');
         } finally {
             setLoading(false);
         }
@@ -112,7 +135,7 @@ export default function AsistenteComprasIndex() {
                 <div className="mb-6">
                     <h1 className="text-3xl font-bold">Asistente de Compras</h1>
                     <p className="text-muted-foreground mt-2">
-                        Sube un PDF de factura o remito para procesarlo automáticamente
+                        Sube un PDF o toma una foto de la factura/remito para procesarlo automáticamente
                     </p>
                 </div>
 
@@ -122,32 +145,61 @@ export default function AsistenteComprasIndex() {
                             <div className="border-2 border-dashed rounded-lg p-8 text-center">
                                 <input
                                     type="file"
-                                    accept=".pdf"
+                                    accept=".pdf,image/*"
                                     onChange={handleFileChange}
                                     className="hidden"
-                                    id="pdf-upload"
+                                    id="file-upload"
                                 />
-                                <label htmlFor="pdf-upload" className="cursor-pointer">
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    capture="environment"
+                                    onChange={handleCapture}
+                                    className="hidden"
+                                    id="camera-capture"
+                                />
+                                
+                                {file ? (
                                     <div className="flex flex-col items-center gap-2">
-                                        {file ? (
-                                            <>
-                                                <FileText className="w-12 h-12 text-primary" />
-                                                <p className="font-medium">{file.name}</p>
-                                                <p className="text-sm text-muted-foreground">
-                                                    {(file.size / 1024 / 1024).toFixed(2)} MB
-                                                </p>
-                                            </>
+                                        {preview ? (
+                                            <img src={preview} alt="Preview" className="max-h-32 rounded" />
                                         ) : (
-                                            <>
-                                                <Upload className="w-12 h-12 text-muted-foreground" />
-                                                <p className="font-medium">Haz clic para subir un PDF</p>
-                                                <p className="text-sm text-muted-foreground">
-                                                    Máximo 10MB
-                                                </p>
-                                            </>
+                                            <FileText className="w-12 h-12 text-primary" />
                                         )}
+                                        <p className="font-medium">{file.name}</p>
+                                        <p className="text-sm text-muted-foreground">
+                                            {(file.size / 1024 / 1024).toFixed(2)} MB
+                                        </p>
                                     </div>
-                                </label>
+                                ) : (
+                                    <div className="space-y-4">
+                                        <div className="flex flex-col items-center gap-2">
+                                            <Upload className="w-12 h-12 text-muted-foreground" />
+                                            <p className="font-medium">Sube un archivo</p>
+                                        </div>
+                                        <div className="flex gap-2 justify-center">
+                                            <label htmlFor="file-upload">
+                                                <Button type="button" variant="outline" size="sm" asChild>
+                                                    <span className="cursor-pointer">
+                                                        <FileText className="w-4 h-4 mr-2" />
+                                                        Seleccionar archivo
+                                                    </span>
+                                                </Button>
+                                            </label>
+                                            <label htmlFor="camera-capture">
+                                                <Button type="button" variant="outline" size="sm" asChild>
+                                                    <span className="cursor-pointer">
+                                                        <Camera className="w-4 h-4 mr-2" />
+                                                        Tomar foto
+                                                    </span>
+                                                </Button>
+                                            </label>
+                                        </div>
+                                        <p className="text-sm text-muted-foreground">
+                                            PDF o imagen (máx. 10MB)
+                                        </p>
+                                    </div>
+                                )}
                             </div>
 
                             <Button
@@ -161,7 +213,7 @@ export default function AsistenteComprasIndex() {
                                         Procesando...
                                     </>
                                 ) : (
-                                    'Procesar PDF'
+                                    'Procesar Archivo'
                                 )}
                             </Button>
 

@@ -2,35 +2,51 @@
 
 namespace App\Services;
 
+use App\Models\Articulo;
+use App\Models\Inventario;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Log;
 use Smalot\PdfParser\Parser;
+use thiagoalessio\TesseractOCR\TesseractOCR;
 
 class PdfProcessorService
 {
     private Client $client;
-    private string $apiKey;
+    private string $apiUrl;
 
     public function __construct()
     {
-        $this->apiKey = env('GROQ_API_KEY');
+        $this->apiUrl = env('CUSTOM_API_URL', 'http://localhost:3000');
         $this->client = new Client([
-            'base_uri' => 'https://api.groq.com/openai/v1/',
             'timeout' => 60,
         ]);
     }
 
-    public function extractAndProcess(string $pdfPath): array
+    public function extractAndProcess(string $filePath): array
     {
-        // Extraer texto del PDF
-        $text = $this->extractTextFromPdf($pdfPath);
+        // Detectar tipo de archivo por MIME type
+        $mimeType = mime_content_type($filePath);
+        
+        // Extraer texto según el tipo
+        if ($mimeType === 'application/pdf') {
+            $text = $this->extractTextFromPdf($filePath);
+        } else {
+            $text = $this->extractTextFromImage($filePath);
+        }
         
         if (!$text) {
-            return ['error' => 'No se pudo extraer texto del PDF'];
+            return ['error' => 'No se pudo extraer texto del archivo'];
         }
 
-        // Procesar con IA para generar JSON estructurado
-        return $this->processWithAI($text);
+        // Procesar con tu API custom
+        $data = $this->processWithCustomAPI($text);
+        
+        // Actualizar inventario si hay items
+        if (isset($data['items']) && is_array($data['items'])) {
+            $this->updateInventory($data['items']);
+        }
+        
+        return $data;
     }
 
     private function extractTextFromPdf(string $pdfPath): ?string
@@ -45,77 +61,106 @@ class PdfProcessorService
         }
     }
 
-    private function processWithAI(string $text): array
+    private function extractTextFromImage(string $imagePath): ?string
     {
-        $prompt = $this->buildPrompt($text);
-
         try {
-            $response = $this->client->post('chat/completions', [
-                'headers' => [
-                    'Authorization' => 'Bearer ' . $this->apiKey,
-                    'Content-Type' => 'application/json',
-                ],
+            // Verificar que Tesseract esté instalado
+            $tesseractPath = trim(shell_exec('which tesseract') ?? '');
+            
+            if (empty($tesseractPath)) {
+                Log::error('Tesseract no encontrado en el sistema');
+                return null;
+            }
+
+            // Usar Tesseract OCR para extraer texto de la imagen
+            $ocr = new TesseractOCR($imagePath);
+            $ocr->executable($tesseractPath);
+            $ocr->lang('spa', 'eng'); // Español e inglés
+            $text = $ocr->run();
+            
+            Log::info('Texto extraído de imagen: ' . substr($text, 0, 200));
+            return $text;
+        } catch (\Exception $e) {
+            Log::error('Error extrayendo texto de la imagen: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    private function processWithCustomAPI(string $text): array
+    {
+        try {
+            $response = $this->client->post($this->apiUrl . '/chat', [
                 'json' => [
-                    'model' => 'llama-3.3-70b-versatile',
                     'messages' => [
                         [
                             'role' => 'system',
-                            'content' => 'Eres un asistente que extrae información de facturas y remitos. Responde SOLO con JSON válido, sin texto adicional.'
+                            'content' => 'Eres un asistente que extrae información estructurada de facturas y documentos comerciales. Responde solo con JSON válido.'
                         ],
                         [
                             'role' => 'user',
-                            'content' => $prompt
+                            'content' => "Extrae la siguiente información del texto y devuélvela en formato JSON: proveedor, fecha, número de factura, items (con codigo, descripción, cantidad, precio unitario), subtotal, impuestos, total.\n\nTexto:\n" . $text
                         ]
                     ],
-                    'response_format' => ['type' => 'json_object'],
-                    'temperature' => 0.1,
                 ],
+                'timeout' => 60,
+                'connect_timeout' => 10,
             ]);
 
-            $data = json_decode($response->getBody()->getContents(), true);
-            $jsonResponse = $data['choices'][0]['message']['content'] ?? '{}';
+            $content = $response->getBody()->getContents();
             
-            return json_decode($jsonResponse, true) ?? ['error' => 'Respuesta inválida'];
+            // La respuesta es un stream de texto, concatenar todo
+            $jsonMatch = preg_match('/\{.*\}/s', $content, $matches);
+            if ($jsonMatch) {
+                $data = json_decode($matches[0], true);
+                if (json_last_error() === JSON_ERROR_NONE) {
+                    return $data;
+                }
+                Log::error('Error parseando JSON: ' . json_last_error_msg());
+            }
+            
+            Log::error('Respuesta de API no contiene JSON válido', ['content' => substr($content, 0, 500)]);
+            return ['error' => 'La API no devolvió un formato válido'];
+        } catch (\GuzzleHttp\Exception\ConnectException $e) {
+            Log::error('Error de conexión con API: ' . $e->getMessage());
+            return ['error' => 'No se pudo conectar con el servicio de procesamiento'];
         } catch (\Exception $e) {
-            Log::error('Error procesando con IA: ' . $e->getMessage());
+            Log::error('Error procesando con API: ' . $e->getMessage());
             return ['error' => 'Error al procesar el documento: ' . $e->getMessage()];
         }
     }
 
-    private function buildPrompt(string $text): string
+    private function updateInventory(array $items): void
     {
-        return <<<PROMPT
-Analiza el siguiente texto extraído de una factura o remito y extrae la información en formato JSON.
+        foreach ($items as $item) {
+            if (!isset($item['cantidad'])) {
+                continue;
+            }
 
-Texto del documento:
-{$text}
+            // Buscar artículo por código (prioridad) o descripción
+            $articulo = null;
+            
+            if (isset($item['codigo'])) {
+                $articulo = Articulo::where('codarticulo', $item['codigo'])
+                    ->orWhere('codprov', $item['codigo'])
+                    ->first();
+            }
+            
+            if (!$articulo && isset($item['descripcion'])) {
+                $articulo = Articulo::where('articulo', 'LIKE', '%' . $item['descripcion'] . '%')
+                    ->first();
+            }
 
-Genera un JSON con esta estructura:
-{
-  "tipo_documento": "factura|remito",
-  "numero": "número del documento",
-  "fecha": "YYYY-MM-DD",
-  "proveedor": {
-    "nombre": "razón social",
-    "cuit": "CUIT",
-    "direccion": "dirección",
-    "telefono": "teléfono"
-  },
-  "items": [
-    {
-      "codigo": "código del producto",
-      "descripcion": "descripción",
-      "cantidad": 0,
-      "precio_unitario": 0.00,
-      "subtotal": 0.00
-    }
-  ],
-  "subtotal": 0.00,
-  "iva": 0.00,
-  "total": 0.00
-}
+            if ($articulo) {
+                $inventario = Inventario::firstOrCreate(
+                    ['articulo_id' => $articulo->id],
+                    ['cantidad' => 0]
+                );
 
-Si algún campo no está disponible, usa null. Responde SOLO con el JSON, sin explicaciones.
-PROMPT;
+                $inventario->cantidad += $item['cantidad'];
+                $inventario->save();
+
+                Log::info("Inventario actualizado: {$articulo->articulo} (código: {$articulo->codarticulo}) +{$item['cantidad']}");
+            }
+        }
     }
 }

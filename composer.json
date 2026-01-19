@@ -20,6 +20,7 @@
         "mercadopago/dx-php": "^3.8",
         "smalot/pdfparser": "^2.12",
         "spatie/laravel-activitylog": "^4.10",
+        "thiagoalessio/tesseract_ocr": "^2.13",
         "tightenco/ziggy": "^2.4"
     },
     "require-dev": {
