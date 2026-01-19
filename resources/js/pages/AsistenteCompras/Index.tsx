@@ -3,7 +3,7 @@ import { Head } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Upload, FileText, Loader2, CheckCircle2, XCircle } from 'lucide-react';
+import { Upload, FileText, Loader2, CheckCircle2, XCircle, Package } from 'lucide-react';
 
 interface PdfResult {
     tipo_documento: string;
@@ -30,14 +30,17 @@ interface PdfResult {
 export default function AsistenteComprasIndex() {
     const [file, setFile] = useState<File | null>(null);
     const [loading, setLoading] = useState(false);
+    const [addingInventory, setAddingInventory] = useState(false);
     const [result, setResult] = useState<PdfResult | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [inventoryResult, setInventoryResult] = useState<any>(null);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             setFile(e.target.files[0]);
             setResult(null);
             setError(null);
+            setInventoryResult(null);
         }
     };
 
@@ -70,6 +73,35 @@ export default function AsistenteComprasIndex() {
             setError('Error al procesar el PDF');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleAddToInventory = async () => {
+        if (!result) return;
+
+        setAddingInventory(true);
+        setInventoryResult(null);
+
+        try {
+            const response = await fetch('/asistente-compras/add-inventory', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+                body: JSON.stringify({
+                    items: result.items,
+                    supplier_id: null,
+                }),
+            });
+
+            const data = await response.json();
+            setInventoryResult(data);
+        } catch (error) {
+            console.error('Error:', error);
+            setInventoryResult({ success: false, errors: ['Error al agregar al inventario'] });
+        } finally {
+            setAddingInventory(false);
         }
     };
 
@@ -199,6 +231,47 @@ export default function AsistenteComprasIndex() {
                                             <p>${result.total}</p>
                                         </div>
                                     </div>
+
+                                    <Button
+                                        onClick={handleAddToInventory}
+                                        disabled={addingInventory}
+                                        className="w-full mt-4"
+                                    >
+                                        {addingInventory ? (
+                                            <>
+                                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                                Agregando...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Package className="w-4 h-4 mr-2" />
+                                                Agregar al Inventario
+                                            </>
+                                        )}
+                                    </Button>
+
+                                    {inventoryResult && (
+                                        <Card className={`p-4 mt-4 ${inventoryResult.success ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+                                            {inventoryResult.added && inventoryResult.added.length > 0 && (
+                                                <div className="mb-2">
+                                                    <p className="font-semibold text-green-700 mb-1">✓ Agregados:</p>
+                                                    {inventoryResult.added.map((item: any, i: number) => (
+                                                        <p key={i} className="text-sm text-green-600">
+                                                            {item.articulo}: +{item.cantidad} unidades
+                                                        </p>
+                                                    ))}
+                                                </div>
+                                            )}
+                                            {inventoryResult.errors && inventoryResult.errors.length > 0 && (
+                                                <div>
+                                                    <p className="font-semibold text-red-700 mb-1">✗ Errores:</p>
+                                                    {inventoryResult.errors.map((err: string, i: number) => (
+                                                        <p key={i} className="text-sm text-red-600">{err}</p>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </Card>
+                                    )}
                                 </div>
                             </div>
                         </Card>

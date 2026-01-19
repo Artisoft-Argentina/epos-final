@@ -66,6 +66,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('asistente-compras', [\App\Http\Controllers\AsistenteComprasController::class, 'index'])->name('asistente-compras.index');
     Route::post('asistente-compras/process', [\App\Http\Controllers\AsistenteComprasController::class, 'processPdf'])->name('asistente-compras.process');
+    Route::post('asistente-compras/add-inventory', [\App\Http\Controllers\AsistenteComprasController::class, 'addToInventory'])->name('asistente-compras.add-inventory');
 
 
 

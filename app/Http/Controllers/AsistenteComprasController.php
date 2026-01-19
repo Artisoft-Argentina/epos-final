@@ -50,4 +50,65 @@ class AsistenteComprasController extends Controller
             ], 500);
         }
     }
+
+    public function addToInventory(Request $request)
+    {
+        $request->validate([
+            'items' => 'required|array',
+            'items.*.codigo' => 'nullable|string',
+            'items.*.descripcion' => 'required|string',
+            'items.*.cantidad' => 'required|numeric|min:0',
+            'supplier_id' => 'nullable|exists:suppliers,id',
+        ]);
+
+        $items = $request->input('items');
+        $supplierId = $request->input('supplier_id');
+        $added = [];
+        $errors = [];
+
+        foreach ($items as $item) {
+            try {
+                // Buscar artículo por código o descripción
+                $articulo = \App\Models\Articulo::where('codarticulo', $item['codigo'])
+                    ->orWhere('articulo', 'LIKE', '%' . $item['descripcion'] . '%')
+                    ->first();
+
+                if (!$articulo) {
+                    $errors[] = "Artículo no encontrado: {$item['descripcion']}";
+                    continue;
+                }
+
+                // Buscar inventario existente
+                $inventario = \App\Models\Inventario::where('articulo_id', $articulo->id)
+                    ->where('supplier_id', $supplierId)
+                    ->first();
+
+                if ($inventario) {
+                    // Actualizar cantidad
+                    $inventario->cantidad += $item['cantidad'];
+                    $inventario->save();
+                } else {
+                    // Crear nuevo inventario
+                    $inventario = \App\Models\Inventario::create([
+                        'articulo_id' => $articulo->id,
+                        'cantidad' => $item['cantidad'],
+                        'supplier_id' => $supplierId,
+                    ]);
+                }
+
+                $added[] = [
+                    'articulo' => $articulo->articulo,
+                    'cantidad' => $item['cantidad'],
+                ];
+            } catch (\Exception $e) {
+                $errors[] = "Error con {$item['descripcion']}: {$e->getMessage()}";
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'added' => $added,
+            'errors' => $errors,
+        ]);
+    }
 }
