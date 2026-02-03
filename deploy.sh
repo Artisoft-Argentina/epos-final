@@ -16,6 +16,9 @@ NC='\033[0m' # No Color
 PROJECT_DIR="/var/www/epos-final"
 cd $PROJECT_DIR
 
+# Fix git ownership
+git config --global --add safe.directory /var/www/epos-final
+
 # Activar modo mantenimiento
 echo -e "${YELLOW}🔧 Activando modo mantenimiento...${NC}"
 php artisan down || true
