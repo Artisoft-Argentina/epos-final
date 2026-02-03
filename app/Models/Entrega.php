@@ -12,12 +12,27 @@ class Entrega extends Model
         'cantidad',
         'fecha_entrega',
         'observaciones',
+        'estado',
+        'fecha_entrega_real',
     ];
 
     protected $casts = [
         'fecha_entrega' => 'date',
+        'fecha_entrega_real' => 'datetime',
     ];
 
+    // Scopes
+    public function scopePendientes($query)
+    {
+        return $query->where('estado', 'pendiente');
+    }
+
+    public function scopeEntregadas($query)
+    {
+        return $query->where('estado', 'entregada');
+    }
+
+    // Relaciones
     public function factura()
     {
         return $this->belongsTo(Factura::class);
@@ -26,5 +41,24 @@ class Entrega extends Model
     public function articulo()
     {
         return $this->belongsTo(Articulo::class);
+    }
+
+    // Métodos
+    public function marcarComoEntregada()
+    {
+        $this->update([
+            'estado' => 'entregada',
+            'fecha_entrega_real' => now(),
+        ]);
+    }
+
+    public function isPendiente()
+    {
+        return $this->estado === 'pendiente';
+    }
+
+    public function isEntregada()
+    {
+        return $this->estado === 'entregada';
     }
 }

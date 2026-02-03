@@ -49,12 +49,13 @@ class VentaController extends Controller
             'auto_payment' => 'boolean',
             'auto_delivery' => 'boolean',
             'lista_precio_id' => 'nullable|exists:listas_precios,id',
+            'tipo_venta' => 'nullable|in:pos,ecommerce',
         ]);
 
         $factura = DB::transaction(function () use ($request) {
             $cliente = Cliente::find($request->cliente_id);
             $subtotal = 0;
-            $total = 0;
+            $tipoVenta = $request->tipo_venta ?? $this->determinarTipoVenta($request);
 
             // Crear factura
             $factura = Factura::create([
@@ -73,7 +74,7 @@ class VentaController extends Controller
                 'cliente_id' => $request->cliente_id,
                 'user_id' => auth()->id(),
                 'lista_precio_id' => $request->lista_precio_id,
-                'tipo_venta' => $this->determinarTipoVenta($request),
+                'tipo_venta' => $tipoVenta,
             ]);
 
             // Procesar artículos
@@ -97,14 +98,51 @@ class VentaController extends Controller
                     'subtotal' => $itemSubtotal,
                 ]);
 
-                // Actualizar inventario
-                $inventario = Inventario::where('articulo_id', $articulo->id)->first();
-                if ($inventario) {
-                    $inventario->cantidad -= $cantidad;
-                    $inventario->save();
-                }
-
                 $subtotal += $itemSubtotal;
+
+                // LÓGICA DE STOCK E ENTREGAS SEGÚN TIPO DE VENTA
+                if ($tipoVenta === 'ecommerce') {
+                    // E-COMMERCE: Crear entrega pendiente (NO descontar stock aún)
+                    \App\Models\Entrega::create([
+                        'factura_id' => $factura->id,
+                        'articulo_id' => $articulo->id,
+                        'cantidad' => $cantidad,
+                        'fecha_entrega' => now()->addDays(3), // Fecha estimada
+                        'observaciones' => 'Entrega pendiente - Venta e-commerce',
+                        'estado' => 'pendiente',
+                    ]);
+                } else {
+                    // POS: Descuento inmediato si auto_delivery está activado
+                    if ($request->auto_delivery) {
+                        // Descontar stock
+                        $inventario = Inventario::where('articulo_id', $articulo->id)->first();
+                        if ($inventario) {
+                            $inventario->cantidad -= $cantidad;
+                            $inventario->save();
+                        }
+
+                        // Crear entrega completada
+                        \App\Models\Entrega::create([
+                            'factura_id' => $factura->id,
+                            'articulo_id' => $articulo->id,
+                            'cantidad' => $cantidad,
+                            'fecha_entrega' => now(),
+                            'observaciones' => 'Entrega inmediata - Venta POS',
+                            'estado' => 'entregada',
+                            'fecha_entrega_real' => now(),
+                        ]);
+                    } else {
+                        // Crear entrega pendiente para POS (entrega diferida)
+                        \App\Models\Entrega::create([
+                            'factura_id' => $factura->id,
+                            'articulo_id' => $articulo->id,
+                            'cantidad' => $cantidad,
+                            'fecha_entrega' => now(),
+                            'observaciones' => 'Entrega pendiente - Venta POS',
+                            'estado' => 'pendiente',
+                        ]);
+                    }
+                }
             }
 
             $recargo = $request->recargo ?? 0;
@@ -126,27 +164,6 @@ class VentaController extends Controller
                     'metodo_pago' => $request->metodo_pago,
                     'fecha_pago' => now(),
                 ]);
-            }
-
-            // Crear entregas automáticas si está marcado
-            if ($request->auto_delivery) {
-                foreach ($request->articulos as $item) {
-                    // Crear entrega
-                    \App\Models\Entrega::create([
-                        'factura_id' => $factura->id,
-                        'articulo_id' => $item['articulo_id'],
-                        'cantidad' => $item['cantidad'],
-                        'fecha_entrega' => now(),
-                        'observaciones' => 'Entrega automática al crear la venta',
-                    ]);
-
-                    // Descontar del inventario
-                    $inventario = Inventario::where('articulo_id', $item['articulo_id'])->first();
-                    if ($inventario) {
-                        $inventario->cantidad -= $item['cantidad'];
-                        $inventario->save();
-                    }
-                }
             }
 
             return $factura;

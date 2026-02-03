@@ -122,6 +122,16 @@ class CheckoutController extends Controller
                     'preciounitario' => $cartItem->articulo->precio,
                     'subtotal' => $cartItem->quantity * $cartItem->articulo->precio,
                 ]);
+
+                // Crear entrega pendiente para e-commerce
+                \App\Models\Entrega::create([
+                    'factura_id' => $factura->id,
+                    'articulo_id' => $cartItem->articulo_id,
+                    'cantidad' => $cartItem->quantity,
+                    'fecha_entrega' => now()->addDays(3),
+                    'observaciones' => 'Entrega pendiente - Compra e-commerce',
+                    'estado' => 'pendiente',
+                ]);
             }
 
             $payment = [

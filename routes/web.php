@@ -59,6 +59,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('pagos/{pago}', [\App\Http\Controllers\PagoController::class, 'destroy'])->name('pagos.destroy');
     Route::get('facturas/{factura}/entregas/create', [\App\Http\Controllers\EntregaController::class, 'create'])->name('entregas.create');
     Route::post('facturas/{factura}/entregas', [\App\Http\Controllers\EntregaController::class, 'store'])->name('entregas.store');
+    Route::get('entregas', [\App\Http\Controllers\EntregaController::class, 'index'])->name('entregas.index');
+    Route::post('entregas/{entrega}/marcar-entregada', [\App\Http\Controllers\EntregaController::class, 'marcarEntregada'])->name('entregas.marcar-entregada');
+    Route::post('entregas/{entrega}/cancelar', [\App\Http\Controllers\EntregaController::class, 'cancelar'])->name('entregas.cancelar');
     Route::delete('entregas/{entrega}', [\App\Http\Controllers\EntregaController::class, 'destroy'])->name('entregas.destroy');
 
     Route::get('chat', [\App\Http\Controllers\ChatController::class, 'index'])->name('chat.index');
