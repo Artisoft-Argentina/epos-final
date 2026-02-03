@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Script de deploy para Gepetto en Hostinger VPS
-# Ubicación: /var/www/gepetto/deploy.sh
+# Script de deploy para EPOS-Final en Hostinger VPS
+# Ubicación: /var/www/epos-final/deploy.sh
 
 set -e
 
-echo "🚀 Iniciando deploy de Gepetto..."
+echo "🚀 Iniciando deploy de EPOS-Final..."
 
 # Colores para output
 GREEN='\033[0;32m'
@@ -13,7 +13,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # Directorio del proyecto
-PROJECT_DIR="/var/www/gepetto"
+PROJECT_DIR="/var/www/epos-final"
 cd $PROJECT_DIR
 
 # Activar modo mantenimiento

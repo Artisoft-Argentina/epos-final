@@ -1,6 +1,6 @@
 # Guía de Configuración AWS RDS MySQL
 
-## 🎯 Configuración de RDS MySQL para Sistema Gepetto
+## 🎯 Configuración de RDS MySQL para Sistema EPOS-Final
 
 ### Requisitos Previos
 - Cuenta AWS activa
@@ -29,7 +29,7 @@ Templates:
 
 ### 3. Configuración de Credenciales
 ```yaml
-DB instance identifier: gepetto-mysql-db
+DB instance identifier: epos-final-mysql-db
 Master username: admin
 Master password: TuPasswordSeguro123!
 Confirm password: TuPasswordSeguro123!
@@ -56,8 +56,8 @@ Virtual private cloud (VPC): Default VPC o tu VPC personalizada
 DB subnet group: default
 Public access: No (recomendado para seguridad)
 VPC security groups: Create new
-  - Name: gepetto-rds-sg
-  - Description: Security group for Gepetto RDS MySQL
+  - Name: epos-final-rds-sg
+  - Description: Security group for EPOS-Final RDS MySQL
 Availability Zone: No preference
 Database port: 3306
 ```
@@ -65,7 +65,7 @@ Database port: 3306
 ### 6. Configuración Adicional
 ```yaml
 Database options:
-  Initial database name: gepetto_db
+  Initial database name: epos-final_db
   DB parameter group: default.mysql8.0
   Option group: default:mysql-8-0
 
@@ -96,8 +96,8 @@ Deletion protection: Enable (para producción)
 ```
 
 ```yaml
-Security group name: gepetto-rds-sg
-Description: MySQL access for Gepetto application
+Security group name: epos-final-rds-sg
+Description: MySQL access for EPOS-Final application
 VPC: Seleccionar la misma VPC que EC2
 
 Inbound rules:
@@ -134,8 +134,8 @@ Outbound rule:
 
 ### 9. Obtener Endpoint de RDS
 ```bash
-# En RDS Console > Databases > gepetto-mysql-db > Connectivity & security
-# Copiar el Endpoint: gepetto-mysql-db.xxxxxxxxx.region.rds.amazonaws.com
+# En RDS Console > Databases > epos-final-mysql-db > Connectivity & security
+# Copiar el Endpoint: epos-final-mysql-db.xxxxxxxxx.region.rds.amazonaws.com
 ```
 
 ### 10. Conectar desde EC2
@@ -145,26 +145,26 @@ sudo apt update
 sudo apt install mysql-client -y
 
 # Conectar a RDS
-mysql -h gepetto-mysql-db.xxxxxxxxx.region.rds.amazonaws.com -u admin -p
+mysql -h epos-final-mysql-db.xxxxxxxxx.region.rds.amazonaws.com -u admin -p
 ```
 
 ### 11. Crear Base de Datos y Usuario
 ```sql
 -- Crear base de datos
-CREATE DATABASE gepetto_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE epos-final_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- Crear usuario específico para la aplicación
-CREATE USER 'gepetto_user'@'%' IDENTIFIED BY 'GepettoPassword123!';
+CREATE USER 'epos-final_user'@'%' IDENTIFIED BY 'EPOS-FinalPassword123!';
 
 -- Otorgar permisos
-GRANT ALL PRIVILEGES ON gepetto_db.* TO 'gepetto_user'@'%';
+GRANT ALL PRIVILEGES ON epos-final_db.* TO 'epos-final_user'@'%';
 
 -- Aplicar cambios
 FLUSH PRIVILEGES;
 
 -- Verificar creación
 SHOW DATABASES;
-SELECT User, Host FROM mysql.user WHERE User = 'gepetto_user';
+SELECT User, Host FROM mysql.user WHERE User = 'epos-final_user';
 
 -- Salir
 EXIT;
@@ -172,7 +172,7 @@ EXIT;
 
 ### 12. Verificar Conexión con Usuario de Aplicación
 ```bash
-mysql -h gepetto-mysql-db.xxxxxxxxx.region.rds.amazonaws.com -u gepetto_user -p gepetto_db
+mysql -h epos-final-mysql-db.xxxxxxxxx.region.rds.amazonaws.com -u epos-final_user -p epos-final_db
 ```
 
 ```sql
@@ -194,8 +194,8 @@ EXIT;
 
 ```yaml
 Parameter group family: mysql8.0
-Group name: gepetto-mysql-params
-Description: Custom parameters for Gepetto MySQL
+Group name: epos-final-mysql-params
+Description: Custom parameters for EPOS-Final MySQL
 
 Parámetros recomendados:
   innodb_buffer_pool_size: 75% de RAM disponible
@@ -207,8 +207,8 @@ Parámetros recomendados:
 
 ### 14. Aplicar Parameter Group
 ```bash
-# En RDS Console > Databases > gepetto-mysql-db > Modify
-# DB parameter group: gepetto-mysql-params
+# En RDS Console > Databases > epos-final-mysql-db > Modify
+# DB parameter group: epos-final-mysql-params
 # Apply immediately: Yes (requiere reinicio)
 ```
 
@@ -218,8 +218,8 @@ Parámetros recomendados:
 ```
 
 ```yaml
-Name: gepetto-subnet-group
-Description: Subnet group for Gepetto RDS
+Name: epos-final-subnet-group
+Description: Subnet group for EPOS-Final RDS
 VPC: Tu VPC
 Availability Zones: Seleccionar al menos 2 AZ
 Subnets: Seleccionar subnets privadas en cada AZ
@@ -276,10 +276,10 @@ SET GLOBAL innodb_log_file_size = 268435456; -- 256MB
 SET GLOBAL query_cache_size = 67108864; -- 64MB
 ```
 
-### 20. Índices Recomendados para Gepetto
+### 20. Índices Recomendados para EPOS-Final
 ```sql
 -- Usar la base de datos
-USE gepetto_db;
+USE epos-final_db;
 
 -- Índices para optimizar consultas frecuentes
 CREATE INDEX idx_clientes_documentounico ON clientes(documentounico);
@@ -314,7 +314,7 @@ Access Control:
 ### 22. Rotación de Passwords
 ```sql
 -- Cambiar password del usuario de aplicación
-ALTER USER 'gepetto_user'@'%' IDENTIFIED BY 'NuevoPasswordSeguro123!';
+ALTER USER 'epos-final_user'@'%' IDENTIFIED BY 'NuevoPasswordSeguro123!';
 FLUSH PRIVILEGES;
 ```
 
@@ -335,10 +335,10 @@ DB_SSL_CERT=/path/to/global-bundle.pem
 ### 24. Test de Conectividad
 ```bash
 # Desde EC2, probar conexión
-mysql -h gepetto-mysql-db.xxxxxxxxx.region.rds.amazonaws.com -u gepetto_user -p -e "SELECT 1 as test;"
+mysql -h epos-final-mysql-db.xxxxxxxxx.region.rds.amazonaws.com -u epos-final_user -p -e "SELECT 1 as test;"
 
 # Test de latencia
-time mysql -h gepetto-mysql-db.xxxxxxxxx.region.rds.amazonaws.com -u gepetto_user -p -e "SELECT 1;"
+time mysql -h epos-final-mysql-db.xxxxxxxxx.region.rds.amazonaws.com -u epos-final_user -p -e "SELECT 1;"
 ```
 
 ### 25. Test de Performance
@@ -368,8 +368,8 @@ DROP TABLE test_performance;
 - [ ] Instancia RDS MySQL creada
 - [ ] Security Groups configurados
 - [ ] Conectividad EC2-RDS verificada
-- [ ] Base de datos `gepetto_db` creada
-- [ ] Usuario `gepetto_user` creado con permisos
+- [ ] Base de datos `epos-final_db` creada
+- [ ] Usuario `epos-final_user` creado con permisos
 - [ ] Parameter Group configurado (opcional)
 - [ ] Backups automáticos habilitados
 - [ ] Enhanced Monitoring configurado

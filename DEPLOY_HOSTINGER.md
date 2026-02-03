@@ -21,12 +21,18 @@ apt update && apt upgrade -y
 # Instalar Git
 apt install git -y
 
-# Instalar PHP 8.2 y extensiones
-apt install php8.2 php8.2-fpm php8.2-mysql php8.2-xml php8.2-mbstring php8.2-curl php8.2-zip php8.2-gd -y
+# Agregar repositorio de PHP
+apt install software-properties-common -y
+add-apt-repository ppa:ondrej/php -y
+apt update
+
+# Instalar PHP 8.3 y extensiones
+apt install php8.3 php8.3-fpm php8.3-mysql php8.3-xml php8.3-mbstring php8.3-curl php8.3-zip php8.3-gd php8.3-bcmath -y
 
 # Instalar Composer
 curl -sS https://getcomposer.org/installer | php
 mv composer.phar /usr/local/bin/composer
+chmod +x /usr/local/bin/composer
 
 # Instalar Node.js 20
 curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
@@ -46,8 +52,8 @@ mkdir -p /var/www
 cd /var/www
 
 # Clonar repositorio (necesitarás configurar SSH key o usar HTTPS con token)
-git clone https://github.com/TU_USUARIO/gepetto.git
-cd gepetto
+git clone https://github.com/TU_USUARIO/epos-final.git
+cd epos-final
 
 # Cambiar a rama dev
 git checkout dev
@@ -73,13 +79,13 @@ php artisan key:generate
 php artisan migrate --seed
 
 # Permisos
-chown -R www-data:www-data /var/www/gepetto
+chown -R www-data:www-data /var/www/epos-final
 chmod -R 775 storage bootstrap/cache
 ```
 
 ### 5. Configurar Nginx
 ```bash
-nano /etc/nginx/sites-available/gepetto
+nano /etc/nginx/sites-available/epos-final
 ```
 
 Contenido del archivo:
@@ -87,7 +93,7 @@ Contenido del archivo:
 server {
     listen 80;
     server_name tu-dominio.com;
-    root /var/www/gepetto/public;
+    root /var/www/epos-final/public;
 
     add_header X-Frame-Options "SAMEORIGIN";
     add_header X-Content-Type-Options "nosniff";
@@ -106,7 +112,7 @@ server {
     error_page 404 /index.php;
 
     location ~ \.php$ {
-        fastcgi_pass unix:/var/run/php/php8.2-fpm.sock;
+        fastcgi_pass unix:/var/run/php/php8.3-fpm.sock;
         fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
         include fastcgi_params;
     }
@@ -119,7 +125,7 @@ server {
 
 Activar sitio:
 ```bash
-ln -s /etc/nginx/sites-available/gepetto /etc/nginx/sites-enabled/
+ln -s /etc/nginx/sites-available/epos-final /etc/nginx/sites-enabled/
 nginx -t
 systemctl restart nginx
 ```
@@ -127,7 +133,7 @@ systemctl restart nginx
 ### 6. Copiar script de deploy
 ```bash
 # Copiar deploy.sh al servidor
-cd /var/www/gepetto
+cd /var/www/epos-final
 chmod +x deploy.sh
 ```
 
@@ -175,7 +181,7 @@ git push origin dev
 ### Deploy manual desde el servidor
 ```bash
 ssh root@XXX.XXXX
-cd /var/www/gepetto
+cd /var/www/epos-final
 ./deploy.sh
 ```
 
@@ -195,10 +201,10 @@ cd /var/www/gepetto
 tail -f /var/log/nginx/error.log
 
 # Logs de Laravel
-tail -f /var/www/gepetto/storage/logs/laravel.log
+tail -f /var/www/epos-final/storage/logs/laravel.log
 
 # Logs de PHP-FPM
-tail -f /var/log/php8.2-fpm.log
+tail -f /var/log/php8.3-fpm.log
 ```
 
 ---
@@ -208,20 +214,20 @@ tail -f /var/log/php8.2-fpm.log
 ### Reiniciar servicios
 ```bash
 systemctl restart nginx
-systemctl restart php8.2-fpm
+systemctl restart php8.3-fpm
 systemctl restart mysql
 ```
 
 ### Verificar estado
 ```bash
 systemctl status nginx
-systemctl status php8.2-fpm
+systemctl status php8.3-fpm
 systemctl status mysql
 ```
 
 ### Limpiar caches manualmente
 ```bash
-cd /var/www/gepetto
+cd /var/www/epos-final
 php artisan optimize:clear
 ```
 
@@ -246,7 +252,7 @@ ufw enable
 ### 2. Instalar SSL con Let's Encrypt
 ```bash
 apt install certbot python3-certbot-nginx -y
-certbot --nginx -d tu-dominio.com
+certbot --nginx -d artisoft-demo.store
 ```
 
 ### 3. Cambiar contraseña de root (Recomendado)
@@ -268,7 +274,7 @@ usermod -aG www-data deployer
 
 ### Error: Permission denied
 ```bash
-chown -R www-data:www-data /var/www/gepetto
+chown -R www-data:www-data /var/www/epos-final
 chmod -R 775 storage bootstrap/cache
 ```
 
@@ -291,7 +297,7 @@ npm run build
 systemctl status mysql
 
 # Verificar credenciales en .env
-nano /var/www/gepetto/.env
+nano /var/www/epos-final/.env
 ```
 
 ---
@@ -299,7 +305,7 @@ nano /var/www/gepetto/.env
 ## 📝 Checklist de Deploy
 
 - [ ] VPS configurado con PHP, Composer, Node, Nginx
-- [ ] Repositorio clonado en `/var/www/gepetto`
+- [ ] Repositorio clonado en `/var/www/epos-final`
 - [ ] `.env` configurado correctamente
 - [ ] Base de datos creada y migrada
 - [ ] Nginx configurado y funcionando
@@ -333,11 +339,11 @@ ssh root@xxxxxx
 
 **Ubicación del proyecto:**
 ```
-/var/www/gepetto
+/var/www/epos-final
 ```
 
 **Logs importantes:**
-- Laravel: `/var/www/gepetto/storage/logs/laravel.log`
+- Laravel: `/var/www/epos-final/storage/logs/laravel.log`
 - Nginx: `/var/log/nginx/error.log`
 - PHP-FPM: `/var/log/php8.2-fpm.log`
 

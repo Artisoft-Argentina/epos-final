@@ -1,4 +1,4 @@
-# Instalación Gepetto
+# Instalación EPOS-Final
 
 ## Requisitos
 - Docker
@@ -9,21 +9,21 @@
 
 ```bash
 # Clonar repositorio
-git clone https://github.com/tu-usuario/gepetto.git
-cd gepetto
+git clone https://github.com/tu-usuario/epos-final.git
+cd epos-final
 
 # Construir y levantar contenedores
 docker-compose up -d --build
 
 # Generar clave de aplicación
-docker exec gepetto-app php artisan key:generate
+docker exec epos-final-app php artisan key:generate
 
 # Ejecutar migraciones y seeders
-docker exec gepetto-app php artisan migrate --seed
+docker exec epos-final-app php artisan migrate --seed
 
 # Limpiar cache
-docker exec gepetto-app php artisan config:clear
-docker exec gepetto-app php artisan cache:clear
+docker exec epos-final-app php artisan config:clear
+docker exec epos-final-app php artisan cache:clear
 ```
 
 ## Acceso

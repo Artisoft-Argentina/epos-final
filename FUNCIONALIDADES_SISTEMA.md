@@ -1,4 +1,4 @@
-# Funcionalidades del Sistema Gepetto
+# Funcionalidades del Sistema EPOS-Final
 
 ## 📊 Dashboard y Administración
 

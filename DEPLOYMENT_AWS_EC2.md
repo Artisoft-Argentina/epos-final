@@ -1,4 +1,4 @@
-# Guía de Despliegue AWS EC2 - Sistema Gepetto
+# Guía de Despliegue AWS EC2 - Sistema EPOS-Final
 
 ## 🚀 Configuración de Instancia EC2
 
@@ -91,9 +91,9 @@ mysql -h tu-rds-endpoint.region.rds.amazonaws.com -u admin -p
 ```
 
 ```sql
-CREATE DATABASE gepetto_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER 'gepetto_user'@'%' IDENTIFIED BY 'tu_password_seguro';
-GRANT ALL PRIVILEGES ON gepetto_db.* TO 'gepetto_user'@'%';
+CREATE DATABASE epos-final_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'epos-final_user'@'%' IDENTIFIED BY 'tu_password_seguro';
+GRANT ALL PRIVILEGES ON epos-final_db.* TO 'epos-final_user'@'%';
 FLUSH PRIVILEGES;
 EXIT;
 ```
@@ -103,9 +103,9 @@ EXIT;
 ### 12. Clonar Repositorio
 ```bash
 cd /var/www
-sudo git clone https://github.com/tu-usuario/gepetto-clean.git
-sudo chown -R www-data:www-data gepetto-clean
-cd gepetto-clean
+sudo git clone https://github.com/tu-usuario/epos-final-clean.git
+sudo chown -R www-data:www-data epos-final-clean
+cd epos-final-clean
 ```
 
 ### 13. Instalar Dependencias PHP
@@ -120,7 +120,7 @@ sudo -u www-data nano .env
 ```
 
 ```env
-APP_NAME="Gepetto"
+APP_NAME="EPOS-Final"
 APP_ENV=production
 APP_KEY=
 APP_DEBUG=false
@@ -130,8 +130,8 @@ APP_URL=https://tu-dominio.com
 DB_CONNECTION=mysql
 DB_HOST=tu-rds-endpoint.region.rds.amazonaws.com
 DB_PORT=3306
-DB_DATABASE=gepetto_db
-DB_USERNAME=gepetto_user
+DB_DATABASE=epos-final_db
+DB_USERNAME=epos-final_user
 DB_PASSWORD=tu_password_seguro
 
 # AFIP Configuración
@@ -168,10 +168,10 @@ sudo -u www-data php artisan db:seed --force
 
 ### 18. Configurar Permisos
 ```bash
-sudo chown -R www-data:www-data /var/www/gepetto-clean
-sudo chmod -R 755 /var/www/gepetto-clean
-sudo chmod -R 775 /var/www/gepetto-clean/storage
-sudo chmod -R 775 /var/www/gepetto-clean/bootstrap/cache
+sudo chown -R www-data:www-data /var/www/epos-final-clean
+sudo chmod -R 755 /var/www/epos-final-clean
+sudo chmod -R 775 /var/www/epos-final-clean/storage
+sudo chmod -R 775 /var/www/epos-final-clean/bootstrap/cache
 ```
 
 ### 19. Optimizar Laravel
@@ -185,14 +185,14 @@ sudo -u www-data php artisan view:cache
 
 ### 20. Crear Configuración de Sitio
 ```bash
-sudo nano /etc/nginx/sites-available/gepetto
+sudo nano /etc/nginx/sites-available/epos-final
 ```
 
 ```nginx
 server {
     listen 80;
     server_name tu-dominio.com www.tu-dominio.com;
-    root /var/www/gepetto-clean/public;
+    root /var/www/epos-final-clean/public;
     index index.php index.html;
 
     location / {
@@ -216,7 +216,7 @@ server {
 
 ### 21. Habilitar Sitio
 ```bash
-sudo ln -s /etc/nginx/sites-available/gepetto /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/epos-final /etc/nginx/sites-enabled/
 sudo nginx -t
 sudo systemctl reload nginx
 ```
@@ -237,11 +237,11 @@ sudo certbot --nginx -d tu-dominio.com -d www.tu-dominio.com
 
 ### 24. Subir Certificados AFIP
 ```bash
-sudo mkdir -p /var/www/gepetto-clean/storage/app/private/afip
-sudo chown www-data:www-data /var/www/gepetto-clean/storage/app/private/afip
+sudo mkdir -p /var/www/epos-final-clean/storage/app/private/afip
+sudo chown www-data:www-data /var/www/epos-final-clean/storage/app/private/afip
 ```
 
-Subir archivos `cert.pem` y `key.pem` a la carpeta `/var/www/gepetto-clean/storage/app/private/afip/`
+Subir archivos `cert.pem` y `key.pem` a la carpeta `/var/www/epos-final-clean/storage/app/private/afip/`
 
 ### 25. Verificar Certificados
 ```bash
@@ -252,18 +252,18 @@ sudo -u www-data php artisan afip:check-certificates
 
 ### 26. Configurar Queue Worker (Opcional)
 ```bash
-sudo nano /etc/systemd/system/gepetto-worker.service
+sudo nano /etc/systemd/system/epos-final-worker.service
 ```
 
 ```ini
 [Unit]
-Description=Gepetto Queue Worker
+Description=EPOS-Final Queue Worker
 After=network.target
 
 [Service]
 Type=simple
 User=www-data
-WorkingDirectory=/var/www/gepetto-clean
+WorkingDirectory=/var/www/epos-final-clean
 ExecStart=/usr/bin/php artisan queue:work --sleep=3 --tries=3
 Restart=always
 
@@ -272,8 +272,8 @@ WantedBy=multi-user.target
 ```
 
 ```bash
-sudo systemctl enable gepetto-worker
-sudo systemctl start gepetto-worker
+sudo systemctl enable epos-final-worker
+sudo systemctl start epos-final-worker
 ```
 
 ### 27. Configurar Cron Jobs
@@ -283,10 +283,10 @@ sudo crontab -e
 
 ```cron
 # Laravel Scheduler
-* * * * * cd /var/www/gepetto-clean && php artisan schedule:run >> /dev/null 2>&1
+* * * * * cd /var/www/epos-final-clean && php artisan schedule:run >> /dev/null 2>&1
 
 # Backup diario a las 2 AM
-0 2 * * * cd /var/www/gepetto-clean && php artisan backup:run >> /var/log/gepetto-backup.log 2>&1
+0 2 * * * cd /var/www/epos-final-clean && php artisan backup:run >> /var/log/epos-final-backup.log 2>&1
 ```
 
 ## 🔧 Configuración de Firewall
@@ -302,17 +302,17 @@ sudo ufw enable
 
 ### 29. Configurar Logs
 ```bash
-sudo mkdir -p /var/log/gepetto
-sudo chown www-data:www-data /var/log/gepetto
+sudo mkdir -p /var/log/epos-final
+sudo chown www-data:www-data /var/log/epos-final
 ```
 
 ### 30. Rotar Logs
 ```bash
-sudo nano /etc/logrotate.d/gepetto
+sudo nano /etc/logrotate.d/epos-final
 ```
 
 ```
-/var/www/gepetto-clean/storage/logs/*.log {
+/var/www/epos-final-clean/storage/logs/*.log {
     daily
     missingok
     rotate 14
@@ -326,12 +326,12 @@ sudo nano /etc/logrotate.d/gepetto
 
 ### 31. Crear Script de Deploy
 ```bash
-sudo nano /var/www/deploy-gepetto.sh
+sudo nano /var/www/deploy-epos-final.sh
 ```
 
 ```bash
 #!/bin/bash
-cd /var/www/gepetto-clean
+cd /var/www/epos-final-clean
 
 # Modo mantenimiento
 sudo -u www-data php artisan down
@@ -361,7 +361,7 @@ echo "Despliegue completado exitosamente"
 ```
 
 ```bash
-sudo chmod +x /var/www/deploy-gepetto.sh
+sudo chmod +x /var/www/deploy-epos-final.sh
 ```
 
 ## 🔍 Verificación Final
@@ -375,7 +375,7 @@ sudo systemctl status nginx
 sudo systemctl status php8.2-fpm
 
 # Verificar conexión a RDS
-mysql -h tu-rds-endpoint.region.rds.amazonaws.com -u gepetto_user -p -e "SELECT 1;"
+mysql -h tu-rds-endpoint.region.rds.amazonaws.com -u epos-final_user -p -e "SELECT 1;"
 
 # Verificar aplicación
 curl -I https://tu-dominio.com
@@ -384,7 +384,7 @@ curl -I https://tu-dominio.com
 ### 33. Verificar Logs
 ```bash
 # Logs de Laravel
-tail -f /var/www/gepetto-clean/storage/logs/laravel.log
+tail -f /var/www/epos-final-clean/storage/logs/laravel.log
 
 # Logs de Nginx
 tail -f /var/log/nginx/error.log
@@ -432,15 +432,15 @@ sudo systemctl enable fail2ban
 **Error 500**:
 ```bash
 # Verificar logs
-tail -f /var/www/gepetto-clean/storage/logs/laravel.log
+tail -f /var/www/epos-final-clean/storage/logs/laravel.log
 # Verificar permisos
-sudo chown -R www-data:www-data /var/www/gepetto-clean
+sudo chown -R www-data:www-data /var/www/epos-final-clean
 ```
 
 **Error de Base de Datos RDS**:
 ```bash
 # Verificar conexión a RDS
-mysql -h tu-rds-endpoint.region.rds.amazonaws.com -u gepetto_user -p
+mysql -h tu-rds-endpoint.region.rds.amazonaws.com -u epos-final_user -p
 
 # Verificar desde Laravel
 sudo -u www-data php artisan tinker

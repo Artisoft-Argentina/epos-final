@@ -48,11 +48,13 @@ apt update && apt upgrade -y
 # Instalar Git
 apt install git -y
 
-# Instalar PHP 8.2
+# Agregar repositorio de PHP
 apt install software-properties-common -y
 add-apt-repository ppa:ondrej/php -y
 apt update
-apt install php8.2 php8.2-fpm php8.2-mysql php8.2-xml php8.2-mbstring php8.2-curl php8.2-zip php8.2-gd php8.2-bcmath -y
+
+# Instalar PHP 8.3
+apt install php8.3 php8.3-fpm php8.3-mysql php8.3-xml php8.3-mbstring php8.3-curl php8.3-zip php8.3-gd php8.3-bcmath -y
 
 # Instalar Composer
 curl -sS https://getcomposer.org/installer | php
@@ -75,9 +77,9 @@ apt install mysql-server -y
 mysql -u root -p
 
 # Dentro de MySQL:
-CREATE DATABASE gepetto;
-CREATE USER 'gepetto_user'@'localhost' IDENTIFIED BY 'gepetto_password';
-GRANT ALL PRIVILEGES ON gepetto.* TO 'gepetto_user'@'localhost';
+CREATE DATABASE epos-final;
+CREATE USER 'epos-final_user'@'localhost' IDENTIFIED BY 'epos-final_password';
+GRANT ALL PRIVILEGES ON epos-final.* TO 'epos-final_user'@'localhost';
 FLUSH PRIVILEGES;
 EXIT;
 ```
@@ -85,8 +87,8 @@ EXIT;
 ### Clonar proyecto
 ```bash
 cd /var/www
-git clone https://github.com/TU_USUARIO/gepetto.git
-cd gepetto
+git clone https://github.com/TU_USUARIO/epos-final.git
+cd epos-final
 git checkout dev
 ```
 
@@ -110,7 +112,7 @@ php artisan key:generate
 php artisan migrate --seed
 
 # Permisos
-chown -R www-data:www-data /var/www/gepetto
+chown -R www-data:www-data /var/www/epos-final
 chmod -R 775 storage bootstrap/cache
 
 # Hacer ejecutable el script de deploy
@@ -119,15 +121,15 @@ chmod +x deploy.sh
 
 ### Configurar Nginx
 ```bash
-nano /etc/nginx/sites-available/gepetto
+nano /etc/nginx/sites-available/epos-final
 ```
 
 Pegar esto:
 ```nginx
 server {
     listen 80;
-    server_name 147.93.12.206;
-    root /var/www/gepetto/public;
+    server_name TU_IP_VPS;
+    root /var/www/epos-final/public;
 
     add_header X-Frame-Options "SAMEORIGIN";
     add_header X-Content-Type-Options "nosniff";
@@ -145,7 +147,7 @@ server {
     error_page 404 /index.php;
 
     location ~ \.php$ {
-        fastcgi_pass unix:/var/run/php/php8.2-fpm.sock;
+        fastcgi_pass unix:/var/run/php/php8.3-fpm.sock;
         fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
         include fastcgi_params;
     }
@@ -158,11 +160,11 @@ server {
 
 Activar sitio:
 ```bash
-ln -s /etc/nginx/sites-available/gepetto /etc/nginx/sites-enabled/
+ln -s /etc/nginx/sites-available/epos-final /etc/nginx/sites-enabled/
 rm /etc/nginx/sites-enabled/default
 nginx -t
 systemctl restart nginx
-systemctl restart php8.2-fpm
+systemctl restart php8.3-fpm
 ```
 
 ---
@@ -198,7 +200,7 @@ Deberías ver tu aplicación funcionando.
 ### En el servidor
 ```bash
 ssh root@TU_IP_VPS
-cd /var/www/gepetto
+cd /var/www/epos-final
 git log -1  # Ver último commit
 ```
 
@@ -215,7 +217,7 @@ Ahora cada vez que hagas `git push origin dev`, tu aplicación se actualizará a
 ### Ver logs en tiempo real
 ```bash
 # Laravel
-tail -f /var/www/gepetto/storage/logs/laravel.log
+tail -f /var/www/epos-final/storage/logs/laravel.log
 
 # Nginx
 tail -f /var/log/nginx/error.log
@@ -224,14 +226,14 @@ tail -f /var/log/nginx/error.log
 ### Deploy manual
 ```bash
 ssh root@TU_IP_VPS
-cd /var/www/gepetto
+cd /var/www/epos-final
 ./deploy.sh
 ```
 
 ### Reiniciar servicios
 ```bash
 systemctl restart nginx
-systemctl restart php8.2-fpm
+systemctl restart php8.3-fpm
 ```
 
 ---

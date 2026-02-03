@@ -1,4 +1,4 @@
-# Gepetto - Sistema de Gestión Comercial
+# EPOS-Final - Sistema de Gestión Comercial
 
 Sistema integral de gestión comercial desarrollado con Laravel 12 y React, diseñado para empresas que requieren facturación electrónica AFIP, control de inventario y gestión completa de ventas.
 
@@ -110,7 +110,7 @@ Sistema integral de gestión comercial desarrollado con Laravel 12 y React, dise
 
 ### Estructura de Directorios
 ```
-gepetto/
+epos-final/
 ├── app/
 │   ├── Http/Controllers/     # Controladores de la aplicación
 │   ├── Models/              # Modelos Eloquent
@@ -168,20 +168,20 @@ gepetto/
 ```bash
 # Clonar repositorio
 git clone https://github.com/FrancoDiCampli/geppeto.git
-cd gepetto
+cd epos-final
 
 # Construir y levantar contenedores
 docker-compose up -d --build
 
 # Generar clave de aplicación
-docker exec gepetto-app php artisan key:generate
+docker exec epos-final-app php artisan key:generate
 
 # Ejecutar migraciones y seeders
-docker exec gepetto-app php artisan migrate --seed
+docker exec epos-final-app php artisan migrate --seed
 
 # Limpiar cache
-docker exec gepetto-app php artisan config:clear
-docker exec gepetto-app php artisan cache:clear
+docker exec epos-final-app php artisan config:clear
+docker exec epos-final-app php artisan cache:clear
 ```
 
 ### Acceso
@@ -289,4 +289,4 @@ Para soporte técnico o consultas:
 
 ---
 
-**Gepetto** - Sistema de Gestión Comercial con Facturación Electrónica AFIP
+**EPOS-Final** - Sistema de Gestión Comercial con Facturación Electrónica AFIP

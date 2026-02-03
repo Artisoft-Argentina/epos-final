@@ -1,6 +1,6 @@
-# 🐳 Guía de Despliegue Docker - Gepetto
+# 🐳 Guía de Despliegue Docker - EPOS-Final
 
-Esta guía te permitirá desplegar la aplicación Gepetto usando Docker de manera rápida y sencilla.
+Esta guía te permitirá desplegar la aplicación EPOS-Final usando Docker de manera rápida y sencilla.
 
 ## 📋 Requisitos Previos
 
@@ -46,7 +46,7 @@ docker-compose logs -f app
 
 ### 4. Acceder a la aplicación
 - **URL**: http://localhost
-- **Usuario**: admin@gepetto.com
+- **Usuario**: admin@epos-final.com
 - **Password**: password
 
 ---
@@ -55,7 +55,7 @@ docker-compose logs -f app
 
 ### Estructura de Archivos Docker
 ```
-gepetto/
+epos-final/
 ├── Dockerfile                 # Imagen principal de la aplicación
 ├── docker-compose.yml        # Orquestación de servicios
 ├── .dockerignore             # Archivos excluidos del build
@@ -81,8 +81,8 @@ gepetto/
 
 #### 🗄️ **MySQL 8.0**
 - **Puerto**: 3306
-- **Base de datos**: gepetto_db
-- **Usuario**: gepetto_user
+- **Base de datos**: epos-final_db
+- **Usuario**: epos-final_user
 - **Configuración optimizada** para Laravel
 
 #### 🔴 **Redis**
@@ -98,9 +98,9 @@ gepetto/
 ```env
 DB_HOST=mysql
 DB_PORT=3306
-DB_DATABASE=gepetto_db
-DB_USERNAME=gepetto_user
-DB_PASSWORD=gepetto_password
+DB_DATABASE=epos-final_db
+DB_USERNAME=epos-final_user
+DB_PASSWORD=epos-final_password
 ```
 
 ### Configuración AFIP
@@ -161,13 +161,13 @@ docker-compose exec app sh
 ### Base de Datos
 ```bash
 # Conectar a MySQL
-docker-compose exec mysql mysql -u gepetto_user -p gepetto_db
+docker-compose exec mysql mysql -u epos-final_user -p epos-final_db
 
 # Backup de base de datos
-docker-compose exec mysql mysqldump -u gepetto_user -p gepetto_db > backup.sql
+docker-compose exec mysql mysqldump -u epos-final_user -p epos-final_db > backup.sql
 
 # Restaurar backup
-docker-compose exec -T mysql mysql -u gepetto_user -p gepetto_db < backup.sql
+docker-compose exec -T mysql mysql -u epos-final_user -p epos-final_db < backup.sql
 ```
 
 ---
@@ -187,10 +187,10 @@ volumes:
 ### Backup de Volúmenes
 ```bash
 # Backup completo
-docker run --rm -v gepetto_mysql_data:/data -v $(pwd):/backup alpine tar czf /backup/mysql_backup.tar.gz -C /data .
+docker run --rm -v epos-final_mysql_data:/data -v $(pwd):/backup alpine tar czf /backup/mysql_backup.tar.gz -C /data .
 
 # Restaurar backup
-docker run --rm -v gepetto_mysql_data:/data -v $(pwd):/backup alpine tar xzf /backup/mysql_backup.tar.gz -C /data
+docker run --rm -v epos-final_mysql_data:/data -v $(pwd):/backup alpine tar xzf /backup/mysql_backup.tar.gz -C /data
 ```
 
 ---
@@ -207,7 +207,7 @@ cp cert.pem temp_afip/
 cp key.pem temp_afip/
 
 # Copiar al volumen Docker
-docker run --rm -v gepetto_afip_certs:/afip -v $(pwd)/temp_afip:/temp alpine cp -r /temp/* /afip/
+docker run --rm -v epos-final_afip_certs:/afip -v $(pwd)/temp_afip:/temp alpine cp -r /temp/* /afip/
 
 # Limpiar
 rm -rf temp_afip
@@ -457,10 +457,10 @@ BACKUP_DIR="./backups"
 mkdir -p $BACKUP_DIR
 
 # Backup base de datos
-docker-compose exec -T mysql mysqldump -u gepetto_user -pgepetto_password gepetto_db > $BACKUP_DIR/db_$DATE.sql
+docker-compose exec -T mysql mysqldump -u epos-final_user -pepos-final_password epos-final_db > $BACKUP_DIR/db_$DATE.sql
 
 # Backup archivos
-docker run --rm -v gepetto_mysql_data:/data -v $(pwd)/$BACKUP_DIR:/backup alpine tar czf /backup/volumes_$DATE.tar.gz -C /data .
+docker run --rm -v epos-final_mysql_data:/data -v $(pwd)/$BACKUP_DIR:/backup alpine tar czf /backup/volumes_$DATE.tar.gz -C /data .
 
 echo "Backup completado: $DATE"
 ```
@@ -494,12 +494,12 @@ docker stats --no-stream
 ### Logs para soporte
 ```bash
 # Generar reporte completo
-docker-compose logs > gepetto_logs.txt
-docker-compose ps > gepetto_status.txt
+docker-compose logs > epos-final_logs.txt
+docker-compose ps > epos-final_status.txt
 ```
 
 ---
 
-**¡Gepetto dockerizado y listo para producción!** 🎉
+**¡EPOS-Final dockerizado y listo para producción!** 🎉
 
 Para soporte adicional, consulta la documentación del proyecto o crea un issue en el repositorio.

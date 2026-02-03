@@ -30,7 +30,7 @@ VPS_PASSWORD: [Tu contraseña]
 ### Variables de Entorno
 ```bash
 # En el servidor VPS
-nano /var/www/gepetto/.env
+nano /var/www/epos-final/.env
 
 # Agregar credenciales solo en el servidor
 DB_PASSWORD=tu_password_real
