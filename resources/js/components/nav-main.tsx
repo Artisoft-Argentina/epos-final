@@ -8,7 +8,7 @@ export function NavMain({ items = [] }: { items: NavItem[] }) {
     const page = usePage();
     return (
         <SidebarGroup className="px-2 py-0">
-            <SidebarGroupLabel>Plataforma</SidebarGroupLabel>
+            <SidebarGroupLabel>Plataforma Epos</SidebarGroupLabel>
             <SidebarMenu>
                 {items.map((item) => {
                     if (item.items) {
