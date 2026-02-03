@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import ShopLayout from '@/layouts/shop-layout';
-import { Head, Link, router } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import { CartProvider } from '@/contexts/CartContext';
 
 interface Articulo {
@@ -47,13 +47,17 @@ function EcommerceIndexContent({ articulos, cartCount }: Props) {
                 <div className="container mx-auto px-4 text-center">
                     <h1 className="text-5xl font-bold mb-4">NUEVA COLECCIÓN</h1>
                     <p className="text-xl mb-8">Descubre los últimos productos</p>
-                    <Button size="lg" className="bg-white text-black hover:bg-gray-100">
+                    <Button
+                        size="lg"
+                        className="bg-white text-black hover:bg-gray-100"
+                        onClick={() => document.getElementById('productos')?.scrollIntoView({ behavior: 'smooth' })}
+                    >
                         COMPRAR AHORA
                     </Button>
                 </div>
             </div>
             
-            <div className="container mx-auto px-4 py-8">
+            <div id="productos" className="container mx-auto px-4 py-8">
                 <div className="flex flex-wrap items-center justify-between mb-8">
                     <h2 className="text-2xl font-bold text-black">PRODUCTOS ({articulos.data.length})</h2>
                 </div>
@@ -61,27 +65,33 @@ function EcommerceIndexContent({ articulos, cartCount }: Props) {
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                     {articulos.data.map((articulo) => (
                         <div key={articulo.id} className="group cursor-pointer">
-                            <div className="aspect-square bg-gray-100 mb-4 relative overflow-hidden">
-                                {articulo.imagenes && articulo.imagenes.length > 0 ? (
-                                    <img 
-                                        src={articulo.imagenes[0].url || `/storage/${articulo.imagenes[0].ruta}`}
-                                        alt={articulo.articulo}
-                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                    />
-                                ) : (
-                                    <div className="absolute inset-0 bg-gray-200 flex items-center justify-center">
-                                        <span className="text-gray-400 text-sm">Sin imagen</span>
-                                    </div>
-                                )}
-                                <button 
-                                    onClick={() => addToCart(articulo.id)}
-                                    className="absolute bottom-2 right-2 bg-black text-white px-3 py-1 text-xs rounded hover:bg-gray-800"
-                                >
-                                    +
-                                </button>
-                            </div>
-                            
-                            <div className="space-y-2">
+                            <Link href={`/shop/${articulo.id}`} className="block">
+                                <div className="aspect-square bg-gray-100 mb-4 relative overflow-hidden">
+                                    {articulo.imagenes && articulo.imagenes.length > 0 ? (
+                                        <img
+                                            src={articulo.imagenes[0].url || `/storage/${articulo.imagenes[0].ruta}`}
+                                            alt={articulo.articulo}
+                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                        />
+                                    ) : (
+                                        <div className="absolute inset-0 bg-gray-200 flex items-center justify-center">
+                                            <span className="text-gray-400 text-sm">Sin imagen</span>
+                                        </div>
+                                    )}
+                                    <button
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            addToCart(articulo.id);
+                                        }}
+                                        className="absolute bottom-2 right-2 bg-black text-white px-3 py-1 text-xs rounded hover:bg-gray-800"
+                                    >
+                                        +
+                                    </button>
+                                </div>
+                            </Link>
+
+                            <Link href={`/shop/${articulo.id}`} className="block space-y-2">
                                 <h3 className="font-medium text-sm uppercase tracking-wide text-black">{articulo.articulo}</h3>
                                 <p className="text-xs text-gray-500 uppercase">
                                     {articulo.categoria?.nombre}
@@ -96,27 +106,37 @@ function EcommerceIndexContent({ articulos, cartCount }: Props) {
                                         </span>
                                     )}
                                 </div>
-                            </div>
+                            </Link>
                         </div>
                     ))}
                 </div>
                 
-                <div className="flex justify-center mt-12">
-                    <div className="flex items-center gap-2">
-                        {articulos.links.map((link, index) => (
-                            <Link
-                                key={index}
-                                href={link.url || '#'}
-                                className={`px-3 py-2 text-sm ${
-                                    link.active 
-                                        ? 'bg-black text-white' 
-                                        : 'border border-gray-300 hover:bg-gray-100 bg-white text-black'
-                                }`}
-                                dangerouslySetInnerHTML={{ __html: link.label }}
-                            />
-                        ))}
+                {articulos.last_page > 1 && (
+                    <div className="flex justify-center mt-12">
+                        <div className="flex items-center gap-2">
+                            {articulos.links.map((link, index) => (
+                                link.url ? (
+                                    <Link
+                                        key={index}
+                                        href={link.url}
+                                        className={`px-3 py-2 text-sm ${
+                                            link.active
+                                                ? 'bg-black text-white'
+                                                : 'border border-gray-300 hover:bg-gray-100 bg-white text-black'
+                                        }`}
+                                        dangerouslySetInnerHTML={{ __html: link.label }}
+                                    />
+                                ) : (
+                                    <span
+                                        key={index}
+                                        className="px-3 py-2 text-sm border border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed"
+                                        dangerouslySetInnerHTML={{ __html: link.label }}
+                                    />
+                                )
+                            ))}
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
         </ShopLayout>
     );

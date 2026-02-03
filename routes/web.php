@@ -79,6 +79,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 // Rutas públicas del e-commerce
 Route::get('shop', [\App\Http\Controllers\EcommerceController::class, 'index'])->name('shop.index');
+Route::get('shop/{articulo}', [\App\Http\Controllers\EcommerceController::class, 'show'])->name('shop.show');
 Route::post('cart/{articulo}', [\App\Http\Controllers\EcommerceController::class, 'addToCart'])->name('cart.add');
 Route::get('cart', [\App\Http\Controllers\EcommerceController::class, 'cart'])->name('cart.index');
 Route::delete('cart', [\App\Http\Controllers\EcommerceController::class, 'clearCart'])->name('cart.clear');

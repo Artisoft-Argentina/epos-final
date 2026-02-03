@@ -17,17 +17,56 @@ class EcommerceController extends Controller
         $articulos->getCollection()->transform(function ($articulo) {
             if ($articulo->imagenes) {
                 $articulo->imagenes->transform(function ($imagen) {
-                    $imagen->url = secure_asset('storage/' . $imagen->ruta);
+                    $imagen->url = asset('storage/' . $imagen->ruta);
                     return $imagen;
                 });
             }
             return $articulo;
         });
 
+        $cartCount = $this->getCartCount();
+
+        return Inertia::render('ecommerce/index', compact('articulos', 'cartCount'));
+    }
+
+    public function show(Articulo $articulo)
+    {
+        $articulo->load(['categoria', 'marca', 'imagenes']);
+
+        if ($articulo->imagenes) {
+            $articulo->imagenes->transform(function ($imagen) {
+                $imagen->url = asset('storage/' . $imagen->ruta);
+                return $imagen;
+            });
+        }
+
+        $relacionados = Articulo::with(['imagenes'])
+            ->where('categoria_id', $articulo->categoria_id)
+            ->where('id', '!=', $articulo->id)
+            ->limit(4)
+            ->get();
+
+        $relacionados->transform(function ($art) {
+            if ($art->imagenes) {
+                $art->imagenes->transform(function ($imagen) {
+                    $imagen->url = asset('storage/' . $imagen->ruta);
+                    return $imagen;
+                });
+            }
+            return $art;
+        });
+
+        $cartCount = $this->getCartCount();
+
+        return Inertia::render('ecommerce/show', compact('articulo', 'relacionados', 'cartCount'));
+    }
+
+    private function getCartCount()
+    {
         $sessionId = session()->getId();
         $userId = auth()->id();
-        
-        $cartCount = Cart::where(function($query) use ($userId, $sessionId) {
+
+        return Cart::where(function($query) use ($userId, $sessionId) {
                 if ($userId) {
                     $query->where('user_id', $userId);
                 } else {
@@ -35,8 +74,6 @@ class EcommerceController extends Controller
                 }
             })
             ->sum('quantity');
-
-        return Inertia::render('ecommerce/index', compact('articulos', 'cartCount'));
     }
 
     public function addToCart(Request $request, Articulo $articulo)
@@ -119,6 +156,8 @@ class EcommerceController extends Controller
 
     public function updateCartItem(Request $request, Cart $cartItem)
     {
+        $this->authorizeCartItem($cartItem);
+
         $request->validate([
             'quantity' => 'required|integer|min:1',
         ]);
@@ -130,9 +169,27 @@ class EcommerceController extends Controller
 
     public function removeCartItem(Cart $cartItem)
     {
+        $this->authorizeCartItem($cartItem);
+
         $cartItem->delete();
 
         return back()->with('success', 'Producto eliminado del carrito');
+    }
+
+    private function authorizeCartItem(Cart $cartItem)
+    {
+        $userId = auth()->id();
+        $sessionId = session()->getId();
+
+        if ($userId) {
+            if ($cartItem->user_id !== $userId) {
+                abort(403, 'No autorizado');
+            }
+        } else {
+            if ($cartItem->session_id !== $sessionId) {
+                abort(403, 'No autorizado');
+            }
+        }
     }
 
     public function mergeSessionCart($userId, $sessionId)

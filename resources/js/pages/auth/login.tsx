@@ -1,4 +1,5 @@
 import InputError from '@/components/input-error';
+import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -14,8 +15,8 @@ interface LoginProps {
 
 export default function Login({ status, canResetPassword }: LoginProps) {
     return (
-        <AuthLayout title="Geppeto" description="Ingresa tu email y password">
-            <Head title="Log in" />
+        <AuthLayout title="TIENDA" description="Ingresa tu email y contraseña">
+            <Head title="Iniciar Sesión" />
 
             <Form method="post" action={route('login')} resetOnSuccess={['password']} className="flex flex-col gap-6">
                 {({ processing, errors }) => (
@@ -31,15 +32,19 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                     autoFocus
                                     tabIndex={1}
                                     autoComplete="email"
-                                    placeholder="email@example.com"
+                                    placeholder="email@ejemplo.com"
                                 />
                                 <InputError message={errors.email} />
                             </div>
 
                             <div className="grid gap-2">
-                                <div className="flex items-center">
-                                    <Label htmlFor="password">Password</Label>
-                                    {canResetPassword }
+                                <div className="flex items-center justify-between">
+                                    <Label htmlFor="password">Contraseña</Label>
+                                    {canResetPassword && (
+                                        <TextLink href={route('password.request')} className="text-sm" tabIndex={5}>
+                                            ¿Olvidaste tu contraseña?
+                                        </TextLink>
+                                    )}
                                 </div>
                                 <Input
                                     id="password"
@@ -48,7 +53,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                     required
                                     tabIndex={2}
                                     autoComplete="current-password"
-                                    placeholder="Password"
+                                    placeholder="Contraseña"
                                 />
                                 <InputError message={errors.password} />
                             </div>
@@ -60,10 +65,16 @@ export default function Login({ status, canResetPassword }: LoginProps) {
 
                             <Button type="submit" className="mt-4 w-full" tabIndex={4} disabled={processing}>
                                 {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
-                                Log in
+                                Iniciar Sesión
                             </Button>
                         </div>
 
+                        <div className="text-center text-sm text-muted-foreground">
+                            ¿No tienes una cuenta?{' '}
+                            <TextLink href={route('register')} tabIndex={6}>
+                                Regístrate
+                            </TextLink>
+                        </div>
                     </>
                 )}
             </Form>
