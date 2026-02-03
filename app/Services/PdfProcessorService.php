@@ -88,6 +88,8 @@ class PdfProcessorService
 
     private function processWithCustomAPI(string $text): array
     {
+        Log::info('Consultando API', ['url' => $this->apiUrl . '/chat']);
+        
         try {
             $response = $this->client->post($this->apiUrl . '/chat', [
                 'json' => [
@@ -98,7 +100,7 @@ class PdfProcessorService
                         ],
                         [
                             'role' => 'user',
-                            'content' => "Extrae la siguiente información del texto y devuélvela en formato JSON: proveedor, fecha, número de factura, items (con codigo, descripción, cantidad, precio unitario), subtotal, impuestos, total.\n\nTexto:\n" . $text
+                            'content' => "Extrae la siguiente información del texto y devuélvela en formato JSON: proveedor, fecha, número de factura, items (con codigo, descripción, cantidad, precio unitario), subtotal, impuestos, total.\n\nTexto:\n" . substr($text, 0, 1000)
                         ]
                     ],
                 ],
@@ -106,6 +108,9 @@ class PdfProcessorService
                 'connect_timeout' => 10,
             ]);
 
+            $statusCode = $response->getStatusCode();
+            Log::info('Respuesta de API', ['status' => $statusCode]);
+            
             $content = $response->getBody()->getContents();
             
             // La respuesta es un stream de texto, concatenar todo
@@ -113,6 +118,7 @@ class PdfProcessorService
             if ($jsonMatch) {
                 $data = json_decode($matches[0], true);
                 if (json_last_error() === JSON_ERROR_NONE) {
+                    Log::info('JSON parseado correctamente');
                     return $data;
                 }
                 Log::error('Error parseando JSON: ' . json_last_error_msg());

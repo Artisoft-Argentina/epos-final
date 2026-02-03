@@ -2,20 +2,23 @@
 
 namespace App\Http\Controllers;
 
+use GuzzleHttp\Client;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
-use App\Services\OllamaService;
-use App\Services\TextToSqlService;
 
 class ChatController extends Controller
 {
-    private OllamaService $ollama;
-    private TextToSqlService $textToSql;
+    private Client $client;
+    private string $apiUrl;
 
-    public function __construct(OllamaService $ollama, TextToSqlService $textToSql)
+    public function __construct()
     {
-        $this->ollama = $ollama;
-        $this->textToSql = $textToSql;
+        $this->apiUrl = env('CUSTOM_API_URL', 'http://localhost:3000');
+        $this->client = new Client([
+            'timeout' => 300,
+            'connect_timeout' => 30,
+        ]);
     }
 
     public function index()
@@ -33,58 +36,27 @@ class ChatController extends Controller
         $message = $request->input('message');
         $history = $request->input('history', []);
 
-        // Si es pregunta de datos, usar SQL directamente
-        if ($this->shouldUseSqlMode($message)) {
-            $sqlResult = $this->textToSql->generateAndExecuteQuery($message, $history);
-            $response = $this->textToSql->formatResults($sqlResult);
-        } else {
-            // Preguntas generales con Ollama
+        try {
             $messages = $history;
             $messages[] = [
                 'role' => 'user',
                 'content' => $message,
             ];
-            $response = $this->ollama->chat($messages);
-        }
 
-        return response()->json([
-            'response' => $response,
-        ]);
-    }
+            $response = $this->client->post($this->apiUrl . '/chat', [
+                'json' => ['messages' => $messages],
+            ]);
 
-    private function shouldUseSqlMode(string $message): bool
-    {
-        $messageLower = mb_strtolower($message);
-        
-        // Palabras que indican consulta de datos
-        $dataKeywords = [
-            'cuántos', 'cuántas', 'cuantos', 'cuantas',
-            'listar', 'mostrar', 'buscar', 'encontrar',
-            'dame', 'dime', 'ver',
-            'qué', 'que', 'quién', 'quien', 'cuál', 'cual',
-            'total', 'suma', 'cantidad', 'tengo'
-        ];
-        
-        // Entidades de la BD
-        $entities = [
-            'cliente', 'clientes',
-            'producto', 'productos', 'artículo', 'articulo', 'articulos',
-            'factura', 'facturas', 'venta', 'ventas',
-            'inventario', 'stock',
-            'categoría', 'categoria', 'marca'
-        ];
-        
-        // Verificar si tiene palabra clave + entidad
-        foreach ($dataKeywords as $keyword) {
-            if (str_contains($messageLower, $keyword)) {
-                foreach ($entities as $entity) {
-                    if (str_contains($messageLower, $entity)) {
-                        return true;
-                    }
-                }
-            }
+            $content = $response->getBody()->getContents();
+            
+            return response()->json([
+                'response' => $content,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error en chat: ' . $e->getMessage());
+            return response()->json([
+                'response' => 'Error al procesar tu mensaje. Intenta nuevamente.',
+            ], 500);
         }
-        
-        return false;
     }
 }
