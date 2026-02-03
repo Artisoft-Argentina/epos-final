@@ -1,0 +1,53 @@
+name: Deploy to Hostinger VPS (Dev)
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 🚀 Deploy to VPS
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: 22
+          script: |
+            cd /var/www/gepetto
+            
+            echo "📥 Pulling latest changes from dev branch..."
+            git pull origin dev
+            
+            echo "📦 Installing PHP dependencies..."
+            composer install --no-dev --optimize-autoloader
+            
+            echo "📦 Installing Node dependencies..."
+            npm ci
+            
+            echo "🏗️ Building assets..."
+            npm run build
+            
+            echo "🔄 Running migrations..."
+            php artisan migrate --force
+            
+            echo "🧹 Clearing caches..."
+            php artisan config:clear
+            php artisan cache:clear
+            php artisan route:clear
+            php artisan view:clear
+            
+            echo "⚡ Optimizing application..."
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+            
+            echo "🔐 Setting permissions..."
+            chown -R www-data:www-data storage bootstrap/cache
+            chmod -R 775 storage bootstrap/cache
+            
+            echo "✅ Deployment completed successfully!"
