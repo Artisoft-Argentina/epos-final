@@ -25,10 +25,30 @@ interface Props {
     cliente: {
         razonsocial: string;
         email: string;
-    };
+    } | null;
 }
 
 export default function ClientDashboard({ compras, cliente }: Props) {
+    if (!cliente) {
+        return (
+            <CartProvider initialCartCount={0}>
+                <ShopLayout title="Mi Cuenta">
+                    <Head title="Mi Cuenta" />
+                    <div className="container mx-auto px-4 py-8">
+                        <div className="text-center py-16">
+                            <h1 className="text-3xl font-bold mb-4">No hay cliente vinculado</h1>
+                            <p className="text-gray-600 mb-8">Tu cuenta de usuario no está vinculada a un cliente. Contacta al administrador.</p>
+                            <Link href="/shop">
+                                <Button className="bg-black text-white hover:bg-gray-800">
+                                    Ir a la tienda
+                                </Button>
+                            </Link>
+                        </div>
+                    </div>
+                </ShopLayout>
+            </CartProvider>
+        );
+    }
     return (
         <CartProvider initialCartCount={0}>
             <ShopLayout title="Mi Cuenta">

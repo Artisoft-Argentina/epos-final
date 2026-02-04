@@ -40,7 +40,20 @@ class RegisteredUserController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'role_id' => 3, // Usuario por defecto
+            'role_id' => 4, // Cliente por defecto
+        ]);
+
+        // Crear cliente automáticamente
+        \App\Models\Cliente::create([
+            'razonsocial' => $request->name,
+            'email' => $request->email,
+            'documentounico' => null,
+            'direccion' => '',
+            'telefono' => '',
+            'codigopostal' => 0,
+            'localidad' => '',
+            'provincia' => '',
+            'condicioniva' => 'Consumidor Final',
         ]);
 
         event(new Registered($user));

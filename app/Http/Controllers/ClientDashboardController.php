@@ -13,10 +13,29 @@ class ClientDashboardController extends Controller
         $user = auth()->user();
         $cliente = \App\Models\Cliente::where('email', $user->email)->first();
         
-        $compras = Factura::with(['articulos'])
+        if (!$cliente) {
+            return Inertia::render('Client/Dashboard', [
+                'compras' => [],
+                'cliente' => null,
+            ]);
+        }
+        
+        $compras = Factura::with(['articulos', 'pagos', 'entregas'])
             ->where('cliente_id', $cliente->id)
             ->orderBy('fecha', 'desc')
             ->paginate(10);
+
+        // Convertir valores a float
+        $compras->getCollection()->transform(function ($factura) {
+            $factura->total = (float) $factura->total;
+            $factura->articulos->transform(function ($articulo) {
+                $articulo->pivot->cantidad = (int) $articulo->pivot->cantidad;
+                $articulo->pivot->preciounitario = (float) $articulo->pivot->preciounitario;
+                $articulo->pivot->subtotal = (float) $articulo->pivot->subtotal;
+                return $articulo;
+            });
+            return $factura;
+        });
 
         return Inertia::render('Client/Dashboard', [
             'compras' => $compras,

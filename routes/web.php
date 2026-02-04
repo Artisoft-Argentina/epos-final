@@ -9,15 +9,25 @@ Route::get('/', function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     // Redirigir clientes a su dashboard
     Route::get('dashboard', function () {
-        if (auth()->user()->role->role === 'cliente') {
+        $userRole = auth()->user()->role?->role;
+        
+        if ($userRole === 'cliente') {
             return redirect()->route('client.dashboard');
         }
-
-        return redirect()->route('admin.dashboard');
+        
+        if (in_array($userRole, ['admin', 'superadmin'])) {
+            return redirect()->route('admin.dashboard');
+        }
+        
+        // Usuarios sin rol específico van a su dashboard
+        return redirect()->route('user.dashboard');
     })->name('dashboard');
 
     Route::get('admin/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])->name('admin.dashboard')->middleware(['role:admin,superadmin']);
     Route::get('dashboard/export', [\App\Http\Controllers\DashboardController::class, 'exportExcel'])->name('dashboard.export')->middleware(['role:admin,superadmin']);
+    
+    // Dashboard para usuarios regulares
+    Route::get('user/dashboard', [\App\Http\Controllers\UserDashboardController::class, 'index'])->name('user.dashboard');
 
     // Rutas solo para superadmin
     Route::middleware(['role:superadmin'])->group(function () {
