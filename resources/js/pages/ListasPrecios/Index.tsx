@@ -2,7 +2,7 @@ import { Head, Link } from '@inertiajs/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit, Trash2 } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye } from 'lucide-react';
 import AppSidebarLayout from '@/layouts/app/app-sidebar-layout';
 import { router } from '@inertiajs/react';
 
@@ -68,6 +68,12 @@ export default function Index({ listas }: Props) {
                                         </p>
                                     </div>
                                     <div className="flex gap-2">
+                                        <Link href={route('listas-precios.show', lista.id)}>
+                                            <Button variant="outline" size="sm">
+                                                <Eye className="h-4 w-4 mr-2" />
+                                                Ver Precios
+                                            </Button>
+                                        </Link>
                                         <Link href={route('listas-precios.edit', lista.id)}>
                                             <Button variant="outline" size="sm">
                                                 <Edit className="h-4 w-4" />

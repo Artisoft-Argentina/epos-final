@@ -21,4 +21,9 @@ Route::middleware('auth')->group(function () {
     Route::get('settings/appearance', function () {
         return Inertia::render('settings/appearance');
     })->name('appearance');
+
+    Route::get('settings/telegram', function () {
+        return Inertia::render('settings/telegram');
+    })->name('telegram');
+    Route::post('settings/telegram/verify', [\App\Http\Controllers\TelegramAuthController::class, 'verify'])->name('telegram.verify');
 });

@@ -42,10 +42,7 @@ class ListaPrecioController extends Controller
         }
 
         $lista = ListaPrecio::create($validated);
-        
-        if ($request->boolean('generar_precios')) {
-            $lista->generarPrecios();
-        }
+        $lista->generarPrecios();
 
         return redirect()->route('listas-precios.index')
                         ->with('success', 'Lista de precios creada exitosamente');
@@ -53,8 +50,32 @@ class ListaPrecioController extends Controller
 
     public function show(ListaPrecio $listas_precio)
     {
+        $articulos = \App\Models\Articulo::with(['categoria', 'marca'])
+            ->get()
+            ->map(function ($articulo) use ($listas_precio) {
+                $precioBase = (float) ($articulo->precio ?? 0);
+                $precioCalculado = $precioBase * (1 + ($listas_precio->porcentaje / 100));
+                
+                // Obtener precio actual si existe
+                $precioActual = $articulo->listasPrecios()
+                    ->where('lista_precio_id', $listas_precio->id)
+                    ->first();
+                
+                return [
+                    'id' => $articulo->id,
+                    'codarticulo' => $articulo->codarticulo,
+                    'articulo' => $articulo->articulo,
+                    'categoria' => $articulo->categoria?->nombre,
+                    'marca' => $articulo->marca?->nombre,
+                    'precio_base' => (float) $precioBase,
+                    'precio_calculado' => (float) round($precioCalculado, 2),
+                    'precio_actual' => $precioActual ? (float) $precioActual->pivot->precio : null,
+                ];
+            });
+
         return Inertia::render('ListasPrecios/Show', [
-            'lista' => $listas_precio->load('articulos')
+            'lista' => $listas_precio,
+            'articulos' => $articulos
         ]);
     }
 
@@ -89,9 +110,10 @@ class ListaPrecioController extends Controller
                       ->update(['default_ecommerce' => false]);
         }
 
+        $porcentajeAnterior = $listas_precio->porcentaje;
         $listas_precio->update($validated);
 
-        if ($request->boolean('regenerar_precios')) {
+        if ($porcentajeAnterior != $validated['porcentaje']) {
             $listas_precio->generarPrecios();
         }
 
@@ -113,5 +135,13 @@ class ListaPrecioController extends Controller
 
         return redirect()->route('listas-precios.index')
                         ->with('success', 'Lista de precios eliminada exitosamente');
+    }
+
+    public function regenerarPrecios(ListaPrecio $listas_precio)
+    {
+        $listas_precio->generarPrecios();
+        
+        return redirect()->back()
+                        ->with('success', 'Precios regenerados exitosamente');
     }
 }

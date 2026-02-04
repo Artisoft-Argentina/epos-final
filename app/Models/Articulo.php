@@ -51,4 +51,22 @@ class Articulo extends Model
     {
         return $this->hasOne(ArticuloImagen::class)->where('es_principal', true);
     }
+
+    public function inventario()
+    {
+        return $this->hasOne(Inventario::class);
+    }
+
+    public function getPrecioVentaAttribute()
+    {
+        // Intentar obtener precio de lista por defecto
+        $listaPorDefecto = $this->listasPrecios()->wherePivot('precio', '>', 0)->first();
+        
+        if ($listaPorDefecto) {
+            return $listaPorDefecto->pivot->precio;
+        }
+        
+        // Si no hay lista de precios, usar precio base
+        return $this->precio ?? 0;
+    }
 }

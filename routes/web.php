@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
 Route::get('/', function () {
     return redirect()->route('shop.index');
@@ -13,9 +12,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         if (auth()->user()->role->role === 'cliente') {
             return redirect()->route('client.dashboard');
         }
+
         return redirect()->route('admin.dashboard');
     })->name('dashboard');
-    
+
     Route::get('admin/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])->name('admin.dashboard')->middleware(['role:admin,superadmin']);
     Route::get('dashboard/export', [\App\Http\Controllers\DashboardController::class, 'exportExcel'])->name('dashboard.export')->middleware(['role:admin,superadmin']);
 
@@ -43,6 +43,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('compras', \App\Http\Controllers\CompraController::class);
         Route::resource('inventarios', \App\Http\Controllers\InventarioController::class);
         Route::resource('listas-precios', \App\Http\Controllers\ListaPrecioController::class);
+        Route::post('listas-precios/{listas_precio}/regenerar', [\App\Http\Controllers\ListaPrecioController::class, 'regenerarPrecios'])->name('listas-precios.regenerar');
     });
 
     // Rutas para todos los roles
@@ -71,12 +72,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('asistente-compras/process', [\App\Http\Controllers\AsistenteComprasController::class, 'processPdf'])->name('asistente-compras.process');
     Route::post('asistente-compras/add-inventory', [\App\Http\Controllers\AsistenteComprasController::class, 'addToInventory'])->name('asistente-compras.add-inventory');
 
-
-
     Route::get('facturas/{factura}/pdf', [\App\Http\Controllers\FacturaPdfController::class, 'generate'])->name('facturas.pdf');
 
     Route::post('afip/consultar-cuit', [\App\Http\Controllers\ClienteController::class, 'consultarCuit'])->name('afip.consultar-cuit');
-
 
 });
 
@@ -97,9 +95,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('checkout/failure', [\App\Http\Controllers\CheckoutController::class, 'failure'])->name('checkout.failure');
     Route::get('checkout/pending', [\App\Http\Controllers\CheckoutController::class, 'pending'])->name('checkout.pending');
     Route::get('payment/{paymentId}/status', [\App\Http\Controllers\CheckoutController::class, 'getPaymentStatus'])->name('payment.status');
-    
+
     Route::get('my-purchases', [\App\Http\Controllers\UserPurchaseController::class, 'index'])->name('user.purchases');
-    
+
     // Rutas para clientes
     Route::middleware(['role:cliente'])->group(function () {
         Route::get('client/dashboard', [\App\Http\Controllers\ClientDashboardController::class, 'index'])->name('client.dashboard');
