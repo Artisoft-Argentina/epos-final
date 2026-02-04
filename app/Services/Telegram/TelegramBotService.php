@@ -12,8 +12,12 @@ class TelegramBotService
     public function __construct(string $botType)
     {
         $this->token = $botType === 'admin' 
-            ? config('telegram-agents.admin_token')
-            : config('telegram-agents.vendedor_token');
+            ? config('telegram-agents.admin_token') ?? env('TELEGRAM_BOT_ADMIN_TOKEN', '')
+            : config('telegram-agents.vendedor_token') ?? env('TELEGRAM_BOT_VENDEDOR_TOKEN', '');
+            
+        if (empty($this->token)) {
+            throw new \Exception("Telegram bot token not configured for {$botType}");
+        }
     }
 
     public function sendMessage(int $chatId, string $text, ?array $keyboard = null): array
