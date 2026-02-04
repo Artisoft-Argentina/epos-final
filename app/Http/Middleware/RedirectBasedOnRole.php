@@ -14,7 +14,6 @@ class RedirectBasedOnRole
             $user = auth()->user();
             $userRole = $user->role?->role;
             
-            // Si es vendedor y está intentando acceder a dashboard, redirigir a ventas
             if ($userRole === 'vendedor' && $request->routeIs('dashboard')) {
                 return redirect()->route('ventas.index');
             }
