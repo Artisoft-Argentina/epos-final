@@ -122,10 +122,6 @@ const mainNavItems: NavItem[] = [
                 title: 'Registro de Actividad',
                 href: '/activity-log',
             },
-            {
-                title: 'AFIP',
-                href: '/settings/afip',
-            },
         ],
     },
 

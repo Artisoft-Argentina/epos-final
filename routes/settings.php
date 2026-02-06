@@ -26,9 +26,4 @@ Route::middleware('auth')->group(function () {
         return Inertia::render('settings/telegram');
     })->name('telegram');
     Route::post('settings/telegram/verify', [\App\Http\Controllers\TelegramAuthController::class, 'verify'])->name('telegram.verify');
-
-    // AFIP
-    Route::get('settings/afip', [\App\Http\Controllers\Settings\AfipController::class, 'index'])->name('afip.settings');
-    Route::post('settings/afip/upload', [\App\Http\Controllers\Settings\AfipController::class, 'upload'])->name('afip.upload');
-    Route::get('settings/afip/health', [\App\Http\Controllers\Settings\AfipController::class, 'healthCheck'])->name('afip.health');
 });
