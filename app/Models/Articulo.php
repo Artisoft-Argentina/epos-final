@@ -18,6 +18,8 @@ class Articulo extends Model
         'marca_id',
         'supplier_id',
         'stockminimo',
+        'codigo_barras',
+        'codigo_qr',
     ];
 
     public function categoria()

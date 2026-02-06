@@ -46,6 +46,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('articulos/imagenes/{imagen}', [\App\Http\Controllers\ArticuloImagenController::class, 'destroy'])->name('articulos.imagenes.destroy');
         Route::post('articulos/imagenes/{imagen}/principal', [\App\Http\Controllers\ArticuloImagenController::class, 'setPrincipal'])->name('articulos.imagenes.setPrincipal');
         Route::post('articulos/{articulo}/imagenes/order', [\App\Http\Controllers\ArticuloImagenController::class, 'updateOrder'])->name('articulos.imagenes.updateOrder');
+        
+        // Rutas de códigos QR y de barras
+        Route::get('articulos/{articulo}/codigo-barras', [\App\Http\Controllers\CodigoController::class, 'generarCodigoBarras'])->name('articulos.codigo-barras');
+        Route::get('articulos/{articulo}/codigo-qr', [\App\Http\Controllers\CodigoController::class, 'generarCodigoQR'])->name('articulos.codigo-qr');
+        Route::get('articulos/{articulo}/codigos', [\App\Http\Controllers\CodigoController::class, 'generarCodigos'])->name('articulos.codigos');
+        Route::post('codigos/imprimir-etiquetas', [\App\Http\Controllers\CodigoController::class, 'imprimirEtiquetas'])->name('codigos.imprimir-etiquetas');
+        
         Route::resource('suppliers', \App\Http\Controllers\SupplierController::class);
         Route::resource('remitos', \App\Http\Controllers\RemitoController::class);
         Route::get('remitos/articulos/{supplier}', [\App\Http\Controllers\RemitoController::class, 'getArticulosBySupplier'])->name('remitos.articulos');
@@ -62,6 +69,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('clientes/{cliente}/exportar-excel', [\App\Http\Controllers\ClienteController::class, 'exportarExcel'])->name('clientes.exportar-excel');
     Route::get('clientes/{cliente}/exportar-pdf', [\App\Http\Controllers\ClienteController::class, 'exportarPdf'])->name('clientes.exportar-pdf');
     Route::get('estados-cuenta', [\App\Http\Controllers\ClienteController::class, 'estadosCuenta'])->name('estados-cuenta.index');
+    
+    // Rutas de escáner de códigos para ventas
+    Route::get('scanner', [\App\Http\Controllers\CodigoController::class, 'scanner'])->name('scanner.index');
+    Route::post('scanner/buscar', [\App\Http\Controllers\CodigoController::class, 'buscarPorCodigo'])->name('scanner.buscar');
+    
     Route::resource('ventas', \App\Http\Controllers\VentaController::class);
     Route::resource('presupuestos', \App\Http\Controllers\PresupuestoController::class);
     Route::post('presupuestos/{presupuesto}/convertir-venta', [\App\Http\Controllers\PresupuestoController::class, 'convertirAVenta'])->name('presupuestos.convertir-venta');

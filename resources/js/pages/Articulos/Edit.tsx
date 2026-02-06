@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import InputError from '@/components/input-error';
+import CodigoDisplay from '@/components/CodigoDisplay';
 import { Save, X } from 'lucide-react';
 
 interface Articulo {
@@ -86,11 +87,13 @@ export default function Edit({ articulo, categorias, marcas, suppliers }: Props)
         <AppLayout>
             <Head title="Editar Artículo" />
             
-            <Card className="max-w-2xl">
-                <CardHeader>
-                    <CardTitle>Editar Artículo</CardTitle>
-                </CardHeader>
-                <CardContent>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Editar Artículo</CardTitle>
+                        </CardHeader>
+                        <CardContent>
                     <form onSubmit={submit} className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
@@ -289,8 +292,17 @@ export default function Edit({ articulo, categorias, marcas, suppliers }: Props)
                             </Button>
                         </div>
                     </form>
-                </CardContent>
-            </Card>
+                        </CardContent>
+                    </Card>
+                </div>
+                
+                <div>
+                    <CodigoDisplay 
+                        articuloId={articulo.id} 
+                        articuloNombre={articulo.articulo} 
+                    />
+                </div>
+            </div>
         </AppLayout>
     );
 }

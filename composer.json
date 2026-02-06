@@ -20,6 +20,8 @@
         "laravel/tinker": "^2.10.1",
         "maatwebsite/excel": "^3.1",
         "mercadopago/dx-php": "^3.8",
+        "picqer/php-barcode-generator": "^3.2",
+        "simplesoftwareio/simple-qrcode": "^4.2",
         "smalot/pdfparser": "^2.12",
         "spatie/laravel-activitylog": "^4.10",
         "thiagoalessio/tesseract_ocr": "^2.13",

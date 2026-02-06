@@ -3,7 +3,7 @@ import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Plus, Edit, Search } from 'lucide-react';
+import { Plus, Edit, Search, QrCode, ScanLine, Printer } from 'lucide-react';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
 import { Pagination } from '@/components/pagination';
 import { toast } from 'sonner';
@@ -34,6 +34,7 @@ interface Props {
 export default function Index({ articulos, filters }: Props) {
     const page = usePage<any>();
     const [search, setSearch] = useState(filters.search || '');
+    const [selectedArticulos, setSelectedArticulos] = useState<number[]>([]);
     
     useEffect(() => {
         if (page.props.flash?.success) {
@@ -46,6 +47,25 @@ export default function Index({ articulos, filters }: Props) {
         router.get(route('articulos.index'), { search: value }, { preserveState: true, replace: true });
     };
 
+    const toggleArticuloSelection = (id: number) => {
+        setSelectedArticulos(prev => 
+            prev.includes(id) 
+                ? prev.filter(artId => artId !== id)
+                : [...prev, id]
+        );
+    };
+
+    const imprimirEtiquetas = () => {
+        if (selectedArticulos.length === 0) {
+            toast.error('Selecciona al menos un artículo');
+            return;
+        }
+        
+        router.post('/codigos/imprimir-etiquetas', {
+            articulos: selectedArticulos
+        });
+    };
+
     return (
         <AppLayout>
             <Head title="Artículos" />
@@ -53,12 +73,20 @@ export default function Index({ articulos, filters }: Props) {
             <div className="p-6">
                 <div className="flex justify-between items-center mb-6">
                     <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Artículos</h1>
-                    <Link href={route('articulos.create')}>
-                        <Button>
-                            <Plus className="w-4 h-4 mr-2" />
-                            Nuevo Artículo
-                        </Button>
-                    </Link>
+                    <div className="flex gap-2">
+                        {selectedArticulos.length > 0 && (
+                            <Button onClick={imprimirEtiquetas} variant="outline">
+                                <Printer className="w-4 h-4 mr-2" />
+                                Imprimir Etiquetas ({selectedArticulos.length})
+                            </Button>
+                        )}
+                        <Link href={route('articulos.create')}>
+                            <Button>
+                                <Plus className="w-4 h-4 mr-2" />
+                                Nuevo Artículo
+                            </Button>
+                        </Link>
+                    </div>
                 </div>
 
                 <div className="mb-6">
@@ -79,6 +107,19 @@ export default function Index({ articulos, filters }: Props) {
                     <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                         <thead className="bg-gray-50 dark:bg-gray-700">
                             <tr>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                    <input
+                                        type="checkbox"
+                                        onChange={(e) => {
+                                            if (e.target.checked) {
+                                                setSelectedArticulos(articulos.data.map(a => a.id));
+                                            } else {
+                                                setSelectedArticulos([]);
+                                            }
+                                        }}
+                                        checked={selectedArticulos.length === articulos.data.length && articulos.data.length > 0}
+                                    />
+                                </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                     Código
                                 </th>
@@ -103,6 +144,13 @@ export default function Index({ articulos, filters }: Props) {
                             {articulos.data.map((articulo) => (
                                 <tr key={articulo.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                                     <td className="px-6 py-4 whitespace-nowrap">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedArticulos.includes(articulo.id)}
+                                            onChange={() => toggleArticuloSelection(articulo.id)}
+                                        />
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="text-sm font-mono text-gray-900 dark:text-gray-100">{articulo.codarticulo}</div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
@@ -121,6 +169,22 @@ export default function Index({ articulos, filters }: Props) {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <div className="flex justify-end gap-2">
+                                            <Button 
+                                                variant="outline" 
+                                                size="sm"
+                                                onClick={() => window.open(`/articulos/${articulo.id}/codigo-qr`, '_blank')}
+                                                title="Ver Código QR"
+                                            >
+                                                <QrCode className="w-4 h-4" />
+                                            </Button>
+                                            <Button 
+                                                variant="outline" 
+                                                size="sm"
+                                                onClick={() => window.open(`/articulos/${articulo.id}/codigo-barras`, '_blank')}
+                                                title="Ver Código de Barras"
+                                            >
+                                                <ScanLine className="w-4 h-4" />
+                                            </Button>
                                             <Link href={route('articulos.edit', articulo.id)}>
                                                 <Button variant="outline" size="sm">
                                                     <Edit className="w-4 h-4" />
