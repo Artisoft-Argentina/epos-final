@@ -201,25 +201,17 @@ class AfipService
     public function consultarDatosFiscales($cuit)
     {
         try {
-            
             $cuitLimpio = preg_replace('/[^0-9]/', '', $cuit);
             
             if (strlen($cuitLimpio) !== 11 && strlen($cuitLimpio) !== 8) {
                 return ['success' => false, 'error' => 'Debe ingresar un CUIT (11 dígitos) o DNI (8 dígitos)'];
             }
             
-            // Intentar con nuevo servicio AFIP
+            \Log::info('AFIP: Iniciando consulta de padrón', ['cuit' => $cuitLimpio]);
+            
+            // Intentar primero con API pública (más confiable y sin autenticación)
             try {
-                $afipWS = new AfipWebService();
-                $datos = $afipWS->consultarPadron($cuitLimpio);
-                
-                return [
-                    'success' => true,
-                    'data' => $datos
-                ];
-            } catch (\Exception $e) {
-                
-                // Fallback a API pública
+                // API pública
                 $url = "https://soa.afip.gob.ar/sr-padron/v2/persona/{$cuitLimpio}";
                 
                 $ch = curl_init();
@@ -230,7 +222,14 @@ class AfipService
                 
                 $response = curl_exec($ch);
                 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                $curlError = curl_error($ch);
                 curl_close($ch);
+                
+                \Log::info('AFIP: Respuesta API pública', [
+                    'http_code' => $httpCode,
+                    'curl_error' => $curlError,
+                    'response_length' => strlen($response)
+                ]);
                 
                 if ($httpCode === 200 && $response) {
                     $data = json_decode($response, true);
@@ -246,6 +245,8 @@ class AfipService
                             $razonSocial = trim($datosGenerales['apellido'] . ', ' . $datosGenerales['nombre']);
                         }
                         
+                        \Log::info('AFIP: Datos obtenidos de API pública', ['razon_social' => $razonSocial]);
+                        
                         return [
                             'success' => true,
                             'data' => [
@@ -260,9 +261,28 @@ class AfipService
                         ];
                     }
                 }
+                
+                \Log::warning('AFIP: API pública no devolvió datos válidos, intentando WebService autenticado');
+                
+                // Fallback a WebService autenticado
+                $afipWS = new AfipWebService();
+                $datos = $afipWS->consultarPadron($cuitLimpio);
+                
+                \Log::info('AFIP: Consulta exitosa con AfipWebService', ['datos' => $datos]);
+                
+                return [
+                    'success' => true,
+                    'data' => $datos
+                ];
+                
+            } catch (\Exception $e) {
+                \Log::warning('AFIP: Error en consulta AFIP', [
+                    'error' => $e->getMessage()
+                ]);
             }
             
             // Fallback final
+            \Log::warning('AFIP: Usando datos de fallback', ['cuit' => $cuit]);
             return [
                 'success' => true,
                 'data' => [
@@ -277,6 +297,10 @@ class AfipService
             ];
             
         } catch (\Exception $e) {
+            \Log::error('AFIP: Error general en consultarDatosFiscales', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             
             return [
                 'success' => true,

@@ -215,7 +215,14 @@ XML;
         $xml->registerXPathNamespace('soapenv', 'http://schemas.xmlsoap.org/soap/envelope/');
         $faults = $xml->xpath('//soapenv:Fault/faultstring');
         if (!empty($faults)) {
-            throw new \Exception('WSAA Fault: ' . (string) $faults[0]);
+            $faultMsg = (string) $faults[0];
+            
+            // Si el error es que ya existe un token válido, informar al usuario
+            if (str_contains($faultMsg, 'El CEE ya posee un TA valido')) {
+                throw new \Exception('AFIP ya tiene un token activo. Espere unos minutos o ejecute: php artisan afip:clear-tokens');
+            }
+            
+            throw new \Exception('WSAA Fault: ' . $faultMsg);
         }
 
         $xml->registerXPathNamespace('ns', 'http://wsaa.view.sua.dvadac.desein.afip.gov');
