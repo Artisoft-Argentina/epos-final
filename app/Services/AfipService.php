@@ -276,28 +276,13 @@ class AfipService
                 ];
                 
             } catch (\Exception $e) {
-                \Log::warning('AFIP: Error en consulta AFIP', [
-                    'error' => $e->getMessage()
-                ]);
+                \Log::error('AFIP: Error en consulta', ['error' => $e->getMessage()]);
+                return ['success' => false, 'error' => 'No se pudieron obtener los datos de AFIP: ' . $e->getMessage()];
             }
             
-            // No se encontraron datos en AFIP
-            \Log::warning('AFIP: No se encontraron datos para el CUIT/DNI', ['cuit' => $cuit]);
-            return [
-                'success' => false,
-                'error' => 'No se encontraron datos en AFIP para el CUIT/DNI ingresado. Por favor, complete los datos manualmente.'
-            ];
-
         } catch (\Exception $e) {
-            \Log::error('AFIP: Error general en consultarDatosFiscales', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return [
-                'success' => false,
-                'error' => 'Error al consultar AFIP. Por favor, complete los datos manualmente.'
-            ];
+            \Log::error('AFIP: Error general', ['error' => $e->getMessage()]);
+            return ['success' => false, 'error' => 'Error al consultar AFIP: ' . $e->getMessage()];
         }
     }
 

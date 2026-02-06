@@ -14,10 +14,14 @@ export function Pagination({ links }: PaginationProps) {
     // Encontrar el índice de la página activa
     const activeIndex = links.findIndex(link => link.active);
 
+    // Detectar si es botón de anterior o siguiente
+    const isPrevious = (label: string) => label.includes('laquo') || label.toLowerCase().includes('previous') || label.toLowerCase().includes('anterior');
+    const isNext = (label: string) => label.includes('raquo') || label.toLowerCase().includes('next') || label.toLowerCase().includes('siguiente');
+
     // Función para determinar si un enlace debe mostrarse en móvil
     const shouldShowOnMobile = (index: number, link: { label: string; active: boolean }) => {
         // Siempre mostrar anterior y siguiente
-        if (link.label === '&laquo; Previous' || link.label === 'Next &raquo;') {
+        if (isPrevious(link.label) || isNext(link.label)) {
             return true;
         }
         // Mostrar la página activa
@@ -36,20 +40,36 @@ export function Pagination({ links }: PaginationProps) {
             {links.map((link, index) => {
                 const showOnMobile = shouldShowOnMobile(index, link);
 
-                if (link.label === '&laquo; Previous') {
+                // Botón Anterior
+                if (isPrevious(link.label)) {
+                    if (!link.url) {
+                        return (
+                            <Button key={index} variant="outline" size="sm" disabled>
+                                <ChevronLeft className="w-4 h-4" />
+                            </Button>
+                        );
+                    }
                     return (
-                        <Link key={index} href={link.url || '#'} preserveState>
-                            <Button variant="outline" size="sm" disabled={!link.url}>
+                        <Link key={index} href={link.url} preserveState>
+                            <Button variant="outline" size="sm">
                                 <ChevronLeft className="w-4 h-4" />
                             </Button>
                         </Link>
                     );
                 }
 
-                if (link.label === 'Next &raquo;') {
+                // Botón Siguiente
+                if (isNext(link.label)) {
+                    if (!link.url) {
+                        return (
+                            <Button key={index} variant="outline" size="sm" disabled>
+                                <ChevronRight className="w-4 h-4" />
+                            </Button>
+                        );
+                    }
                     return (
-                        <Link key={index} href={link.url || '#'} preserveState>
-                            <Button variant="outline" size="sm" disabled={!link.url}>
+                        <Link key={index} href={link.url} preserveState>
+                            <Button variant="outline" size="sm">
                                 <ChevronRight className="w-4 h-4" />
                             </Button>
                         </Link>
@@ -57,17 +77,30 @@ export function Pagination({ links }: PaginationProps) {
                 }
 
                 // Para números de página: ocultar en móvil si no es relevante
+                if (!link.url) {
+                    return (
+                        <Button
+                            key={index}
+                            variant={link.active ? "default" : "outline"}
+                            size="sm"
+                            disabled
+                            className={showOnMobile ? '' : 'hidden sm:inline-flex'}
+                        >
+                            {link.label}
+                        </Button>
+                    );
+                }
+
                 return (
                     <Link
                         key={index}
-                        href={link.url || '#'}
+                        href={link.url}
                         preserveState
                         className={showOnMobile ? '' : 'hidden sm:inline-flex'}
                     >
                         <Button
                             variant={link.active ? "default" : "outline"}
                             size="sm"
-                            disabled={!link.url}
                         >
                             {link.label}
                         </Button>
