@@ -132,6 +132,12 @@ XML;
     private function signTRA(string $tra): string
     {
         if (! file_exists($this->certPath) || ! file_exists($this->keyPath)) {
+            Log::error('AFIP: Certificados no encontrados', [
+                'cert' => $this->certPath,
+                'key' => $this->keyPath,
+                'cert_exists' => file_exists($this->certPath),
+                'key_exists' => file_exists($this->keyPath)
+            ]);
             throw new \Exception('Certificados AFIP no encontrados');
         }
 
@@ -141,7 +147,7 @@ XML;
         file_put_contents($traFile, $tra);
 
         $command = sprintf(
-            'openssl smime -sign -in %s -out %s -signer %s -inkey %s -nodetach -outform DER',
+            'openssl smime -sign -in %s -out %s -signer %s -inkey %s -nodetach -outform DER 2>&1',
             escapeshellarg($traFile),
             escapeshellarg($cmsFile),
             escapeshellarg($this->certPath),
@@ -151,7 +157,12 @@ XML;
         exec($command, $output, $returnCode);
 
         if ($returnCode !== 0) {
-            throw new \Exception('Error al firmar TRA');
+            Log::error('AFIP: Error al firmar TRA', [
+                'command' => $command,
+                'output' => implode("\n", $output),
+                'return_code' => $returnCode
+            ]);
+            throw new \Exception('Error al firmar TRA: ' . implode(', ', $output));
         }
 
         $cms = base64_encode(file_get_contents($cmsFile));
