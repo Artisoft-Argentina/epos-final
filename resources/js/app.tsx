@@ -1,6 +1,6 @@
 import '../css/app.css';
 
-import { createInertiaApp } from '@inertiajs/react';
+import { createInertiaApp, router } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
 import { initializeTheme } from './hooks/use-appearance';
@@ -14,6 +14,26 @@ const token = document.head.querySelector('meta[name="csrf-token"]');
 if (token) {
     axios.defaults.headers.common['X-CSRF-TOKEN'] = token.getAttribute('content');
 }
+
+// Manejar errores 419 (CSRF token expirado) recargando la página
+router.on('invalid', (event) => {
+    const response = event.detail.response;
+    if (response.status === 419) {
+        event.preventDefault();
+        window.location.reload();
+    }
+});
+
+// Interceptor de axios para errores 419
+axios.interceptors.response.use(
+    response => response,
+    error => {
+        if (error.response?.status === 419) {
+            window.location.reload();
+        }
+        return Promise.reject(error);
+    }
+);
 
 createInertiaApp({
     title: (title) => title ? `${title} - ${appName}` : appName,

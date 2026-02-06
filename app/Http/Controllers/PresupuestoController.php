@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Articulo;
 use App\Models\Cliente;
+use App\Models\Factura;
 use App\Models\Presupuesto;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -101,5 +102,51 @@ class PresupuestoController extends Controller
         $presupuesto->delete();
 
         return redirect()->route('presupuestos.index')->with('success', 'Presupuesto eliminado exitosamente');
+    }
+
+    public function convertirAVenta(Presupuesto $presupuesto)
+    {
+        $factura = DB::transaction(function () use ($presupuesto) {
+            $presupuesto->load(['cliente', 'articulos']);
+
+            // Crear factura desde el presupuesto
+            $factura = Factura::create([
+                'ptoventa' => $presupuesto->ptoventa ?? 1,
+                'letracomprobante' => 'B',
+                'numfactura' => Factura::max('numfactura') + 1,
+                'cuit' => $presupuesto->cuit,
+                'fecha' => now()->format('Y-m-d'),
+                'bonificacion' => $presupuesto->bonificacion ?? 0,
+                'recargo' => $presupuesto->recargo ?? 0,
+                'descuento' => 0,
+                'subtotal' => $presupuesto->subtotal,
+                'total' => $presupuesto->total,
+                'pagada' => 'NO',
+                'condicionventa' => 'CUENTA CORRIENTE',
+                'cliente_id' => $presupuesto->cliente_id,
+                'user_id' => auth()->id(),
+                'tipo_venta' => 'pos',
+            ]);
+
+            // Copiar los artículos del presupuesto a la factura
+            foreach ($presupuesto->articulos as $articulo) {
+                $factura->articulos()->attach($articulo->id, [
+                    'codprov' => $articulo->pivot->codprov,
+                    'codarticulo' => $articulo->pivot->codarticulo,
+                    'articulo' => $articulo->pivot->articulo,
+                    'medida' => $articulo->pivot->medida,
+                    'cantidad' => $articulo->pivot->cantidad,
+                    'bonificacion' => $articulo->pivot->bonificacion,
+                    'alicuota' => $articulo->pivot->alicuota,
+                    'preciounitario' => $articulo->pivot->preciounitario,
+                    'subtotal' => $articulo->pivot->subtotal,
+                ]);
+            }
+
+            return $factura;
+        });
+
+        return redirect()->route('ventas.show', $factura->id)
+            ->with('success', "Presupuesto #{$presupuesto->numpresupuesto} convertido a Factura #{$factura->numfactura} exitosamente");
     }
 }

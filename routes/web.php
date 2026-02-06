@@ -64,6 +64,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('estados-cuenta', [\App\Http\Controllers\ClienteController::class, 'estadosCuenta'])->name('estados-cuenta.index');
     Route::resource('ventas', \App\Http\Controllers\VentaController::class);
     Route::resource('presupuestos', \App\Http\Controllers\PresupuestoController::class);
+    Route::post('presupuestos/{presupuesto}/convertir-venta', [\App\Http\Controllers\PresupuestoController::class, 'convertirAVenta'])->name('presupuestos.convertir-venta');
     Route::post('afip/authorize/{factura}', [\App\Http\Controllers\VentaController::class, 'autorizarAfip'])->name('afip.authorize');
     Route::get('facturas/{factura}/pagos/create', [\App\Http\Controllers\PagoController::class, 'create'])->name('pagos.create');
     Route::post('facturas/{factura}/pagos', [\App\Http\Controllers\PagoController::class, 'store'])->name('pagos.store');

@@ -18,6 +18,14 @@ class Cliente extends Model
         'condicioniva',
     ];
 
+    /**
+     * Accessor para obtener CUIT (alias de documentounico)
+     */
+    public function getCuitAttribute(): ?string
+    {
+        return $this->documentounico ? (string) $this->documentounico : null;
+    }
+
     public function facturas()
     {
         return $this->hasMany(Factura::class);

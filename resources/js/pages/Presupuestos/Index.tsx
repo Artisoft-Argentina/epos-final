@@ -1,9 +1,9 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, usePage, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Plus, Eye, Trash2 } from 'lucide-react';
+import { Plus, Eye, ShoppingCart } from 'lucide-react';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
 import { Pagination } from '@/components/pagination';
 import { toast } from 'sonner';
@@ -45,6 +45,12 @@ export default function Index({ presupuestos }: Props) {
         presupuesto.numpresupuesto.toString().includes(filtro) ||
         presupuesto.user.name.toLowerCase().includes(filtro.toLowerCase())
     );
+
+    const convertirAVenta = (presupuestoId: number) => {
+        if (confirm('¿Convertir este presupuesto en una venta?')) {
+            router.post(route('presupuestos.convertir-venta', presupuestoId));
+        }
+    };
 
     return (
         <AppLayout>
@@ -118,12 +124,20 @@ export default function Index({ presupuestos }: Props) {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <div className="flex justify-end gap-2">
+                                            <Button
+                                                variant="default"
+                                                size="sm"
+                                                onClick={() => convertirAVenta(presupuesto.id)}
+                                                title="Convertir a Venta"
+                                            >
+                                                <ShoppingCart className="w-4 h-4" />
+                                            </Button>
                                             <Link href={route('presupuestos.show', presupuesto.id)}>
                                                 <Button variant="outline" size="sm">
                                                     <Eye className="w-4 h-4" />
                                                 </Button>
                                             </Link>
-                                            <DeleteConfirmationDialog 
+                                            <DeleteConfirmationDialog
                                                 url={route('presupuestos.destroy', presupuesto.id)}
                                                 title="Eliminar presupuesto"
                                                 description={`¿Está seguro que desea eliminar el presupuesto #${presupuesto.numpresupuesto}?`}
@@ -152,14 +166,22 @@ export default function Index({ presupuestos }: Props) {
                                     <p className="text-sm font-semibold text-gray-900">Total: ${Number(presupuesto.total).toFixed(2)}</p>
                                     <p className="text-sm text-gray-600">Vendedor: {presupuesto.user.name}</p>
                                 </div>
-                                <div className="flex gap-2">
+                                <div className="flex gap-2 flex-wrap">
+                                    <Button
+                                        variant="default"
+                                        size="sm"
+                                        onClick={() => convertirAVenta(presupuesto.id)}
+                                    >
+                                        <ShoppingCart className="w-4 h-4 mr-2" />
+                                        Vender
+                                    </Button>
                                     <Link href={route('presupuestos.show', presupuesto.id)}>
                                         <Button variant="outline" size="sm">
                                             <Eye className="w-4 h-4 mr-2" />
                                             Ver
                                         </Button>
                                     </Link>
-                                    <DeleteConfirmationDialog 
+                                    <DeleteConfirmationDialog
                                         url={route('presupuestos.destroy', presupuesto.id)}
                                         title="Eliminar presupuesto"
                                         description={`¿Está seguro que desea eliminar el presupuesto #${presupuesto.numpresupuesto}?`}

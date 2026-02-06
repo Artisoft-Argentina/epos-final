@@ -17,8 +17,10 @@ interface Empresa {
     localidad?: string;
     provincia?: string;
     condicioniva?: string;
+    iibb?: string;
     inicioactividades?: string;
     puntoventa?: number;
+    afip_ambiente?: string;
     nombrefantasia?: string;
     domiciliocomercial?: string;
     tagline?: string;
@@ -45,19 +47,21 @@ export default function Index({ empresa }: Props) {
         localidad: empresa.localidad || '',
         provincia: empresa.provincia || '',
         condicioniva: empresa.condicioniva || '',
+        iibb: empresa.iibb || '',
         inicioactividades: empresa.inicioactividades || '',
         puntoventa: empresa.puntoventa || '',
+        afip_ambiente: empresa.afip_ambiente || 'homologacion',
         nombrefantasia: empresa.nombrefantasia || '',
         domiciliocomercial: empresa.domiciliocomercial || '',
         tagline: empresa.tagline || '',
-        logo: null,
+        logo: null as File | null,
         numfactura: empresa.numfactura || '',
         numremito: empresa.numremito || '',
         numpresupuesto: empresa.numpresupuesto || '',
         numpago: empresa.numpago || '',
         numrecibo: empresa.numrecibo || '',
-        cert_file: null,
-        key_file: null,
+        cert_file: null as File | null,
+        key_file: null as File | null,
     });
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -123,6 +127,24 @@ export default function Index({ empresa }: Props) {
                                         <SelectItem value="Exento">Exento</SelectItem>
                                     </SelectContent>
                                 </Select>
+                            </div>
+                            <div>
+                                <Label htmlFor="iibb">Nº Ingresos Brutos</Label>
+                                <Input
+                                    id="iibb"
+                                    value={data.iibb}
+                                    onChange={(e) => setData('iibb', e.target.value)}
+                                    placeholder="Ej: 123-456789-0"
+                                />
+                            </div>
+                            <div>
+                                <Label htmlFor="inicioactividades">Inicio de Actividades</Label>
+                                <Input
+                                    id="inicioactividades"
+                                    value={data.inicioactividades}
+                                    onChange={(e) => setData('inicioactividades', e.target.value)}
+                                    placeholder="Ej: 01/01/2020"
+                                />
                             </div>
                             <div>
                                 <Label htmlFor="logo">Logo</Label>
@@ -250,9 +272,25 @@ export default function Index({ empresa }: Props) {
 
                     <Card>
                         <CardHeader>
-                            <CardTitle>Certificados AFIP</CardTitle>
+                            <CardTitle>Configuración AFIP/ARCA</CardTitle>
                         </CardHeader>
                         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <Label htmlFor="afip_ambiente">Ambiente AFIP</Label>
+                                <Select value={data.afip_ambiente} onValueChange={(value) => setData('afip_ambiente', value)}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Seleccionar ambiente" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="homologacion">Homologación (Pruebas)</SelectItem>
+                                        <SelectItem value="production">Producción</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <p className="text-xs text-gray-500 mt-1">Usa Homologación para pruebas, Producción para facturas reales</p>
+                            </div>
+                            <div className="md:col-span-2 border-t pt-4 mt-2">
+                                <p className="text-sm font-medium mb-3">Certificados Digitales</p>
+                            </div>
                             <div>
                                 <Label htmlFor="cert_file">Certificado AFIP (.pem, .crt, .txt)</Label>
                                 <Input
@@ -260,7 +298,6 @@ export default function Index({ empresa }: Props) {
                                     type="file"
                                     accept=".pem,.crt,.cert,.txt"
                                     onChange={(e) => setData('cert_file', e.target.files?.[0] || null)}
-                                    error={errors.cert_file}
                                 />
                                 <p className="text-xs text-gray-500 mt-1">Sube tu certificado AFIP para autorizar facturas</p>
                             </div>
@@ -271,7 +308,6 @@ export default function Index({ empresa }: Props) {
                                     type="file"
                                     accept=".pem,.key,.txt"
                                     onChange={(e) => setData('key_file', e.target.files?.[0] || null)}
-                                    error={errors.key_file}
                                 />
                                 <p className="text-xs text-gray-500 mt-1">Sube tu clave privada AFIP correspondiente al certificado</p>
                             </div>

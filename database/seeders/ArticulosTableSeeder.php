@@ -9,6 +9,13 @@ class ArticulosTableSeeder extends Seeder
 {
     public function run()
     {
+        // Proveedores:
+        // 1 - Distribuidora Juguetes SA (general)
+        // 2 - Importadora Toys SRL (Mattel: Barbie, Hot Wheels, Fisher-Price)
+        // 3 - Mayorista Didácticos (didácticos, arte)
+        // 4 - Proveedor Peluches Norte (peluches)
+        // 5 - Distribuidora LEGO Argentina (LEGO)
+
         $articulos = [
             [
                 'codarticulo' => 'LEGO001',
@@ -21,6 +28,7 @@ class ArticulosTableSeeder extends Seeder
                 'categoria_id' => 5, // Construcción
                 'marca_id' => 3, // LEGO
                 'codprov' => 'LEG484',
+                'supplier_id' => 5, // Distribuidora LEGO Argentina
             ],
             [
                 'codarticulo' => 'BAR001',
@@ -33,6 +41,7 @@ class ArticulosTableSeeder extends Seeder
                 'categoria_id' => 3, // Muñecas
                 'marca_id' => 5, // Barbie
                 'codprov' => 'BAR123',
+                'supplier_id' => 2, // Importadora Toys SRL (Mattel)
             ],
             [
                 'codarticulo' => 'HW001',
@@ -45,6 +54,7 @@ class ArticulosTableSeeder extends Seeder
                 'categoria_id' => 4, // Autos y Vehículos
                 'marca_id' => 6, // Hot Wheels
                 'codprov' => 'HW5PK',
+                'supplier_id' => 2, // Importadora Toys SRL (Mattel)
             ],
             [
                 'codarticulo' => 'PEL001',
@@ -57,6 +67,7 @@ class ArticulosTableSeeder extends Seeder
                 'categoria_id' => 2, // Peluches
                 'marca_id' => 8, // Melissa & Doug
                 'codprov' => 'TED50',
+                'supplier_id' => 4, // Proveedor Peluches Norte
             ],
             [
                 'codarticulo' => 'DID001',
@@ -69,6 +80,7 @@ class ArticulosTableSeeder extends Seeder
                 'categoria_id' => 1, // Didácticos
                 'marca_id' => 8, // Melissa & Doug
                 'codprov' => 'EDU123',
+                'supplier_id' => 3, // Mayorista Didácticos
             ],
             [
                 'codarticulo' => 'PLAY001',
@@ -81,6 +93,7 @@ class ArticulosTableSeeder extends Seeder
                 'categoria_id' => 9, // Arte y Manualidades
                 'marca_id' => 12, // Play-Doh
                 'codprov' => 'PD456',
+                'supplier_id' => 3, // Mayorista Didácticos
             ],
             [
                 'codarticulo' => 'NERF001',
@@ -93,6 +106,7 @@ class ArticulosTableSeeder extends Seeder
                 'categoria_id' => 7, // Deportes
                 'marca_id' => 13, // Nerf
                 'codprov' => 'NRF789',
+                'supplier_id' => 1, // Distribuidora Juguetes SA
             ],
             [
                 'codarticulo' => 'FP001',
@@ -105,6 +119,7 @@ class ArticulosTableSeeder extends Seeder
                 'categoria_id' => 10, // Bebés
                 'marca_id' => 4, // Fisher-Price
                 'codprov' => 'FP321',
+                'supplier_id' => 2, // Importadora Toys SRL (Mattel)
             ],
         ];
 

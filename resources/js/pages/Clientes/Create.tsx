@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 
 interface Provincia {
     id: number;
@@ -39,6 +40,8 @@ export default function Create({ provincias, localidades }: Props) {
     const [selectedProvinciaId, setSelectedProvinciaId] = useState<string>('');
     const [filteredLocalidades, setFilteredLocalidades] = useState<Localidad[]>([]);
 
+    const [consultandoAfip, setConsultandoAfip] = useState(false);
+
     useEffect(() => {
         if (selectedProvinciaId) {
             const filtered = localidades.filter(loc => loc.provincia_id.toString() === selectedProvinciaId);
@@ -58,16 +61,20 @@ export default function Create({ provincias, localidades }: Props) {
 
 
     const consultarAfip = async () => {
-        if (!data.documentounico) return;
+        if (!data.documentounico) {
+            toast.error('Ingrese un CUIT o DNI');
+            return;
+        }
+        
+        setConsultandoAfip(true);
         
         try {
             const response = await fetch(route('afip.consultar-cuit'), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || window.Laravel?.csrfToken || '',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
                     'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
                 },
                 body: JSON.stringify({ cuit: data.documentounico })
             });
@@ -75,8 +82,6 @@ export default function Create({ provincias, localidades }: Props) {
             const result = await response.json();
             
             if (result.success && result.data) {
-                
-                // Actualizar todos los campos directamente
                 setData({
                     ...data,
                     razonsocial: result.data.razonsocial || data.razonsocial,
@@ -87,7 +92,6 @@ export default function Create({ provincias, localidades }: Props) {
                     provincia: result.data.provincia || data.provincia
                 });
                 
-                // Buscar provincia por ID de AFIP
                 if (result.data.provincia_id_afip !== null) {
                     const provinciaAfip = provincias.find(p => p.id_afip === result.data.provincia_id_afip);
                     if (provinciaAfip) {
@@ -95,12 +99,15 @@ export default function Create({ provincias, localidades }: Props) {
                     }
                 }
                 
-                alert('Datos cargados desde AFIP: ' + result.data.razonsocial);
+                toast.success('Datos cargados desde AFIP');
             } else {
-                alert('Error: ' + (result.error || 'No se pudieron obtener datos'));
+                toast.error(result.error || 'No se pudieron obtener datos de AFIP');
             }
         } catch (error) {
-            alert('Error consultando AFIP');
+            console.error('Error:', error);
+            toast.error('Error consultando AFIP');
+        } finally {
+            setConsultandoAfip(false);
         }
     };
 
@@ -130,21 +137,26 @@ export default function Create({ provincias, localidades }: Props) {
                                 />
                             </div>
                             <div>
-                                <Label htmlFor="documentounico">Documento *</Label>
+                                <Label htmlFor="documentounico">CUIT / DNI *</Label>
                                 <div className="flex gap-2">
                                     <Input
                                         id="documentounico"
+                                        placeholder="20123456789 o 12345678"
                                         value={data.documentounico}
-                                        onChange={(e) => setData('documentounico', e.target.value)}
+                                        onChange={(e) => {
+                                            const value = e.target.value.replace(/\D/g, '').slice(0, 11);
+                                            setData('documentounico', value);
+                                        }}
                                         error={errors.documentounico}
+                                        maxLength={11}
                                     />
                                     <Button 
                                         type="button" 
                                         variant="outline" 
-                                        onClick={() => consultarAfip()}
-                                        disabled={!data.documentounico || processing}
+                                        onClick={consultarAfip}
+                                        disabled={!data.documentounico || consultandoAfip}
                                     >
-                                        AFIP
+                                        {consultandoAfip ? 'Consultando...' : 'AFIP'}
                                     </Button>
                                 </div>
                             </div>
