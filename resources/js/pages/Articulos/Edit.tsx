@@ -26,6 +26,7 @@ interface Articulo {
         id: number;
         ruta: string;
         url: string;
+        url_thumb?: string;
     }>;
 }
 
@@ -244,8 +245,8 @@ export default function Edit({ articulo, categorias, marcas, suppliers }: Props)
                                 <div className="grid grid-cols-4 gap-4 mt-2">
                                     {articulo.imagenes.map((image) => (
                                         <div key={image.id} className="relative">
-                                            <img 
-                                                src={image.url} 
+                                            <img
+                                                src={image.url_thumb || image.url}
                                                 alt={articulo.articulo}
                                                 className="w-full h-24 object-cover rounded border"
                                             />
@@ -275,7 +276,7 @@ export default function Edit({ articulo, categorias, marcas, suppliers }: Props)
                                     setData('imagenes', files);
                                 }}
                             />
-                            <p className="text-sm text-gray-500 mt-1">Puedes seleccionar múltiples imágenes (JPEG, PNG, JPG, GIF - Máx 2MB cada una)</p>
+                            <p className="text-sm text-gray-500 mt-1">Puedes seleccionar múltiples imágenes (JPEG, PNG, JPG, GIF - Máx 5MB cada una). Las imágenes se redimensionan automáticamente.</p>
                             <InputError message={errors.imagenes} />
                         </div>
 

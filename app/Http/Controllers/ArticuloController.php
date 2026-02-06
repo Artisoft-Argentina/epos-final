@@ -6,15 +6,20 @@ use App\Models\Articulo;
 use App\Models\Categoria;
 use App\Models\Marca;
 use App\Models\Supplier;
+use App\Services\ImageService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class ArticuloController extends Controller
 {
+    public function __construct(
+        protected ImageService $imageService
+    ) {}
+
     public function index(Request $request)
     {
         $query = Articulo::with(['categoria', 'marca', 'supplier']);
-        
+
         if ($request->search) {
             $query->where(function($q) use ($request) {
                 $q->where('codarticulo', 'like', '%' . $request->search . '%')
@@ -22,7 +27,7 @@ class ArticuloController extends Controller
                   ->orWhere('descripcion', 'like', '%' . $request->search . '%');
             });
         }
-        
+
         return Inertia::render('Articulos/Index', [
             'articulos' => $query->paginate(5)->withQueryString(),
             'filters' => $request->only(['search']),
@@ -51,19 +56,19 @@ class ArticuloController extends Controller
             'marca_id' => 'required|exists:marcas,id',
             'categoria_id' => 'required|exists:categorias,id',
             'supplier_id' => 'nullable|exists:suppliers,id',
-            'imagenes.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+            'imagenes.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120'
         ]);
 
         $articulo = Articulo::create($request->except('imagenes'));
 
         if ($request->hasFile('imagenes')) {
             foreach ($request->file('imagenes') as $index => $imagen) {
-                $nombreArchivo = time() . '_' . $index . '.' . $imagen->getClientOriginalExtension();
-                $ruta = $imagen->storeAs('articulos/' . $articulo->id, $nombreArchivo, 'public');
-                
+                $resultado = $this->imageService->processArticuloImage($imagen, $articulo->id, $index);
+
                 $articulo->imagenes()->create([
-                    'nombre_archivo' => $nombreArchivo,
-                    'ruta' => $ruta,
+                    'nombre_archivo' => $resultado['nombre_archivo'],
+                    'ruta' => $resultado['ruta'],
+                    'ruta_thumb' => $resultado['ruta_thumb'],
                     'es_principal' => $index === 0,
                     'orden' => $index
                 ]);
@@ -96,21 +101,23 @@ class ArticuloController extends Controller
             'marca_id' => 'required|exists:marcas,id',
             'categoria_id' => 'required|exists:categorias,id',
             'supplier_id' => 'nullable|exists:suppliers,id',
-            'imagenes.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+            'imagenes.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120'
         ]);
 
         $articulo->update($request->except('imagenes'));
 
         if ($request->hasFile('imagenes')) {
+            $currentCount = $articulo->imagenes()->count();
+
             foreach ($request->file('imagenes') as $index => $imagen) {
-                $nombreArchivo = time() . '_' . $index . '.' . $imagen->getClientOriginalExtension();
-                $ruta = $imagen->storeAs('articulos/' . $articulo->id, $nombreArchivo, 'public');
-                
+                $resultado = $this->imageService->processArticuloImage($imagen, $articulo->id, $currentCount + $index);
+
                 $articulo->imagenes()->create([
-                    'nombre_archivo' => $nombreArchivo,
-                    'ruta' => $ruta,
-                    'es_principal' => $articulo->imagenes()->count() === 0 && $index === 0,
-                    'orden' => $articulo->imagenes()->count() + $index
+                    'nombre_archivo' => $resultado['nombre_archivo'],
+                    'ruta' => $resultado['ruta'],
+                    'ruta_thumb' => $resultado['ruta_thumb'],
+                    'es_principal' => $currentCount === 0 && $index === 0,
+                    'orden' => $currentCount + $index
                 ]);
             }
         }
@@ -120,6 +127,11 @@ class ArticuloController extends Controller
 
     public function destroy(Articulo $articulo)
     {
+        // Eliminar imágenes del storage
+        foreach ($articulo->imagenes as $imagen) {
+            $this->imageService->deleteArticuloImage($imagen->ruta, $imagen->ruta_thumb);
+        }
+
         $articulo->delete();
 
         return redirect()->route('articulos.index')->with('success', 'Artículo eliminado exitosamente');

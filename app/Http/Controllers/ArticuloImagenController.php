@@ -4,31 +4,35 @@ namespace App\Http\Controllers;
 
 use App\Models\Articulo;
 use App\Models\ArticuloImagen;
+use App\Services\ImageService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class ArticuloImagenController extends Controller
 {
+    public function __construct(
+        protected ImageService $imageService
+    ) {}
+
     public function store(Request $request, Articulo $articulo)
     {
         $request->validate([
-            'imagenes.*' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048'
+            'imagenes.*' => 'required|image|mimes:jpeg,png,jpg,gif|max:5120'
         ]);
 
         $imagenes = [];
-        
+
         foreach ($request->file('imagenes') as $index => $imagen) {
-            $nombreArchivo = time() . '_' . $index . '.' . $imagen->getClientOriginalExtension();
-            $ruta = $imagen->storeAs('articulos/' . $articulo->id, $nombreArchivo, 'public');
-            
+            $resultado = $this->imageService->processArticuloImage($imagen, $articulo->id, $index);
+
             $articuloImagen = ArticuloImagen::create([
                 'articulo_id' => $articulo->id,
-                'nombre_archivo' => $nombreArchivo,
-                'ruta' => $ruta,
+                'nombre_archivo' => $resultado['nombre_archivo'],
+                'ruta' => $resultado['ruta'],
+                'ruta_thumb' => $resultado['ruta_thumb'],
                 'es_principal' => $index === 0 && $articulo->imagenes()->count() === 0,
                 'orden' => $articulo->imagenes()->count() + $index
             ]);
-            
+
             $imagenes[] = $articuloImagen;
         }
 
@@ -37,22 +41,20 @@ class ArticuloImagenController extends Controller
 
     public function destroy(ArticuloImagen $imagen)
     {
-        Storage::disk('public')->delete($imagen->ruta);
+        $this->imageService->deleteArticuloImage($imagen->ruta, $imagen->ruta_thumb);
         $imagen->delete();
-        
-        return response()->json(['success' => true]);
+
+        return back();
     }
 
     public function setPrincipal(ArticuloImagen $imagen)
     {
-        // Quitar principal de todas las imágenes del artículo
         ArticuloImagen::where('articulo_id', $imagen->articulo_id)
                      ->update(['es_principal' => false]);
-        
-        // Establecer como principal
+
         $imagen->update(['es_principal' => true]);
-        
-        return response()->json(['success' => true]);
+
+        return back();
     }
 
     public function updateOrder(Request $request, Articulo $articulo)
@@ -68,6 +70,6 @@ class ArticuloImagenController extends Controller
                          ->update(['orden' => $imagenData['orden']]);
         }
 
-        return response()->json(['success' => true]);
+        return back();
     }
 }

@@ -8,11 +8,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class ArticuloImagen extends Model
 {
     protected $table = 'articulo_imagenes';
-    
+
     protected $fillable = [
         'articulo_id',
         'nombre_archivo',
         'ruta',
+        'ruta_thumb',
         'es_principal',
         'orden'
     ];
@@ -31,5 +32,10 @@ class ArticuloImagen extends Model
         return asset('storage/' . $this->ruta);
     }
 
-    protected $appends = ['url'];
+    public function getUrlThumbAttribute(): ?string
+    {
+        return $this->ruta_thumb ? asset('storage/' . $this->ruta_thumb) : null;
+    }
+
+    protected $appends = ['url', 'url_thumb'];
 }

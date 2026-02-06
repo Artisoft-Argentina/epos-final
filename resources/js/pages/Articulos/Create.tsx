@@ -207,7 +207,7 @@ export default function Create({ categorias, marcas, suppliers }: Props) {
                                     setData('imagenes', files);
                                 }}
                             />
-                            <p className="text-sm text-gray-500 mt-1">Puedes seleccionar múltiples imágenes (JPEG, PNG, JPG, GIF - Máx 2MB cada una)</p>
+                            <p className="text-sm text-gray-500 mt-1">Puedes seleccionar múltiples imágenes (JPEG, PNG, JPG, GIF - Máx 5MB cada una). Las imágenes se redimensionan automáticamente.</p>
                             {errors.imagenes && <p className="text-sm text-red-600 mt-1">{errors.imagenes}</p>}
                         </div>
 
