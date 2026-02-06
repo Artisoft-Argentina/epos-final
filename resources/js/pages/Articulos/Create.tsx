@@ -32,7 +32,7 @@ export default function Create({ categorias, marcas, suppliers }: Props) {
         codarticulo: '',
         articulo: '',
         descripcion: '',
-        medida: '',
+        medida: 'Unidad',
         precio: '',
         alicuota: '',
         stockminimo: '',
@@ -98,12 +98,20 @@ export default function Create({ categorias, marcas, suppliers }: Props) {
                             </div>
                             <div>
                                 <Label htmlFor="medida">Medida *</Label>
-                                <Input
-                                    id="medida"
-                                    value={data.medida}
-                                    onChange={(e) => setData('medida', e.target.value)}
-                                    error={errors.medida}
-                                />
+                                <Select value={data.medida} onValueChange={(value) => setData('medida', value)}>
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Unidad">Unidad</SelectItem>
+                                        <SelectItem value="Kg">Kg</SelectItem>
+                                        <SelectItem value="Litro">Litro</SelectItem>
+                                        <SelectItem value="Metro">Metro</SelectItem>
+                                        <SelectItem value="Caja">Caja</SelectItem>
+                                        <SelectItem value="Pack">Pack</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                {errors.medida && <p className="text-sm text-red-600 mt-1">{errors.medida}</p>}
                             </div>
                             <div>
                                 <Label htmlFor="precio">Precio *</Label>
