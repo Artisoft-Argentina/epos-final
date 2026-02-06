@@ -281,38 +281,22 @@ class AfipService
                 ]);
             }
             
-            // Fallback final
-            \Log::warning('AFIP: Usando datos de fallback', ['cuit' => $cuit]);
+            // No se encontraron datos en AFIP
+            \Log::warning('AFIP: No se encontraron datos para el CUIT/DNI', ['cuit' => $cuit]);
             return [
-                'success' => true,
-                'data' => [
-                    'razonsocial' => 'Cliente - ' . $cuit,
-                    'direccion' => 'Dirección no disponible',
-                    'localidad' => 'Localidad',
-                    'provincia' => 'Provincia',
-                    'provincia_id_afip' => 1,
-                    'codigopostal' => '',
-                    'condicioniva' => 'Consumidor Final',
-                ]
+                'success' => false,
+                'error' => 'No se encontraron datos en AFIP para el CUIT/DNI ingresado. Por favor, complete los datos manualmente.'
             ];
-            
+
         } catch (\Exception $e) {
             \Log::error('AFIP: Error general en consultarDatosFiscales', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             return [
-                'success' => true,
-                'data' => [
-                    'razonsocial' => 'Cliente - ' . $cuit,
-                    'direccion' => 'Dirección no disponible',
-                    'localidad' => 'Localidad',
-                    'provincia' => 'Provincia',
-                    'provincia_id_afip' => 1,
-                    'codigopostal' => '',
-                    'condicioniva' => 'Consumidor Final',
-                ]
+                'success' => false,
+                'error' => 'Error al consultar AFIP. Por favor, complete los datos manualmente.'
             ];
         }
     }
