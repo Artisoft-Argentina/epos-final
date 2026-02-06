@@ -43,7 +43,7 @@ class CheckoutController extends Controller
             return $cartItem->articulo->precio * $cartItem->quantity;
         });
 
-        $publicKey = env('MERCADOPAGO_PUBLIC_KEY');
+        $publicKey = config('mercadopago.public_key');
 
         return Inertia::render('ecommerce/checkout', compact('cartItems', 'total', 'publicKey'));
     }
@@ -62,7 +62,7 @@ class CheckoutController extends Controller
         }
 
         try {
-            MercadoPagoConfig::setAccessToken(env('MERCADOPAGO_ACCESS_TOKEN'));
+            MercadoPagoConfig::setAccessToken(config('mercadopago.access_token'));
 
             $sessionId = session()->getId();
             $userId = auth()->id();
@@ -217,7 +217,7 @@ class CheckoutController extends Controller
     public function getPaymentStatus($paymentId)
     {
         try {
-            MercadoPagoConfig::setAccessToken(env('MERCADOPAGO_ACCESS_TOKEN'));
+            MercadoPagoConfig::setAccessToken(config('mercadopago.access_token'));
             
             $client = new PaymentClient();
             $payment = $client->get($paymentId);

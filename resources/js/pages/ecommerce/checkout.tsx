@@ -29,15 +29,22 @@ function CheckoutContent({ cartItems, total, publicKey }: Props) {
     const [mpReady, setMpReady] = useState(false);
 
     useEffect(() => {
-        if (publicKey) {
-            try {
-                initMercadoPago(publicKey, {
-                    locale: 'es-AR'
-                });
-                setMpReady(true);
-            } catch (error) {
-                console.error('MercadoPago initialization error:', error);
-            }
+        console.log('Public Key:', publicKey);
+        if (!publicKey) {
+            console.error('MercadoPago Public Key no configurado');
+            return;
+        }
+        
+        try {
+            console.log('Inicializando MercadoPago...');
+            initMercadoPago(publicKey, {
+                locale: 'es-AR'
+            });
+            console.log('MercadoPago inicializado correctamente');
+            setMpReady(true);
+        } catch (error) {
+            console.error('Error al inicializar MercadoPago:', error);
+            alert('Error al cargar el formulario de pago. Por favor, desactiva tu bloqueador de anuncios y recarga la página.');
         }
     }, [publicKey]);
 
@@ -177,10 +184,21 @@ function CheckoutContent({ cartItems, total, publicKey }: Props) {
                                         onError={onError}
                                     />
                                 </div>
-                            ) : (
+                            ) : publicKey ? (
                                 <div className="text-center py-12">
                                     <div className="w-12 h-12 mx-auto mb-4 border-4 border-violet-200 border-t-violet-600 rounded-full animate-spin"></div>
                                     <p className="text-gray-600">Cargando formulario de pago...</p>
+                                    <p className="text-xs text-gray-400 mt-2">Si no carga, desactiva tu bloqueador de anuncios</p>
+                                </div>
+                            ) : (
+                                <div className="text-center py-12">
+                                    <div className="text-red-600 mb-4">
+                                        <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                        </svg>
+                                    </div>
+                                    <p className="text-gray-900 font-semibold mb-2">Error de configuración</p>
+                                    <p className="text-gray-600 text-sm">No se pudo cargar el sistema de pagos. Contacta al administrador.</p>
                                 </div>
                             )}
 
