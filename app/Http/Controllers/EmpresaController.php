@@ -55,27 +55,19 @@ class EmpresaController extends Controller
 
         // Handle AFIP certificate files
         if ($request->hasFile('cert_file') || $request->hasFile('key_file')) {
-            $afipDir = dirname(config('afip.certificate_path'));
+            $afipDir = storage_path('app/private/afip');
             if (!is_dir($afipDir)) {
                 mkdir($afipDir, 0755, true);
             }
 
             if ($request->hasFile('cert_file')) {
-                $certPath = config('afip.certificate_path');
-                if (file_exists($certPath)) {
-                    unlink($certPath);
-                }
-                $certContent = $request->file('cert_file')->getContent();
-                file_put_contents($certPath, $certContent);
+                $certPath = $afipDir . '/cert.pem';
+                $request->file('cert_file')->move($afipDir, 'cert.pem');
             }
 
             if ($request->hasFile('key_file')) {
-                $keyPath = config('afip.key_path');
-                if (file_exists($keyPath)) {
-                    unlink($keyPath);
-                }
-                $keyContent = $request->file('key_file')->getContent();
-                file_put_contents($keyPath, $keyContent);
+                $keyPath = $afipDir . '/key.pem';
+                $request->file('key_file')->move($afipDir, 'key.pem');
             }
         }
 
