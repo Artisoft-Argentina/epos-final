@@ -290,14 +290,13 @@ export default function Create({ clientes, articulos, listasPrecios, listaDefaul
                                         type="button" 
                                         onClick={() => setIsScanning(true)} 
                                         variant="outline"
+                                        size="icon"
                                         title="Escanear QR"
                                     >
-                                        <Camera className="w-4 h-4 mr-2" />
-                                        Escanear
+                                        <Camera className="w-4 h-4" />
                                     </Button>
-                                    <Button type="button" onClick={addArticulo} variant="outline">
-                                        <Plus className="w-4 h-4 mr-2" />
-                                        Agregar Línea
+                                    <Button type="button" onClick={addArticulo} variant="outline" size="icon" title="Agregar Línea">
+                                        <Plus className="w-4 h-4" />
                                     </Button>
                                 </div>
                             </div>
