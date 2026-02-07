@@ -78,6 +78,13 @@ class ArticuloController extends Controller
         return redirect()->route('articulos.index')->with('success', 'Artículo creado exitosamente');
     }
 
+    public function show(Articulo $articulo)
+    {
+        return Inertia::render('Articulos/Show', [
+            'articulo' => $articulo->load(['categoria', 'marca', 'supplier', 'imagenes', 'inventario'])
+        ]);
+    }
+
     public function edit(Articulo $articulo)
     {
         return Inertia::render('Articulos/Edit', [

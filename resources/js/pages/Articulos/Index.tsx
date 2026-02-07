@@ -3,7 +3,7 @@ import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Plus, Edit, Search, QrCode, ScanLine, Printer } from 'lucide-react';
+import { Plus, Edit, Search, Printer, Eye } from 'lucide-react';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
 import { Pagination } from '@/components/pagination';
 import { toast } from 'sonner';
@@ -169,24 +169,13 @@ export default function Index({ articulos, filters }: Props) {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <div className="flex justify-end gap-2">
-                                            <Button 
-                                                variant="outline" 
-                                                size="sm"
-                                                onClick={() => window.open(`/articulos/${articulo.id}/codigo-qr`, '_blank')}
-                                                title="Ver Código QR"
-                                            >
-                                                <QrCode className="w-4 h-4" />
-                                            </Button>
-                                            <Button 
-                                                variant="outline" 
-                                                size="sm"
-                                                onClick={() => window.open(`/articulos/${articulo.id}/codigo-barras`, '_blank')}
-                                                title="Ver Código de Barras"
-                                            >
-                                                <ScanLine className="w-4 h-4" />
-                                            </Button>
+                                            <Link href={route('articulos.show', articulo.id)}>
+                                                <Button variant="outline" size="sm" title="Ver Detalles">
+                                                    <Eye className="w-4 h-4" />
+                                                </Button>
+                                            </Link>
                                             <Link href={route('articulos.edit', articulo.id)}>
-                                                <Button variant="outline" size="sm">
+                                                <Button variant="outline" size="sm" title="Editar">
                                                     <Edit className="w-4 h-4" />
                                                 </Button>
                                             </Link>
@@ -222,6 +211,11 @@ export default function Index({ articulos, filters }: Props) {
                                     </div>
                                 </div>
                                 <div className="flex gap-2">
+                                    <Link href={route('articulos.show', articulo.id)}>
+                                        <Button variant="outline" size="sm">
+                                            <Eye className="w-4 h-4" />
+                                        </Button>
+                                    </Link>
                                     <Link href={route('articulos.edit', articulo.id)}>
                                         <Button variant="outline" size="sm">
                                             <Edit className="w-4 h-4" />
