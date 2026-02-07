@@ -1,10 +1,12 @@
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, usePage } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast } from 'sonner';
+import { useEffect } from 'react';
 
 interface Articulo {
     id: number;
@@ -23,6 +25,7 @@ interface Props {
 }
 
 export default function Create({ articulos, suppliers }: Props) {
+    const page = usePage<any>();
     const { data, setData, post, processing, errors } = useForm({
         cantidad: '',
         lote: '',
@@ -30,6 +33,15 @@ export default function Create({ articulos, suppliers }: Props) {
         articulo_id: '',
         supplier_id: '',
     });
+
+    useEffect(() => {
+        if (page.props.flash?.success) {
+            toast.success(page.props.flash.success);
+        }
+        if (page.props.flash?.error) {
+            toast.error(page.props.flash.error);
+        }
+    }, [page.props.flash]);
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();

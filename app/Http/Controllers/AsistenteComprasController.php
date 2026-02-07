@@ -32,7 +32,7 @@ class AsistenteComprasController extends Controller
 
         try {
             $request->validate([
-                'file' => 'required|file|max:10240',
+                'file' => 'required|file|max:10240|mimes:pdf,jpeg,jpg,png,gif,bmp,tiff',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::error('Validación fallida', ['errors' => $e->errors()]);
