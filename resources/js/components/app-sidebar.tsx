@@ -63,11 +63,6 @@ const mainNavItems: NavItem[] = [
                 href: '/presupuestos',
             },
             {
-                title: 'Escáner de Códigos',
-                href: '/scanner',
-                icon: Camera,
-            },
-            {
                 title: 'Entregas Pendientes',
                 href: '/entregas',
                 icon: PackageCheck,

@@ -151,6 +151,7 @@ class TelegramWebhookController extends Controller
             \App\Services\Functions\SearchProductFunction::definition(),
             \App\Services\Functions\CreateSaleFunction::definition(),
             \App\Services\Functions\AuthorizeInvoiceFunction::definition(),
+            \App\Services\Functions\CreateAndSendInvoiceFunction::definition(),
         ];
 
         try {
@@ -182,6 +183,7 @@ class TelegramWebhookController extends Controller
                     'search_product' => (new \App\Services\Functions\SearchProductFunction())->execute($arguments),
                     'create_sale' => (new \App\Services\Functions\CreateSaleFunction())->execute($arguments, $telegramUser->user_id),
                     'authorize_invoice' => (new \App\Services\Functions\AuthorizeInvoiceFunction())->execute($arguments),
+                    'create_and_send_invoice' => \App\Services\Functions\CreateAndSendInvoiceFunction::execute($arguments, $telegramUser->user_id),
                     default => ['success' => false, 'message' => 'Función no encontrada'],
                 };
 
