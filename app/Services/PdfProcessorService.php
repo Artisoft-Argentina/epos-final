@@ -37,9 +37,9 @@ class PdfProcessorService
         // Procesar con tu API custom
         $data = $this->processWithCustomAPI($text);
         
-        // Actualizar inventario si hay items y enriquecer respuesta
+        // Enriquecer items con información de artículos (sin actualizar inventario)
         if (isset($data['items']) && is_array($data['items'])) {
-            $data['items'] = $this->updateInventory($data['items']);
+            $data['items'] = $this->enrichItems($data['items']);
             Log::info('Items enriquecidos', ['items' => $data['items']]);
         }
         
@@ -131,6 +131,48 @@ class PdfProcessorService
             Log::error('Error procesando con Groq: ' . $e->getMessage());
             return ['error' => 'Error al procesar el documento: ' . $e->getMessage()];
         }
+    }
+
+    private function enrichItems(array $items): array
+    {
+        $enrichedItems = [];
+        
+        foreach ($items as $item) {
+            $enrichedItem = $item;
+            $enrichedItem['encontrado'] = false;
+            $enrichedItem['articulo_id'] = null;
+            $enrichedItem['articulo_nombre'] = null;
+            $enrichedItem['codarticulo'] = null;
+            
+            $articulo = null;
+            
+            // Buscar por código de proveedor (prioridad)
+            if (isset($item['codigo']) && !empty($item['codigo'])) {
+                $articulo = Articulo::where('codprov', $item['codigo'])->first();
+            }
+            
+            // Si no se encuentra, buscar por código interno
+            if (!$articulo && isset($item['codigo']) && !empty($item['codigo'])) {
+                $articulo = Articulo::where('codarticulo', $item['codigo'])->first();
+            }
+            
+            // Si no se encuentra, buscar por descripción
+            if (!$articulo && isset($item['descripcion']) && !empty($item['descripcion'])) {
+                $articulo = Articulo::where('articulo', 'LIKE', '%' . $item['descripcion'] . '%')->first();
+            }
+
+            if ($articulo) {
+                $enrichedItem['encontrado'] = true;
+                $enrichedItem['articulo_id'] = $articulo->id;
+                $enrichedItem['articulo_nombre'] = $articulo->articulo;
+                $enrichedItem['codarticulo'] = $articulo->codarticulo;
+                $enrichedItem['codprov'] = $articulo->codprov;
+            }
+            
+            $enrichedItems[] = $enrichedItem;
+        }
+        
+        return $enrichedItems;
     }
 
     private function updateInventory(array $items): array

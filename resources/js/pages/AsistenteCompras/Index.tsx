@@ -3,6 +3,7 @@ import { Head } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Upload, FileText, Loader2, CheckCircle2, XCircle, Package, Camera, Image } from 'lucide-react';
 
 interface PdfResult {
@@ -35,6 +36,13 @@ export default function AsistenteComprasIndex() {
     const [error, setError] = useState<string | null>(null);
     const [inventoryResult, setInventoryResult] = useState<any>(null);
     const [preview, setPreview] = useState<string | null>(null);
+
+    const handleItemChange = (index: number, field: string, value: any) => {
+        if (!result) return;
+        const newItems = [...result.items];
+        newItems[index] = { ...newItems[index], [field]: value };
+        setResult({ ...result, items: newItems });
+    };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
@@ -272,11 +280,11 @@ export default function AsistenteComprasIndex() {
                                     </div>
                                     <div>
                                         <p className="text-sm text-muted-foreground mb-2">Items ({result.items?.length || 0})</p>
-                                        <div className="space-y-2 max-h-48 overflow-y-auto">
+                                        <div className="space-y-3 max-h-96 overflow-y-auto">
                                             {result.items?.map((item: any, i) => (
-                                                <div key={i} className={`text-sm border-l-2 pl-2 ${item.encontrado ? 'border-green-500' : 'border-red-500'}`}>
-                                                    <div className="flex items-center gap-2">
-                                                        <p className="font-medium">{item.descripcion}</p>
+                                                <div key={i} className={`border rounded-lg p-3 ${item.encontrado ? 'border-green-500 bg-green-50' : 'border-red-500 bg-red-50'}`}>
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        <p className="font-medium text-sm">{item.descripcion}</p>
                                                         {item.encontrado ? (
                                                             <CheckCircle2 className="w-4 h-4 text-green-600" />
                                                         ) : (
@@ -284,14 +292,40 @@ export default function AsistenteComprasIndex() {
                                                         )}
                                                     </div>
                                                     {item.encontrado && item.articulo_nombre && (
-                                                        <p className="text-xs text-green-600">✓ {item.articulo_nombre} ({item.codarticulo})</p>
+                                                        <p className="text-xs text-green-600 mb-2">✓ {item.articulo_nombre} ({item.codarticulo})</p>
                                                     )}
                                                     {!item.encontrado && (
-                                                        <p className="text-xs text-red-600">✗ Artículo no encontrado</p>
+                                                        <p className="text-xs text-red-600 mb-2">✗ Artículo no encontrado</p>
                                                     )}
-                                                    <p className="text-muted-foreground">
-                                                        Código: {item.codigo} | {item.cantidad} x ${item.precio_unitario}
-                                                    </p>
+                                                    <div className="grid grid-cols-3 gap-2">
+                                                        <div>
+                                                            <label className="text-xs text-muted-foreground">Código</label>
+                                                            <Input
+                                                                type="text"
+                                                                value={item.codigo}
+                                                                onChange={(e) => handleItemChange(i, 'codigo', e.target.value)}
+                                                                className="h-8 text-sm"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="text-xs text-muted-foreground">Cantidad</label>
+                                                            <Input
+                                                                type="number"
+                                                                value={item.cantidad}
+                                                                onChange={(e) => handleItemChange(i, 'cantidad', parseFloat(e.target.value) || 0)}
+                                                                className="h-8 text-sm"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="text-xs text-muted-foreground">Precio Unit.</label>
+                                                            <Input
+                                                                type="number"
+                                                                value={item.precio_unitario}
+                                                                onChange={(e) => handleItemChange(i, 'precio_unitario', parseFloat(e.target.value) || 0)}
+                                                                className="h-8 text-sm"
+                                                            />
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             ))}
                                         </div>

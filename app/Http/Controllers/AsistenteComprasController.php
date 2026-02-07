@@ -78,8 +78,7 @@ class AsistenteComprasController extends Controller
     {
         $request->validate([
             'items' => 'required|array',
-            'items.*.codigo' => 'nullable|string',
-            'items.*.descripcion' => 'required|string',
+            'items.*.articulo_id' => 'required|exists:articulos,id',
             'items.*.cantidad' => 'required|numeric|min:0',
             'supplier_id' => 'nullable|exists:suppliers,id',
         ]);
@@ -91,40 +90,27 @@ class AsistenteComprasController extends Controller
 
         foreach ($items as $item) {
             try {
-                // Buscar artículo por código o descripción
-                $articulo = \App\Models\Articulo::where('codarticulo', $item['codigo'])
-                    ->orWhere('articulo', 'LIKE', '%' . $item['descripcion'] . '%')
-                    ->first();
-
+                $articulo = \App\Models\Articulo::find($item['articulo_id']);
+                
                 if (!$articulo) {
-                    $errors[] = "Artículo no encontrado: {$item['descripcion']}";
+                    $errors[] = "Artículo no encontrado: ID {$item['articulo_id']}";
                     continue;
                 }
 
-                // Buscar inventario existente
-                $inventario = \App\Models\Inventario::where('articulo_id', $articulo->id)
-                    ->where('supplier_id', $supplierId)
-                    ->first();
+                $inventario = \App\Models\Inventario::firstOrCreate(
+                    ['articulo_id' => $articulo->id],
+                    ['cantidad' => 0]
+                );
 
-                if ($inventario) {
-                    // Actualizar cantidad
-                    $inventario->cantidad += $item['cantidad'];
-                    $inventario->save();
-                } else {
-                    // Crear nuevo inventario
-                    $inventario = \App\Models\Inventario::create([
-                        'articulo_id' => $articulo->id,
-                        'cantidad' => $item['cantidad'],
-                        'supplier_id' => $supplierId,
-                    ]);
-                }
+                $inventario->cantidad += $item['cantidad'];
+                $inventario->save();
 
                 $added[] = [
                     'articulo' => $articulo->articulo,
                     'cantidad' => $item['cantidad'],
                 ];
             } catch (\Exception $e) {
-                $errors[] = "Error con {$item['descripcion']}: {$e->getMessage()}";
+                $errors[] = "Error: {$e->getMessage()}";
             }
         }
 
