@@ -5,8 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Trash2, Save, X, Package } from 'lucide-react';
+import { Plus, Trash2, Save, X, Package, Camera } from 'lucide-react';
 import { useState, useRef } from 'react';
+import QRScanner from '@/components/QRScanner';
 
 interface Cliente {
     id: number;
@@ -50,6 +51,7 @@ export default function Create({ clientes, articulos, listasPrecios, listaDefaul
     const [searchTerm, setSearchTerm] = useState('');
     const [filteredArticulos, setFilteredArticulos] = useState<Articulo[]>([]);
     const [showDropdown, setShowDropdown] = useState(false);
+    const [isScanning, setIsScanning] = useState(false);
     const searchInputRef = useRef<HTMLInputElement>(null);
 
     const { data, setData, post, processing, errors } = useForm({
@@ -171,6 +173,30 @@ export default function Create({ clientes, articulos, listasPrecios, listaDefaul
         }
     };
 
+    const handleScanResult = async (codigo: string) => {
+        setIsScanning(false);
+        try {
+            const response = await fetch('/scanner/buscar', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+                body: JSON.stringify({ codigo }),
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                const articuloEncontrado = articulos.find(a => a.id === data.articulo.id);
+                if (articuloEncontrado) {
+                    addArticuloFromSearch(articuloEncontrado);
+                }
+            }
+        } catch (error) {
+            console.error('Error al buscar artículo:', error);
+        }
+    };
+
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
         post(route('ventas.store'));
@@ -235,10 +261,21 @@ export default function Create({ clientes, articulos, listasPrecios, listaDefaul
                         <CardHeader>
                             <div className="flex justify-between items-center">
                                 <CardTitle>Artículos</CardTitle>
-                                <Button type="button" onClick={addArticulo} variant="outline">
-                                    <Plus className="w-4 h-4 mr-2" />
-                                    Agregar Línea
-                                </Button>
+                                <div className="flex gap-2">
+                                    <Button 
+                                        type="button" 
+                                        onClick={() => setIsScanning(true)} 
+                                        variant="outline"
+                                        className="md:hidden"
+                                        title="Escanear QR"
+                                    >
+                                        <Camera className="w-4 h-4" />
+                                    </Button>
+                                    <Button type="button" onClick={addArticulo} variant="outline">
+                                        <Plus className="w-4 h-4 mr-2" />
+                                        Agregar Línea
+                                    </Button>
+                                </div>
                             </div>
                             <div className="mt-4 relative">
                                 <Label>Búsqueda Rápida</Label>
@@ -492,6 +529,16 @@ export default function Create({ clientes, articulos, listasPrecios, listaDefaul
                     </div>
                 </form>
             </div>
+
+            <QRScanner
+                isActive={isScanning}
+                onScan={handleScanResult}
+                onClose={() => setIsScanning(false)}
+                onError={(error) => {
+                    console.error('Scanner error:', error);
+                    setIsScanning(false);
+                }}
+            />
         </AppLayout>
     );
 }
