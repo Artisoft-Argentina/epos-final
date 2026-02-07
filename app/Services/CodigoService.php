@@ -10,24 +10,14 @@ class CodigoService
 {
     public function generarCodigoBarras($articulo)
     {
-        if (!$articulo->codigo_barras) {
-            // Generar código de barras único basado en el ID del artículo
-            $codigo = 'ART' . str_pad($articulo->id, 8, '0', STR_PAD_LEFT);
-            $articulo->update(['codigo_barras' => $codigo]);
-        }
-        
-        return $articulo->codigo_barras;
+        // Usar el código del artículo directamente para el código de barras
+        return $articulo->codarticulo;
     }
 
     public function generarCodigoQR($articulo)
     {
-        if (!$articulo->codigo_qr) {
-            // Generar código QR único basado en el ID del artículo
-            $codigo = 'QR' . str_pad($articulo->id, 8, '0', STR_PAD_LEFT);
-            $articulo->update(['codigo_qr' => $codigo]);
-        }
-        
-        return $articulo->codigo_qr;
+        // Usar el código del artículo directamente para el QR
+        return $articulo->codarticulo;
     }
 
     public function generarImagenCodigoBarras($codigo)
@@ -38,8 +28,11 @@ class CodigoService
 
     public function generarImagenQR($codigo, $size = 200)
     {
-        return QrCode::format('png')
+        // Usar SVG en lugar de PNG para evitar dependencia de imagick
+        return QrCode::format('svg')
             ->size($size)
+            ->errorCorrection('H')
+            ->margin(1)
             ->generate($codigo);
     }
 
@@ -57,12 +50,15 @@ class CodigoService
         $codigoBarras = $this->generarCodigoBarras($articulo);
         $codigoQR = $this->generarCodigoQR($articulo);
 
+        $imagenQR = $this->generarImagenQR($codigoQR);
+        $imagenBarras = $this->generarImagenCodigoBarras($codigoBarras);
+
         return [
             'articulo' => $articulo,
             'codigo_barras' => $codigoBarras,
             'codigo_qr' => $codigoQR,
-            'imagen_barras' => base64_encode($this->generarImagenCodigoBarras($codigoBarras)),
-            'imagen_qr' => base64_encode($this->generarImagenQR($codigoQR))
+            'imagen_barras' => base64_encode($imagenBarras),
+            'imagen_qr' => base64_encode($imagenQR)
         ];
     }
 }

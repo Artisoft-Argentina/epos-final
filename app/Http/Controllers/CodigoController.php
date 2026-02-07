@@ -38,26 +38,37 @@ class CodigoController extends Controller
         $imagen = $this->codigoService->generarImagenQR($codigo);
         
         return response($imagen)
-            ->header('Content-Type', 'image/png');
+            ->header('Content-Type', 'image/svg+xml');
     }
 
     public function buscarPorCodigo(Request $request)
     {
+        \Log::info('Scanner: Búsqueda iniciada', ['codigo' => $request->input('codigo')]);
+        
         $codigo = $request->input('codigo');
         
         if (!$codigo) {
+            \Log::warning('Scanner: Código vacío');
             return response()->json(['error' => 'Código requerido'], 400);
         }
 
-        $articulo = $this->codigoService->buscarArticuloPorCodigo($codigo);
-        
-        if (!$articulo) {
-            return response()->json(['error' => 'Artículo no encontrado'], 404);
-        }
+        try {
+            $articulo = $this->codigoService->buscarArticuloPorCodigo($codigo);
+            
+            if (!$articulo) {
+                \Log::info('Scanner: Artículo no encontrado', ['codigo' => $codigo]);
+                return response()->json(['error' => 'Artículo no encontrado'], 404);
+            }
 
-        return response()->json([
-            'articulo' => $articulo->load(['categoria', 'marca', 'inventario'])
-        ]);
+            \Log::info('Scanner: Artículo encontrado', ['id' => $articulo->id, 'nombre' => $articulo->articulo]);
+            
+            return response()->json([
+                'articulo' => $articulo->load(['categoria', 'marca', 'inventario', 'listasPrecios', 'imagenes'])
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Scanner: Error en búsqueda', ['error' => $e->getMessage(), 'codigo' => $codigo]);
+            return response()->json(['error' => 'Error interno del servidor'], 500);
+        }
     }
 
     public function imprimirEtiquetas(Request $request)

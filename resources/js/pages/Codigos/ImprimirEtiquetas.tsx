@@ -74,7 +74,7 @@ export default function ImprimirEtiquetas({ etiquetas }: Props) {
                   {/* Código QR */}
                   <div className="flex justify-center">
                     <img
-                      src={`data:image/png;base64,${etiqueta.imagen_qr}`}
+                      src={`data:image/svg+xml;base64,${etiqueta.imagen_qr}`}
                       alt="Código QR"
                       className="w-16 h-16 print:w-12 print:h-12"
                     />

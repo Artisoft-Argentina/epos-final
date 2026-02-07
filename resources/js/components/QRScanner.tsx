@@ -14,52 +14,88 @@ interface QRScannerProps {
 export default function QRScanner({ onScan, onError, isActive, onClose }: QRScannerProps) {
   const scannerRef = useRef<Html5QrcodeScanner | null>(null);
   const [isScanning, setIsScanning] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isActive && !scannerRef.current) {
-      const scanner = new Html5QrcodeScanner(
-        'qr-reader',
-        {
-          fps: 10,
-          qrbox: { width: 250, height: 250 },
-          aspectRatio: 1.0,
-        },
-        false
-      );
+    if (!isActive) return;
 
-      scanner.render(
-        (decodedText) => {
-          onScan(decodedText);
-          setIsScanning(false);
-          scanner.clear();
+    let mounted = true;
+
+    const initScanner = async () => {
+      try {
+        if (scannerRef.current) {
+          await scannerRef.current.clear();
           scannerRef.current = null;
-        },
-        (error) => {
-          if (onError) {
-            onError(error);
-          }
         }
-      );
 
-      scannerRef.current = scanner;
-      setIsScanning(true);
-    }
+        const scanner = new Html5QrcodeScanner(
+          'qr-reader',
+          {
+            fps: 10,
+            qrbox: { width: 250, height: 250 },
+            aspectRatio: 1.0,
+            videoConstraints: {
+              facingMode: { ideal: 'environment' }
+            },
+            rememberLastUsedCamera: true
+          },
+          false
+        );
 
-    return () => {
-      if (scannerRef.current) {
-        scannerRef.current.clear();
-        scannerRef.current = null;
-        setIsScanning(false);
+        if (!mounted) return;
+
+        scanner.render(
+          (decodedText) => {
+            console.log('=== QR ESCANEADO ===');
+            console.log('Código leído:', decodedText);
+            console.log('Tipo:', typeof decodedText);
+            console.log('Longitud:', decodedText.length);
+            console.log('====================');
+            if (mounted) {
+              onScan(decodedText);
+              handleClose();
+            }
+          },
+          (errorMessage) => {
+            console.log('Scanner error:', errorMessage);
+          }
+        );
+
+        scannerRef.current = scanner;
+        setIsScanning(true);
+        setError(null);
+      } catch (err) {
+        console.error('Error initializing scanner:', err);
+        setError('Error al inicializar la cámara');
+        if (onError) {
+          onError(err instanceof Error ? err.message : 'Error desconocido');
+        }
       }
     };
-  }, [isActive, onScan, onError]);
 
-  const handleClose = () => {
-    if (scannerRef.current) {
-      scannerRef.current.clear();
-      scannerRef.current = null;
+    initScanner();
+
+    return () => {
+      mounted = false;
+      if (scannerRef.current) {
+        scannerRef.current.clear().catch(console.error);
+        scannerRef.current = null;
+      }
       setIsScanning(false);
+    };
+  }, [isActive]);
+
+  const handleClose = async () => {
+    if (scannerRef.current) {
+      try {
+        await scannerRef.current.clear();
+      } catch (err) {
+        console.error('Error clearing scanner:', err);
+      }
+      scannerRef.current = null;
     }
+    setIsScanning(false);
+    setError(null);
     onClose();
   };
 
@@ -79,7 +115,13 @@ export default function QRScanner({ onScan, onError, isActive, onClose }: QRScan
         </CardHeader>
         <CardContent>
           <div id="qr-reader" className="w-full"></div>
-          {isScanning && (
+          {error && (
+            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded text-center">
+              <p className="text-sm text-red-600">{error}</p>
+              <p className="text-xs text-red-500 mt-1">Verifica los permisos de cámara</p>
+            </div>
+          )}
+          {isScanning && !error && (
             <div className="mt-4 text-center">
               <p className="text-sm text-gray-600">
                 Apunta la cámara hacia el código QR o de barras

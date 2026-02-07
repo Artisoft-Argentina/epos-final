@@ -86,7 +86,7 @@ export default function CodigoDisplay({ articuloId, articuloNombre }: CodigoDisp
               <div class="nombre">${articuloNombre}</div>
               <img src="data:image/png;base64,${codigos.imagen_barras}" alt="Código de barras" />
               <div class="codigo">${codigos.codigo_barras}</div>
-              <img src="data:image/png;base64,${codigos.imagen_qr}" alt="Código QR" style="width: 80px; height: 80px;" />
+              <img src="data:image/svg+xml;base64,${codigos.imagen_qr}" alt="Código QR" style="width: 80px; height: 80px;" />
               <div class="codigo">${codigos.codigo_qr}</div>
             </div>
             <script>
@@ -140,7 +140,7 @@ export default function CodigoDisplay({ articuloId, articuloNombre }: CodigoDisp
             <div className="text-center space-y-2">
               <h4 className="font-medium">Código QR</h4>
               <img
-                src={`data:image/png;base64,${codigos.imagen_qr}`}
+                src={`data:image/svg+xml;base64,${codigos.imagen_qr}`}
                 alt="Código QR"
                 className="mx-auto w-24 h-24"
               />

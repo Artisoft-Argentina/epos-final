@@ -132,7 +132,7 @@ export default function Create({ clientes, articulos, listasPrecios, listaDefaul
 
     const getPrecioArticulo = (articulo: Articulo) => {
         if (data.lista_precio_id) {
-            const precioLista = articulo.listas_precios?.find(lp => lp.id.toString() === data.lista_precio_id);
+            const precioLista = articulo.listasPrecios?.find(lp => lp.id.toString() === data.lista_precio_id);
             if (precioLista) {
                 return Number(precioLista.pivot.precio);
             }
@@ -146,7 +146,7 @@ export default function Create({ clientes, articulos, listasPrecios, listaDefaul
                 const articulo = articulos.find(a => a.id.toString() === item.articulo_id);
                 if (articulo) {
                     const nuevoPrecio = nuevaListaId ? 
-                        articulo.listas_precios?.find(lp => lp.id.toString() === nuevaListaId)?.pivot.precio || articulo.precio :
+                        articulo.listasPrecios?.find(lp => lp.id.toString() === nuevaListaId)?.pivot.precio || articulo.precio :
                         articulo.precio;
                     return { ...item, precio: Number(nuevoPrecio) };
                 }
@@ -175,25 +175,49 @@ export default function Create({ clientes, articulos, listasPrecios, listaDefaul
 
     const handleScanResult = async (codigo: string) => {
         setIsScanning(false);
+        console.log('Código escaneado:', codigo);
+        
         try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            console.log('CSRF Token:', csrfToken ? 'Presente' : 'FALTA');
+            
             const response = await fetch('/scanner/buscar', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                    'X-CSRF-TOKEN': csrfToken || '',
                 },
                 body: JSON.stringify({ codigo }),
             });
             
+            console.log('Response status:', response.status);
+            
             if (response.ok) {
                 const data = await response.json();
-                const articuloEncontrado = articulos.find(a => a.id === data.articulo.id);
-                if (articuloEncontrado) {
-                    addArticuloFromSearch(articuloEncontrado);
+                console.log('Datos recibidos:', data);
+                
+                if (data.articulo) {
+                    const articuloEncontrado = articulos.find(a => a.id === data.articulo.id);
+                    if (articuloEncontrado) {
+                        console.log('Artículo encontrado, agregando...');
+                        addArticuloFromSearch(articuloEncontrado);
+                        alert('✅ Artículo agregado: ' + articuloEncontrado.articulo);
+                    } else {
+                        console.error('Artículo no encontrado en la lista');
+                        alert('⚠️ Artículo no disponible en esta lista');
+                    }
+                } else {
+                    console.error('No se encontró el artículo');
+                    alert('❌ Artículo no encontrado: ' + codigo);
                 }
+            } else {
+                const errorData = await response.json().catch(() => ({ error: 'Error desconocido' }));
+                console.error('Error en respuesta:', response.status, errorData);
+                alert('❌ Error ' + response.status + ': ' + (errorData.error || 'Error al buscar'));
             }
         } catch (error) {
             console.error('Error al buscar artículo:', error);
+            alert('❌ Error de conexión: ' + (error instanceof Error ? error.message : 'Error desconocido'));
         }
     };
 
@@ -266,10 +290,10 @@ export default function Create({ clientes, articulos, listasPrecios, listaDefaul
                                         type="button" 
                                         onClick={() => setIsScanning(true)} 
                                         variant="outline"
-                                        className="md:hidden"
                                         title="Escanear QR"
                                     >
-                                        <Camera className="w-4 h-4" />
+                                        <Camera className="w-4 h-4 mr-2" />
+                                        Escanear
                                     </Button>
                                     <Button type="button" onClick={addArticulo} variant="outline">
                                         <Plus className="w-4 h-4 mr-2" />
