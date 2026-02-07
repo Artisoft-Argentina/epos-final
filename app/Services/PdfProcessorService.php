@@ -40,7 +40,6 @@ class PdfProcessorService
         // Enriquecer items con información de artículos (sin actualizar inventario)
         if (isset($data['items']) && is_array($data['items'])) {
             $data['items'] = $this->enrichItems($data['items']);
-            Log::info('Items enriquecidos', ['items' => $data['items']]);
         }
         
         return $data;
@@ -100,7 +99,6 @@ class PdfProcessorService
             ]);
 
             $content = $response['content'] ?? '';
-            Log::info('Respuesta de Groq', ['content' => substr($content, 0, 500)]);
             
             if (empty($content)) {
                 return ['error' => 'La IA no devolvió respuesta'];
@@ -109,7 +107,6 @@ class PdfProcessorService
             // Intentar parsear directamente
             $data = json_decode($content, true);
             if (json_last_error() === JSON_ERROR_NONE) {
-                Log::info('JSON parseado correctamente');
                 return $data;
             }
             
@@ -117,7 +114,6 @@ class PdfProcessorService
             if (preg_match('/\{.*\}/s', $content, $matches)) {
                 $data = json_decode($matches[0], true);
                 if (json_last_error() === JSON_ERROR_NONE) {
-                    Log::info('JSON extraído y parseado correctamente');
                     return $data;
                 }
             }
@@ -239,8 +235,6 @@ class PdfProcessorService
 
                 $inventario->cantidad += $item['cantidad'];
                 $inventario->save();
-
-                Log::info("Inventario actualizado: {$articulo->articulo} (codprov: {$articulo->codprov}, codarticulo: {$articulo->codarticulo}) +{$item['cantidad']}");
                 
                 $enrichedItem['encontrado'] = true;
                 $enrichedItem['articulo_id'] = $articulo->id;
