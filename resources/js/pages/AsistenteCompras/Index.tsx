@@ -259,11 +259,24 @@ export default function AsistenteComprasIndex() {
                                     <div>
                                         <p className="text-sm text-muted-foreground mb-2">Items ({result.items?.length || 0})</p>
                                         <div className="space-y-2 max-h-48 overflow-y-auto">
-                                            {result.items?.map((item, i) => (
-                                                <div key={i} className="text-sm border-l-2 pl-2">
-                                                    <p className="font-medium">{item.descripcion}</p>
+                                            {result.items?.map((item: any, i) => (
+                                                <div key={i} className={`text-sm border-l-2 pl-2 ${item.encontrado ? 'border-green-500' : 'border-red-500'}`}>
+                                                    <div className="flex items-center gap-2">
+                                                        <p className="font-medium">{item.descripcion}</p>
+                                                        {item.encontrado ? (
+                                                            <CheckCircle2 className="w-4 h-4 text-green-600" />
+                                                        ) : (
+                                                            <XCircle className="w-4 h-4 text-red-600" />
+                                                        )}
+                                                    </div>
+                                                    {item.encontrado && item.articulo_nombre && (
+                                                        <p className="text-xs text-green-600">✓ {item.articulo_nombre} ({item.codarticulo})</p>
+                                                    )}
+                                                    {!item.encontrado && (
+                                                        <p className="text-xs text-red-600">✗ Artículo no encontrado</p>
+                                                    )}
                                                     <p className="text-muted-foreground">
-                                                        {item.cantidad} x ${item.precio_unitario} = ${item.subtotal}
+                                                        Código: {item.codigo} | {item.cantidad} x ${item.precio_unitario}
                                                     </p>
                                                 </div>
                                             ))}

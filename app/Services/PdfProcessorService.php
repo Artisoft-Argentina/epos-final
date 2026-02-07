@@ -4,22 +4,18 @@ namespace App\Services;
 
 use App\Models\Articulo;
 use App\Models\Inventario;
-use GuzzleHttp\Client;
+use App\Services\AI\GroqService;
 use Illuminate\Support\Facades\Log;
 use Smalot\PdfParser\Parser;
 use thiagoalessio\TesseractOCR\TesseractOCR;
 
 class PdfProcessorService
 {
-    private Client $client;
-    private string $apiUrl;
+    private GroqService $groq;
 
-    public function __construct()
+    public function __construct(GroqService $groq)
     {
-        $this->apiUrl = env('CUSTOM_API_URL', 'http://localhost:3000');
-        $this->client = new Client([
-            'timeout' => 60,
-        ]);
+        $this->groq = $groq;
     }
 
     public function extractAndProcess(string $filePath): array
@@ -41,9 +37,10 @@ class PdfProcessorService
         // Procesar con tu API custom
         $data = $this->processWithCustomAPI($text);
         
-        // Actualizar inventario si hay items
+        // Actualizar inventario si hay items y enriquecer respuesta
         if (isset($data['items']) && is_array($data['items'])) {
-            $this->updateInventory($data['items']);
+            $data['items'] = $this->updateInventory($data['items']);
+            Log::info('Items enriquecidos', ['items' => $data['items']]);
         }
         
         return $data;
@@ -88,72 +85,108 @@ class PdfProcessorService
 
     private function processWithCustomAPI(string $text): array
     {
-        Log::info('Consultando API', ['url' => $this->apiUrl . '/chat']);
+        Log::info('Procesando con Groq AI');
         
         try {
-            $response = $this->client->post($this->apiUrl . '/chat', [
-                'json' => [
-                    'messages' => [
-                        [
-                            'role' => 'system',
-                            'content' => 'Eres un asistente que extrae información estructurada de facturas y documentos comerciales. Responde solo con JSON válido.'
-                        ],
-                        [
-                            'role' => 'user',
-                            'content' => "Extrae la siguiente información del texto y devuélvela en formato JSON: proveedor, fecha, número de factura, items (con codigo, descripción, cantidad, precio unitario), subtotal, impuestos, total.\n\nTexto:\n" . substr($text, 0, 1000)
-                        ]
-                    ],
+            $response = $this->groq->chat([
+                [
+                    'role' => 'system',
+                    'content' => 'Eres un asistente que extrae información estructurada de facturas y documentos comerciales. Responde SOLO con JSON válido, sin texto adicional.'
                 ],
-                'timeout' => 60,
-                'connect_timeout' => 10,
+                [
+                    'role' => 'user',
+                    'content' => "Extrae la siguiente información del texto y devuélvela en formato JSON con esta estructura exacta: {\"proveedor\":{\"nombre\":\"\",\"cuit\":\"\"},\"fecha\":\"\",\"numero\":\"\",\"items\":[{\"codigo\":\"\",\"descripcion\":\"\",\"cantidad\":0,\"precio_unitario\":0}],\"subtotal\":0,\"impuestos\":0,\"total\":0}\n\nTexto:\n" . substr($text, 0, 2000)
+                ]
             ]);
 
-            $statusCode = $response->getStatusCode();
-            Log::info('Respuesta de API', ['status' => $statusCode]);
+            $content = $response['content'] ?? '';
+            Log::info('Respuesta de Groq', ['content' => substr($content, 0, 500)]);
             
-            $content = $response->getBody()->getContents();
-            
-            // La respuesta es un stream de texto, concatenar todo
-            $jsonMatch = preg_match('/\{.*\}/s', $content, $matches);
-            if ($jsonMatch) {
-                $data = json_decode($matches[0], true);
-                if (json_last_error() === JSON_ERROR_NONE) {
-                    Log::info('JSON parseado correctamente');
-                    return $data;
-                }
-                Log::error('Error parseando JSON: ' . json_last_error_msg());
+            if (empty($content)) {
+                return ['error' => 'La IA no devolvió respuesta'];
             }
             
-            Log::error('Respuesta de API no contiene JSON válido', ['content' => substr($content, 0, 500)]);
-            return ['error' => 'La API no devolvió un formato válido'];
-        } catch (\GuzzleHttp\Exception\ConnectException $e) {
-            Log::error('Error de conexión con API: ' . $e->getMessage());
-            return ['error' => 'No se pudo conectar con el servicio de procesamiento'];
+            // Intentar parsear directamente
+            $data = json_decode($content, true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                Log::info('JSON parseado correctamente');
+                return $data;
+            }
+            
+            // Si falla, buscar JSON en el contenido
+            if (preg_match('/\{.*\}/s', $content, $matches)) {
+                $data = json_decode($matches[0], true);
+                if (json_last_error() === JSON_ERROR_NONE) {
+                    Log::info('JSON extraído y parseado correctamente');
+                    return $data;
+                }
+            }
+            
+            Log::error('Respuesta no es JSON válido', [
+                'content' => substr($content, 0, 500),
+                'json_error' => json_last_error_msg()
+            ]);
+            return ['error' => 'La respuesta no es JSON válido: ' . json_last_error_msg()];
         } catch (\Exception $e) {
-            Log::error('Error procesando con API: ' . $e->getMessage());
+            Log::error('Error procesando con Groq: ' . $e->getMessage());
             return ['error' => 'Error al procesar el documento: ' . $e->getMessage()];
         }
     }
 
-    private function updateInventory(array $items): void
+    private function updateInventory(array $items): array
     {
+        $enrichedItems = [];
+        
         foreach ($items as $item) {
-            if (!isset($item['cantidad'])) {
+            $enrichedItem = $item;
+            $enrichedItem['encontrado'] = false;
+            $enrichedItem['articulo_id'] = null;
+            $enrichedItem['articulo_nombre'] = null;
+            $enrichedItem['codarticulo'] = null;
+            
+            if (!isset($item['cantidad']) || $item['cantidad'] <= 0) {
+                $enrichedItems[] = $enrichedItem;
                 continue;
             }
 
-            // Buscar artículo por código (prioridad) o descripción
             $articulo = null;
             
-            if (isset($item['codigo'])) {
-                $articulo = Articulo::where('codarticulo', $item['codigo'])
-                    ->orWhere('codprov', $item['codigo'])
-                    ->first();
+            // Buscar por código de proveedor (prioridad)
+            if (isset($item['codigo']) && !empty($item['codigo'])) {
+                $articulo = Articulo::where('codprov', $item['codigo'])->first();
+                
+                if ($articulo) {
+                    Log::info("Artículo encontrado por codprov", [
+                        'codprov' => $item['codigo'],
+                        'articulo' => $articulo->articulo,
+                        'codarticulo' => $articulo->codarticulo
+                    ]);
+                }
             }
             
-            if (!$articulo && isset($item['descripcion'])) {
+            // Si no se encuentra, buscar por código interno
+            if (!$articulo && isset($item['codigo']) && !empty($item['codigo'])) {
+                $articulo = Articulo::where('codarticulo', $item['codigo'])->first();
+                
+                if ($articulo) {
+                    Log::info("Artículo encontrado por codarticulo", [
+                        'codarticulo' => $item['codigo'],
+                        'articulo' => $articulo->articulo
+                    ]);
+                }
+            }
+            
+            // Si no se encuentra, buscar por descripción
+            if (!$articulo && isset($item['descripcion']) && !empty($item['descripcion'])) {
                 $articulo = Articulo::where('articulo', 'LIKE', '%' . $item['descripcion'] . '%')
                     ->first();
+                    
+                if ($articulo) {
+                    Log::info("Artículo encontrado por descripción", [
+                        'descripcion' => $item['descripcion'],
+                        'articulo' => $articulo->articulo
+                    ]);
+                }
             }
 
             if ($articulo) {
@@ -165,8 +198,22 @@ class PdfProcessorService
                 $inventario->cantidad += $item['cantidad'];
                 $inventario->save();
 
-                Log::info("Inventario actualizado: {$articulo->articulo} (código: {$articulo->codarticulo}) +{$item['cantidad']}");
+                Log::info("Inventario actualizado: {$articulo->articulo} (codprov: {$articulo->codprov}, codarticulo: {$articulo->codarticulo}) +{$item['cantidad']}");
+                
+                $enrichedItem['encontrado'] = true;
+                $enrichedItem['articulo_id'] = $articulo->id;
+                $enrichedItem['articulo_nombre'] = $articulo->articulo;
+                $enrichedItem['codarticulo'] = $articulo->codarticulo;
+            } else {
+                Log::warning("Artículo no encontrado", [
+                    'codigo' => $item['codigo'] ?? null,
+                    'descripcion' => $item['descripcion'] ?? null
+                ]);
             }
+            
+            $enrichedItems[] = $enrichedItem;
         }
+        
+        return $enrichedItems;
     }
 }

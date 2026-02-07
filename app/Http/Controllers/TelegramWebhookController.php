@@ -24,6 +24,7 @@ class TelegramWebhookController extends Controller
     private function handleWebhook(Request $request, string $botType)
     {
         $update = $request->all();
+        \Log::info("Telegram webhook recibido [{$botType}]", ['update' => $update]);
 
         $message = $update['message'] ?? null;
         if (!$message) {

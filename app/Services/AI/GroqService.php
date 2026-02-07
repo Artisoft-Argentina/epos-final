@@ -18,7 +18,7 @@ class GroqService
         $payload = [
             'model' => 'llama-3.3-70b-versatile',
             'messages' => $messages,
-            'temperature' => 0.7,
+            'temperature' => 0.5,
             'max_tokens' => 1000,
         ];
 
