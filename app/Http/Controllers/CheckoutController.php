@@ -88,6 +88,9 @@ class CheckoutController extends Controller
                 $client = Cliente::create([
                     'razonsocial' => auth()->user()->name,
                     'email' => $userEmail,
+                    'direccion' => '',
+                    'telefono' => '',
+                    'condicioniva' => 'Consumidor Final',
                 ]);
             }
 
