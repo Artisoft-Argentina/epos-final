@@ -36,10 +36,16 @@ class AfipWebService
         // Intentar obtener configuración desde InitialSetting (BD) o config
         $empresa = \App\Models\InitialSetting::first();
 
+<<<<<<< HEAD
         $rawCuit = $empresa?->cuit ?: config('afip.cuit');
         $this->cuit = preg_replace('/\D/', '', (string) $rawCuit);
         $this->certPath = config('afip.certificate_path');
         $this->keyPath = config('afip.key_path');
+=======
+        $this->cuit = $empresa?->cuit ?: config('afip.cuit');
+        $this->certPath = storage_path('app/private/afip/cert.pem');
+        $this->keyPath = storage_path('app/private/afip/key.pem');
+>>>>>>> 3d95a44 (fix rutas de lso certificados)
 
         // Ambiente: desde BD si existe, sino desde config
         $ambiente = $empresa?->afip_ambiente ?? config('afip.environment', 'homologacion');
