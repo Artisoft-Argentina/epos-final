@@ -14,8 +14,8 @@ class AfipService
     public function __construct()
     {
         try {
-            $certPath = storage_path('app/private/afip/cert.pem');
-            $keyPath = storage_path('app/private/afip/key.pem');
+            $certPath = config('afip.certificate_path');
+            $keyPath = config('afip.key_path');
             
             if (!file_exists($certPath) || !file_exists($keyPath)) {
                 \Log::warning('AFIP: Certificados no encontrados, usando modo desarrollo');
