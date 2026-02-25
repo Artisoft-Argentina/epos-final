@@ -34,7 +34,7 @@ class InitialSetting extends Model
     ];
 
     protected $casts = [
-        'cuit' => 'integer',
+        'cuit' => 'string',
         'codigopostal' => 'integer',
         'puntoventa' => 'integer',
         'numfactura' => 'integer',
