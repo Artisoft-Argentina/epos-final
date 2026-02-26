@@ -44,7 +44,12 @@ class HandleInertiaRequests extends Middleware
             'name' => config('app.name'),
             'quote' => ['message' => trim($message), 'author' => trim($author)],
             'auth' => [
-                'user' => $request->user()?->load('role'),
+                'user' => tenancy()->initialized
+                    ? $request->user()?->load('role')
+                    : $request->user('central'),
+                'tour_completed' => tenancy()->initialized
+                    ? ($request->user()?->tour_completed ?? true)
+                    : true,
             ],
             'ziggy' => fn (): array => [
                 ...(new Ziggy())->toArray(),

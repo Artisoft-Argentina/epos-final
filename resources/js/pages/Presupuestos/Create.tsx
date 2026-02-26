@@ -121,7 +121,7 @@ export default function Create({ clientes, articulos }: Props) {
             <Head title="Nuevo Presupuesto" />
             
             <div className="p-6">
-                <h1 className="text-2xl font-semibold text-gray-900 mb-6">Nuevo Presupuesto</h1>
+                <h1 className="text-2xl font-semibold text-gray-900 dark:text-white mb-6">Nuevo Presupuesto</h1>
 
                 <form onSubmit={submit} className="space-y-6">
                     {/* Cliente */}
@@ -170,11 +170,11 @@ export default function Create({ clientes, articulos }: Props) {
                                     className="mt-1"
                                 />
                                 {showDropdown && filteredArticulos.length > 0 && (
-                                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
+                                    <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg max-h-60 overflow-auto">
                                         {filteredArticulos.map((articulo) => (
                                             <div
                                                 key={articulo.id}
-                                                className="px-4 py-2 hover:bg-gray-50 cursor-pointer flex justify-between items-center"
+                                                className="px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer flex justify-between items-center text-gray-900 dark:text-white"
                                                 onClick={() => addArticuloFromSearch(articulo)}
                                             >
                                                 <span>{articulo.codarticulo} - {articulo.articulo}</span>

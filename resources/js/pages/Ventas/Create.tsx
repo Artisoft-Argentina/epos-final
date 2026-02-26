@@ -231,7 +231,7 @@ export default function Create({ clientes, articulos, listasPrecios, listaDefaul
             <Head title="Nueva Venta" />
             
             <div className="p-6">
-                <h1 className="text-2xl font-semibold text-gray-900 mb-6">Nueva Venta</h1>
+                <h1 className="text-2xl font-semibold text-gray-900 dark:text-white mb-6">Nueva Venta</h1>
 
                 <form onSubmit={submit} className="space-y-6">
                     {/* Cliente */}
@@ -311,13 +311,13 @@ export default function Create({ clientes, articulos, listasPrecios, listaDefaul
                                     className="mt-1"
                                 />
                                 {showDropdown && filteredArticulos.length > 0 && (
-                                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
+                                    <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg max-h-60 overflow-auto">
                                         {filteredArticulos.map((articulo) => {
                                             const imagenPrincipal = articulo.imagenes?.find(img => img.principal) || articulo.imagenes?.[0];
                                             return (
                                                 <div
                                                     key={articulo.id}
-                                                    className="px-4 py-2 hover:bg-gray-50 cursor-pointer flex items-center gap-3 text-gray-900"
+                                                    className="px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer flex items-center gap-3 text-gray-900 dark:text-white"
                                                     onClick={() => addArticuloFromSearch(articulo)}
                                                 >
                                                     {imagenPrincipal ? (
@@ -335,7 +335,7 @@ export default function Create({ clientes, articulos, listasPrecios, listaDefaul
                                                         <div className="font-medium truncate">{articulo.codarticulo} - {articulo.articulo}</div>
                                                         <div className="text-sm text-gray-500">{articulo.categoria.categoria} • {articulo.marca.marca}</div>
                                                     </div>
-                                                    <span className="text-sm font-semibold text-gray-900">${Number(articulo.precio).toFixed(2)}</span>
+                                                    <span className="text-sm font-semibold text-gray-900 dark:text-white">${Number(articulo.precio).toFixed(2)}</span>
                                                 </div>
                                             );
                                         })}
