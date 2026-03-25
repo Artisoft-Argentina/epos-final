@@ -93,6 +93,26 @@ Esto crea automáticamente:
 > El seeder elimina y recrea `epos_principal` en cada ejecución, por lo que
 > `migrate:fresh --seed` se puede repetir sin errores.
 
+Al terminar verás en consola:
+
+```
+Database\Seeders\CentralAdminSeeder ......... DONE
+Database\Seeders\RoleSeeder ................. DONE
+Database\Seeders\UserSeeder ................. DONE
+Database\Seeders\ProvinciaSeeder ............ DONE
+...
+Tenant 'principal.epos.test' listo con todos los datos de ejemplo.
+```
+
+Credenciales disponibles de inmediato:
+
+| Rol | URL | Email | Contraseña |
+|---|---|---|---|
+| Superadmin central | `https://epos.test/central/login` | `principal@mail.com` | `superadmin123` |
+| Superadmin tenant | `https://principal.epos.test/login` | `superadmin@mail.com` | `asdf1234` |
+| Admin tenant | `https://principal.epos.test/login` | `admin@mail.com` | `asdf1234` |
+| Vendedor | `https://principal.epos.test/login` | `vendedor@mail.com` | `asdf1234` |
+
 ### 1.6 Registrar el sitio en Herd
 
 ```bash
@@ -155,19 +175,15 @@ Listo. El proyecto está disponible en:
 | Campo | Valor |
 |---|---|
 | URL | `https://epos.test/central/login` |
-| Email | `superadmin@epos.local` |
+| Email | `principal@mail.com` |
 | Contraseña | `superadmin123` |
 
-### Tenant "principal"
-| Campo | Valor |
-|---|---|
-| URL | `https://principal.epos.test/login` |
-| Email (superadmin) | `superadmin@mail.com` |
-| Contraseña | `asdf1234` |
-| Email (admin) | `admin@mail.com` |
-| Contraseña | `asdf1234` |
-| Email (vendedor) | `vendedor@mail.com` |
-| Contraseña | `asdf1234` |
+### Tenant "principal" — `https://principal.epos.test/login`
+| Rol | Email | Contraseña |
+|---|---|---|
+| Superadmin | `superadmin@mail.com` | `asdf1234` |
+| Admin | `admin@mail.com` | `asdf1234` |
+| Vendedor | `vendedor@mail.com` | `asdf1234` |
 
 ---
 
@@ -339,3 +355,128 @@ php artisan config:clear
 | `DB_PORT` | `3308` | Puerto del MySQL en Docker |
 | `SESSION_DRIVER` | `database` | Sesiones en BD (no archivo) |
 | `SESSION_SECURE_COOKIE` | `false` | En dev; `true` en producción |
+
+---
+
+## 8. Primeros pasos — Cómo empezar a usar el sistema
+
+Una vez que el proyecto está corriendo y el seeder fue ejecutado, seguí estos pasos para recorrer las funcionalidades principales.
+
+### 8.1 Ingresar al tenant "principal"
+
+Abrir en el navegador: **`https://principal.epos.test/login`**
+
+```
+Email:      superadmin@mail.com
+Contraseña: asdf1234
+```
+
+El dashboard muestra métricas de ventas del día, semana y mes (cargadas con datos de ejemplo por el seeder).
+
+---
+
+### 8.2 Recorrido por el sistema
+
+#### Configuración inicial (Settings)
+
+Antes de operar, configurar los datos de la empresa:
+
+1. Ir a **Configuración → Empresa**
+2. Completar razón social, CUIT, dirección, provincia, ciudad
+3. Configurar datos de facturación AFIP (punto de venta, tipo de factura)
+4. Guardar
+
+> El seeder ya carga configuración de ejemplo, podés omitir este paso en desarrollo.
+
+---
+
+#### Catálogo de productos
+
+| Sección | Ruta | Qué hacer |
+|---|---|---|
+| Categorías | `/categorias` | Ver las 10 categorías de ejemplo |
+| Marcas | `/marcas` | Ver las marcas cargadas |
+| Proveedores | `/proveedores` | Ver los proveedores de ejemplo |
+| Artículos | `/articulos` | Ver el catálogo con stock y precios |
+| Inventario | `/inventarios` | Ver el inventario inicial |
+
+Para crear un artículo nuevo:
+1. **Artículos → Nuevo artículo**
+2. Completar: código, nombre, categoría, marca, precio de costo, precio de venta, stock
+3. Guardar
+
+---
+
+#### Clientes
+
+1. Ir a **Clientes**
+2. Ver los clientes de ejemplo cargados por el seeder
+3. Para agregar: **Nuevo cliente** → CUIT/DNI, razón social, dirección, provincia, ciudad
+
+---
+
+#### Realizar una venta
+
+1. Ir a **Ventas → Nueva Venta**
+2. Buscar cliente (o usar "Consumidor Final")
+3. Buscar artículos por nombre o código en el buscador
+4. Ajustar cantidades
+5. Seleccionar medio de pago (efectivo, tarjeta, transferencia)
+6. **Confirmar venta**
+
+La venta queda registrada y el stock se descuenta automáticamente.
+
+---
+
+#### Presupuestos
+
+1. Ir a **Presupuestos → Nuevo Presupuesto**
+2. Mismo flujo que una venta
+3. El presupuesto queda en estado "pendiente" — desde la lista se puede **convertir a venta** o **imprimir**
+
+---
+
+#### Listas de precios
+
+1. Ir a **Listas de precios**
+2. Ver las listas cargadas (ej: "Lista General", "Mayorista")
+3. Asignar una lista a un cliente para que sus ventas usen esos precios automáticamente
+
+---
+
+#### Ver reportes de ventas
+
+1. Dashboard → gráficos de ventas por día/semana/mes
+2. **Ventas** → listado completo con filtros por fecha, cliente, estado
+3. Cada venta tiene detalle de ítems, totales y medio de pago
+
+---
+
+### 8.3 Panel central (gestión de tenants)
+
+Para gestionar empresas (tenants) desde el panel central:
+
+1. Abrir **`https://epos.test/central/login`**
+2. Ingresar con `principal@mail.com` / `superadmin123`
+3. Desde aquí se pueden:
+   - Ver todas las empresas registradas
+   - Crear nuevas empresas
+   - Activar / desactivar tenants
+   - Ver métricas globales
+
+---
+
+### 8.4 Datos de ejemplo cargados por el seeder
+
+| Entidad | Cantidad |
+|---|---|
+| Roles | 3 (superadmin, admin, vendedor) |
+| Usuarios | 3 (uno por rol) |
+| Provincias | 24 (todas las de Argentina) |
+| Ciudades/Localidades | ~350+ |
+| Categorías | 10 |
+| Marcas | ~10 |
+| Proveedores | ~5 |
+| Artículos | ~20 con stock |
+| Clientes | ~20 |
+| Ventas de ejemplo | 90 (distribuidas en sep–oct 2025) |

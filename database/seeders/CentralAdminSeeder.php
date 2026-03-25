@@ -11,13 +11,13 @@ class CentralAdminSeeder extends Seeder
     public function run(): void
     {
         CentralUser::firstOrCreate(
-            ['email' => 'superadmin@epos.local'],
+            ['email' => 'principal@mail.com'],
             [
-                'name'     => 'Super Admin',
+                'name' => 'Super Admin',
                 'password' => Hash::make('superadmin123'),
             ]
         );
 
-        $this->command->info('Superadmin central creado: superadmin@epos.local / superadmin123');
+        $this->command->info('Superadmin central creado: principal@mail.com / superadmin123');
     }
 }
