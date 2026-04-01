@@ -31,4 +31,8 @@ Route::middleware('auth')->group(function () {
     Route::get('settings/afip', [\App\Http\Controllers\Settings\AfipController::class, 'index'])->name('afip.settings');
     Route::post('settings/afip/upload', [\App\Http\Controllers\Settings\AfipController::class, 'upload'])->name('afip.upload');
     Route::get('settings/afip/health', [\App\Http\Controllers\Settings\AfipController::class, 'healthCheck'])->name('afip.health');
+
+    // MercadoPago
+    Route::get('settings/mercadopago', [\App\Http\Controllers\Settings\MercadoPagoController::class, 'index'])->name('mercadopago.settings');
+    Route::post('settings/mercadopago', [\App\Http\Controllers\Settings\MercadoPagoController::class, 'update'])->name('mercadopago.update');
 });
