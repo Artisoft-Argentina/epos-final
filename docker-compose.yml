@@ -1,67 +1,78 @@
 version: '3.8'
 
+# ============================================================
+# EPOS - Docker Compose para desarrollo LOCAL
+# Uso: docker compose up -d
+#
+# Acceso:
+#   Central (admin):  http://epos.lvh.me:3000
+#   Tenant ejemplo:   http://empresa1.epos.lvh.me:3000
+#
+# lvh.me es un DNS público que resuelve *.lvh.me → 127.0.0.1
+# No requiere configurar /etc/hosts.
+# ============================================================
+
 services:
+
   app:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: gepetto-app
+    container_name: epos-app
     restart: unless-stopped
     ports:
       - "3000:80"
-      - "3443:443"
     environment:
-      - APP_ENV=production
-      - APP_DEBUG=false
-      - DB_HOST=mysql
-      - DB_PORT=3306
-      - DB_DATABASE=gepetto_db
-      - DB_USERNAME=gepetto_user
-      - DB_PASSWORD=gepetto_password
       - RUN_MIGRATIONS=true
       - RUN_SEEDERS=false
     volumes:
       - ./storage:/var/www/html/storage
       - ./bootstrap/cache:/var/www/html/bootstrap/cache
-      - afip_certs:/var/www/html/storage/app/private/afip
       - ./.env.docker:/var/www/html/.env
-      - ./docker/ssl:/etc/nginx/ssl
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
     networks:
-      - gepetto-network
+      - epos-network
 
   mysql:
     image: mysql:8.0
-    container_name: gepetto-mysql
+    container_name: epos-mysql
     restart: unless-stopped
     environment:
-      - MYSQL_ROOT_PASSWORD=root_password
-      - MYSQL_DATABASE=gepetto_db
-      - MYSQL_USER=gepetto_user
-      - MYSQL_PASSWORD=gepetto_password
+      - MYSQL_ROOT_PASSWORD=epos_root_2024
+      - MYSQL_DATABASE=epos_central
+      - MYSQL_USER=epos_user
+      - MYSQL_PASSWORD=epos_password
     volumes:
       - mysql_data:/var/lib/mysql
       - ./docker/mysql.cnf:/etc/mysql/conf.d/custom.cnf
+      # Otorga CREATE DATABASE al usuario (requerido para multitenant)
+      - ./docker/mysql-init.sql:/docker-entrypoint-initdb.d/01-grants.sql
     ports:
-      - "3307:3306"
+      - "3307:3306"   # Acceso local desde herramientas como TablePlus/DBeaver
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-pepos_root_2024"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     networks:
-      - gepetto-network
+      - epos-network
 
   redis:
     image: redis:7-alpine
-    container_name: gepetto-redis
+    container_name: epos-redis
     restart: unless-stopped
     volumes:
       - redis_data:/data
     networks:
-      - gepetto-network
+      - epos-network
 
 volumes:
   mysql_data:
   redis_data:
-  afip_certs:
 
 networks:
-  gepetto-network:
+  epos-network:
     driver: bridge

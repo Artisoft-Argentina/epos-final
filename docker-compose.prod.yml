@@ -1,29 +1,77 @@
 version: '3.8'
 
-# Configuración adicional para producción
+# ============================================================
+# EPOS - Docker Compose para PRODUCCIÓN (VPS Hostinger)
+# Uso: docker compose -f docker-compose.prod.yml up -d
+#
+# Arquitectura:
+#   Internet → Nginx del HOST (puerto 80/443, SSL wildcard)
+#            → Docker app (127.0.0.1:3000, solo acceso local)
+#
+# Prerequisitos en el VPS:
+#   - Nginx instalado en el host (no en Docker)
+#   - Certificado wildcard SSL en /etc/letsencrypt/
+#   - DNS wildcard: *.epos.TUDOMINIO.com → IP del VPS
+#   - Archivo .env.production configurado
+# ============================================================
+
 services:
+
   app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: epos-app
+    restart: always
+    ports:
+      # Solo accesible desde localhost del VPS.
+      # El nginx del host hace proxy_pass a este puerto.
+      - "127.0.0.1:3000:80"
     environment:
-      - APP_ENV=production
-      - APP_DEBUG=false
-      - RUN_MIGRATIONS=false
+      - RUN_MIGRATIONS=false   # Ejecutar manualmente: make migrate-prod
       - RUN_SEEDERS=false
+    volumes:
+      - ./storage:/var/www/html/storage
+      - ./bootstrap/cache:/var/www/html/bootstrap/cache
+      - ./.env.production:/var/www/html/.env
+      # Montar certificados AFIP (se gestionan desde el panel del sistema)
+      - afip_certs:/var/www/html/storage/app/private/afip
+    depends_on:
+      mysql:
+        condition: service_healthy
     deploy:
       resources:
         limits:
           cpus: '2'
           memory: 1G
         reservations:
-          cpus: '1'
+          cpus: '0.5'
           memory: 512M
-    restart: always
+    networks:
+      - epos-network
 
   mysql:
+    image: mysql:8.0
+    container_name: epos-mysql
+    restart: always
     environment:
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
-      - MYSQL_DATABASE=${DB_DATABASE}
-      - MYSQL_USER=${DB_USERNAME}
+      - MYSQL_DATABASE=${DB_DATABASE:-epos_central}
+      - MYSQL_USER=${DB_USERNAME:-epos_user}
       - MYSQL_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql.cnf:/etc/mysql/conf.d/custom.cnf
+      - ./docker/mysql-init.sql:/docker-entrypoint-initdb.d/01-grants.sql
+      # Backups automáticos (se guardan en el host)
+      - ./backups:/backups
+    # NO se expone el puerto 3306 al exterior en producción
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -32,10 +80,17 @@ services:
         reservations:
           cpus: '0.5'
           memory: 256M
-    restart: always
-    command: --default-authentication-plugin=mysql_native_password
+    networks:
+      - epos-network
 
   redis:
+    image: redis:7-alpine
+    container_name: epos-redis
+    restart: always
+    command: redis-server --maxmemory 128mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    # NO se expone el puerto Redis al exterior
     deploy:
       resources:
         limits:
@@ -44,39 +99,14 @@ services:
         reservations:
           cpus: '0.25'
           memory: 128M
-    restart: always
-
-  # Nginx Proxy para HTTPS (opcional)
-  nginx-proxy:
-    image: nginxproxy/nginx-proxy:alpine
-    container_name: nginx-proxy
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - /var/run/docker.sock:/tmp/docker.sock:ro
-      - ./certs:/etc/nginx/certs:ro
-      - ./vhost:/etc/nginx/vhost.d
-      - ./html:/usr/share/nginx/html
     networks:
-      - gepetto-network
-    restart: always
+      - epos-network
 
-  # Let's Encrypt para certificados SSL automáticos
-  letsencrypt:
-    image: nginxproxy/acme-companion
-    container_name: nginx-proxy-acme
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./certs:/etc/nginx/certs:rw
-      - ./vhost:/etc/nginx/vhost.d
-      - ./html:/usr/share/nginx/html
-      - ./acme:/etc/acme.sh
-    environment:
-      - DEFAULT_EMAIL=admin@tu-dominio.com
-      - NGINX_PROXY_CONTAINER=nginx-proxy
-    networks:
-      - gepetto-network
-    restart: always
-    depends_on:
-      - nginx-proxy
+volumes:
+  mysql_data:
+  redis_data:
+  afip_certs:
+
+networks:
+  epos-network:
+    driver: bridge
