@@ -106,8 +106,8 @@ Abre: **http://epos.lvh.me:3000/central**
 
 Credenciales por defecto del seeder:
 ```
-Email:    superadmin@epos.com
-Password: password
+Email:    principal@mail.com
+Password: superadmin123
 ```
 
 > Si no ves la pantalla de login, esperá ~30 segundos y recargá.
