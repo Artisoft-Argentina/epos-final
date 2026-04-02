@@ -12,11 +12,26 @@ use Inertia\Response;
 
 class TenantController extends Controller
 {
+    private function tenantUrl(string $domain): string
+    {
+        $appUrl = config('app.url');
+        $scheme = parse_url($appUrl, PHP_URL_SCHEME) ?? 'http';
+        $port   = parse_url($appUrl, PHP_URL_PORT);
+
+        return $scheme . '://' . $domain . ($port ? ':' . $port : '');
+    }
+
     public function index(): Response
     {
         $tenants = Tenant::with('domains')
             ->orderBy('created_at', 'desc')
             ->paginate(20);
+
+        $tenants->getCollection()->transform(function ($tenant) {
+            $domain = $tenant->domains->first()?->domain;
+            $tenant->url = $domain ? $this->tenantUrl($domain) : null;
+            return $tenant;
+        });
 
         return Inertia::render('central/Tenants/Index', [
             'tenants' => $tenants,
@@ -91,12 +106,15 @@ class TenantController extends Controller
         }
 
         return redirect()->route('central.tenants.index')
-            ->with('success', "Empresa '{$tenant->razonsocial}' creada correctamente. URL: https://{$subdomain}");
+            ->with('success', "Empresa '{$tenant->razonsocial}' creada correctamente. URL: {$this->tenantUrl($subdomain)}");
     }
 
     public function show(Tenant $tenant): Response
     {
         $tenant->load('domains');
+
+        $domain = $tenant->domains->first()?->domain;
+        $tenant->url = $domain ? $this->tenantUrl($domain) : null;
 
         // Obtener stats del tenant
         $stats = [];

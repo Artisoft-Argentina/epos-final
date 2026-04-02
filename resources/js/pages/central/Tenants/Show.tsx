@@ -15,6 +15,7 @@ interface Tenant {
     status: string;
     created_at: string;
     domains: Domain[];
+    url: string | null;
 }
 
 interface Stats {
@@ -72,8 +73,8 @@ export default function ShowTenant({ tenant, stats }: Props) {
                             : <><Power className="mr-1.5 h-4 w-4" /> Activar</>
                         }
                     </Button>
-                    {domain && (
-                        <a href={`https://${domain}`} target="_blank" rel="noreferrer">
+                    {tenant.url && (
+                        <a href={tenant.url} target="_blank" rel="noreferrer">
                             <Button size="sm">
                                 <ExternalLink className="mr-1.5 h-4 w-4" />
                                 Abrir sistema
@@ -107,8 +108,8 @@ export default function ShowTenant({ tenant, stats }: Props) {
                             <DataRow
                                 label="URL"
                                 value={
-                                    domain
-                                        ? <a href={`https://${domain}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-blue-600 hover:underline dark:text-blue-400">
+                                    tenant.url
+                                        ? <a href={tenant.url} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-blue-600 hover:underline dark:text-blue-400">
                                             {domain} <ExternalLink className="h-3 w-3" />
                                           </a>
                                         : '—'
