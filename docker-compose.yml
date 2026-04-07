@@ -3,8 +3,8 @@
 # Uso: docker compose up -d
 #
 # Acceso:
-#   Central (admin):  http://epos.lvh.me:3000
-#   Tenant ejemplo:   http://empresa1.epos.lvh.me:3000
+#   Central (admin):  http://epos.lvh.me:81
+#   Tenant ejemplo:   http://empresa1.epos.lvh.me:81
 #
 # lvh.me es un DNS público que resuelve *.lvh.me → 127.0.0.1
 # No requiere configurar /etc/hosts.
