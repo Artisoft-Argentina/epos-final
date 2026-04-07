@@ -11,7 +11,6 @@
 # ============================================================
 
 services:
-
   app:
     build:
       context: .
@@ -19,13 +18,15 @@ services:
     container_name: epos-app
     restart: unless-stopped
     ports:
-      - "3000:80"
-      - "5173:5173"
+      - '3000:80'
+      - '5173:5173'
     environment:
       - RUN_MIGRATIONS=true
       - RUN_SEEDERS=true
     volumes:
-      - ./:/var/www/html
+      # Do not mount the entire project into the container in this compose
+      # file to avoid overwriting files copied during image build (eg. public/build).
+      # Mount only the folders that need live sync for development.
       - vendor_data:/var/www/html/vendor
       - node_build:/var/www/html/public/build
       - ./storage:/var/www/html/storage
@@ -51,9 +52,9 @@ services:
       # Otorga CREATE DATABASE al usuario (requerido para multitenant)
       - ./docker/mysql-init.sql:/docker-entrypoint-initdb.d/01-grants.sql
     ports:
-      - "3307:3306"   # Acceso local desde herramientas como TablePlus/DBeaver
+      - '3307:3306' # Acceso local desde herramientas como TablePlus/DBeaver
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-pepos_root_2024"]
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-uroot', '-pepos_root_2024']
       interval: 10s
       timeout: 5s
       retries: 5

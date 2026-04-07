@@ -69,6 +69,11 @@ RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 775 /var/www/html/storage \
     && chmod -R 775 /var/www/html/bootstrap/cache
 
+# Asegurarse de que no exista el archivo `public/hot` en la imagen final.
+# Si este archivo existe, Laravel/Vite detectará un dev-server y servirá assets
+# apuntando a :5173 en lugar de usar los assets construidos.
+RUN if [ -f public/hot ]; then rm -f public/hot; fi || true
+
 # Copiar configuraciones
 COPY docker/nginx.conf /etc/nginx/nginx.conf
 COPY docker/php.ini /usr/local/etc/php/conf.d/custom.ini
