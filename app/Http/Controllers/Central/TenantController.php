@@ -45,7 +45,8 @@ class TenantController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $centralDomain = env('CENTRAL_DOMAIN', parse_url(config('app.url'), PHP_URL_HOST));
+        // $centralDomain = env('CENTRAL_DOMAIN', parse_url(config('app.url'), PHP_URL_HOST));
+        $centralDomain = env('SESSION_DOMAIN', parse_url(config('app.url'), PHP_URL_HOST));
         $subdomain     = $request->slug . '.' . $centralDomain;
 
         $request->validate([
