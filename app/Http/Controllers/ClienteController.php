@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Cliente;
 use App\Models\Localidad;
 use App\Models\Provincia;
-use App\Services\AfipService;
+use App\Services\Afip\AfipWebService;
 use App\Traits\HasToastNotifications;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -163,8 +163,8 @@ class ClienteController extends Controller
             'cuit' => 'required|string'
         ]);
 
-        $afipService = new AfipService();
-        $resultado = $afipService->consultarDatosFiscales($request->cuit);
+        $afipService = new AfipWebService();
+        $resultado = $afipService->consultarPadron($request->cuit);
         
         \Log::info('AFIP: Resultado del servicio', ['resultado' => $resultado]);
 

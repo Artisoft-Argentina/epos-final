@@ -39,6 +39,15 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
         bcmath \
         opcache
 
+# Instalar dependencias de compilación y phpredis (Alpine)
+RUN apk add --no-cache --virtual .build-deps autoconf gcc g++ make libtool openssl-dev \
+ && pecl install redis \
+ && docker-php-ext-enable redis \
+ && apk del .build-deps
+
+# Asegurar que la extensión redis quede habilitada (algunas versiones de pecl no crean el ini)
+RUN echo "extension=redis.so" > /usr/local/etc/php/conf.d/docker-php-ext-redis.ini || true
+
 # Instalar Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
