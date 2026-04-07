@@ -1,20 +1,8 @@
 <?php
 
+namespace Database\Seeders;
+
 use App\Models\Tenant;
-use Database\Seeders\ArticulosTableSeeder;
-use Database\Seeders\CentralAdminSeeder;
-use Database\Seeders\CategoriasTableSeeder;
-use Database\Seeders\ClientesTableSeeder;
-use Database\Seeders\InitialSettingsSeeder;
-use Database\Seeders\InventariosTableSeeder;
-use Database\Seeders\ListaPrecioSeeder;
-use Database\Seeders\MarcasTableSeeder;
-use Database\Seeders\ProvinciaSeeder;
-use Database\Seeders\ProvinciasAfipSeeder;
-use Database\Seeders\RoleSeeder;
-use Database\Seeders\SuppliersTableSeeder;
-use Database\Seeders\UserSeeder;
-use Database\Seeders\VentasSeeder;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -30,8 +18,8 @@ class DatabaseSeeder extends Seeder
         // Crea el tenant "principal" si no existe y lo seedea con datos
         // de negocio dentro de su propia BD aislada.
         $centralDomain = env('CENTRAL_DOMAIN', 'epos.test');
-        $subdomain     = 'principal.' . $centralDomain;
-        $tenantDb      = env('TENANCY_DB_PREFIX', 'epos_') . 'principal';
+        $subdomain = 'principal.'.$centralDomain;
+        $tenantDb = env('TENANCY_DB_PREFIX', 'epos_').'principal';
 
         // Si el tenant ya existe, eliminarlo junto con su BD para empezar limpio.
         $existing = Tenant::find('principal');
@@ -44,15 +32,15 @@ class DatabaseSeeder extends Seeder
                 DB::statement("DROP DATABASE IF EXISTS `{$tenantDb}`");
             }
         } catch (\Throwable $th) {
-            //throw $th;
+            // throw $th;
         }
 
         $tenant = Tenant::create([
-            'id'          => 'principal',
+            'id' => 'principal',
             'razonsocial' => 'Empresa Principal',
-            'cuit'        => '20123456789',
-            'plan'        => 'basic',
-            'status'      => 'active',
+            'cuit' => '20123456789',
+            'plan' => 'basic',
+            'status' => 'active',
         ]);
 
         $tenant->domains()->create(['domain' => $subdomain]);
