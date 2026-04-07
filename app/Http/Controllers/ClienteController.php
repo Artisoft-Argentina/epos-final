@@ -51,7 +51,7 @@ class ClienteController extends Controller
             'direccion' => 'required|string|max:255',
             'telefono' => 'required|string|max:20',
             'email' => 'nullable|email',
-            'codigopostal' => 'nullable|string|max:10',
+            'codigopostal' => 'required|string|max:10',
             'localidad' => 'required|string|max:100',
             'provincia' => 'required|string|max:100',
             'condicioniva' => 'nullable|string|max:50',
