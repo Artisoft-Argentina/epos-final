@@ -10,6 +10,7 @@ use Database\Seeders\InventariosTableSeeder;
 use Database\Seeders\ListaPrecioSeeder;
 use Database\Seeders\MarcasTableSeeder;
 use Database\Seeders\ProvinciaSeeder;
+use Database\Seeders\ProvinciasAfipSeeder;
 use Database\Seeders\RoleSeeder;
 use Database\Seeders\SuppliersTableSeeder;
 use Database\Seeders\UserSeeder;
@@ -34,12 +35,16 @@ class DatabaseSeeder extends Seeder
 
         // Si el tenant ya existe, eliminarlo junto con su BD para empezar limpio.
         $existing = Tenant::find('principal');
-        if ($existing) {
-            DB::statement("DROP DATABASE IF EXISTS `{$tenantDb}`");
-            $existing->domains()->delete();
-            $existing->delete();
-        } else {
-            DB::statement("DROP DATABASE IF EXISTS `{$tenantDb}`");
+        try {
+            if ($existing) {
+                DB::statement("DROP DATABASE IF EXISTS `{$tenantDb}`");
+                $existing->domains()->delete();
+                $existing->delete();
+            } else {
+                DB::statement("DROP DATABASE IF EXISTS `{$tenantDb}`");
+            }
+        } catch (\Throwable $th) {
+            //throw $th;
         }
 
         $tenant = Tenant::create([
@@ -60,6 +65,7 @@ class DatabaseSeeder extends Seeder
                 RoleSeeder::class,
                 UserSeeder::class,
                 ProvinciaSeeder::class,
+                ProvinciasAfipSeeder::class,
                 CategoriasTableSeeder::class,
                 MarcasTableSeeder::class,
                 SuppliersTableSeeder::class,
