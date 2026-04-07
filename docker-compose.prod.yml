@@ -1,5 +1,3 @@
-version: '3.8'
-
 # ============================================================
 # EPOS - Docker Compose para PRODUCCIÓN (VPS Hostinger)
 # Uso: docker compose -f docker-compose.prod.yml up -d
