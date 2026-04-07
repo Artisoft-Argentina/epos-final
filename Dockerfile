@@ -16,6 +16,8 @@ RUN apk add --no-cache \
     nginx \
     supervisor \
     mysql-client \
+    nodejs \
+    npm \
     zip \
     unzip \
     git \
