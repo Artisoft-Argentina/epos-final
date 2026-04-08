@@ -32,9 +32,10 @@ class DatabaseSeeder extends Seeder
         $subdomain     = 'principal.' . $centralDomain;
         $tenantDb      = env('TENANCY_DB_PREFIX', 'epos_') . 'principal';
 
-        // Si la BD del tenant ya existe (de un migrate:fresh anterior),
-        // eliminarla para que stancl pueda recrearla limpiamente.
+        // Eliminar tenant y su BD si ya existen para empezar limpio
         DB::statement("DROP DATABASE IF EXISTS `{$tenantDb}`");
+        Tenant::where('id', 'principal')->forceDelete();
+        DB::table('domains')->where('domain', $subdomain)->delete();
 
         $tenant = Tenant::create([
             'id'          => 'principal',

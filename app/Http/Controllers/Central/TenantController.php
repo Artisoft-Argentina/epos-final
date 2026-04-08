@@ -67,6 +67,9 @@ class TenantController extends Controller
             \App\Models\Role::firstOrCreate(['role' => 'vendedor'], ['permission' => '',  'description' => 'Vendedor']);
             \App\Models\Role::firstOrCreate(['role' => 'cliente'],  ['permission' => '',  'description' => 'Cliente']);
 
+            // Datos comunes a todos los tenants
+            (new \Database\Seeders\ProvinciaSeeder())->run();
+
             \App\Models\User::create([
                 'name'     => $request->admin_name,
                 'email'    => $request->admin_email,
