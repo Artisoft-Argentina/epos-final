@@ -15,6 +15,7 @@ interface Tenant {
     status: string;
     created_at: string;
     domains: Domain[];
+    url: string | null;
 }
 
 interface Props {
@@ -84,9 +85,9 @@ export default function TenantsIndex({ tenants }: Props) {
                                     </td>
                                     <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{tenant.cuit}</td>
                                     <td className="px-4 py-3">
-                                        {domain && (
+                                        {tenant.url && (
                                             <a
-                                                href={`https://${domain}`}
+                                                href={tenant.url}
                                                 target="_blank"
                                                 rel="noreferrer"
                                                 className="flex items-center gap-1 text-blue-600 hover:underline dark:text-blue-400"

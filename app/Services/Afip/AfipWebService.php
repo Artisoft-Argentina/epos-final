@@ -36,16 +36,14 @@ class AfipWebService
         // Intentar obtener configuración desde InitialSetting (BD) o config
         $empresa = \App\Models\InitialSetting::first();
 
-<<<<<<< HEAD
+        // CUIT: sanitizar eliminando caracteres no numéricos
         $rawCuit = $empresa?->cuit ?: config('afip.cuit');
         $this->cuit = preg_replace('/\D/', '', (string) $rawCuit);
-        $this->certPath = config('afip.certificate_path');
-        $this->keyPath = config('afip.key_path');
-=======
-        $this->cuit = $empresa?->cuit ?: config('afip.cuit');
-        $this->certPath = storage_path('app/private/afip/cert.pem');
-        $this->keyPath = storage_path('app/private/afip/key.pem');
->>>>>>> 3d95a44 (fix rutas de lso certificados)
+
+        // Certificados per-tenant
+        $afipDir = $this->getAfipDir();
+        $this->certPath = "{$afipDir}/cert.pem";
+        $this->keyPath  = "{$afipDir}/key.pem";
 
         // Ambiente: desde BD si existe, sino desde config
         $ambiente = $empresa?->afip_ambiente ?? config('afip.environment', 'homologacion');
@@ -55,9 +53,15 @@ class AfipWebService
         $this->validateTokenCuit();
     }
 
+    private function getAfipDir(): string
+    {
+        $tenantId = tenancy()->tenant?->id ?? 'default';
+        return storage_path("app/private/tenants/{$tenantId}/afip");
+    }
+
     private function validateTokenCuit(): void
     {
-        $tokenFile = storage_path('app/private/afip/token_wsfe.json');
+        $tokenFile = $this->getAfipDir() . '/token_wsfe.json';
 
         if (file_exists($tokenFile)) {
             $tokenData = json_decode(file_get_contents($tokenFile), true);
@@ -81,8 +85,9 @@ class AfipWebService
 
     private function getAuth(string $service): array
     {
-        $cacheKey = "afip_auth_{$service}";
-        $tokenFile = storage_path("app/private/afip/token_{$service}.json");
+        $tenantId  = tenancy()->tenant?->id ?? 'default';
+        $cacheKey  = "afip_auth_{$tenantId}_{$service}";
+        $tokenFile = $this->getAfipDir() . "/token_{$service}.json";
 
         // Intentar obtener del caché de Laravel
         if (Cache::has($cacheKey)) {
@@ -106,6 +111,10 @@ class AfipWebService
 
         // Guardar en caché y archivo (incluir CUIT y ambiente para validación)
         Cache::put($cacheKey, $auth, now()->addHours(11));
+        $dir = dirname($tokenFile);
+        if (!is_dir($dir)) {
+            mkdir($dir, 0755, true);
+        }
         file_put_contents($tokenFile, json_encode([
             'auth' => $auth,
             'cuit' => $this->cuit,

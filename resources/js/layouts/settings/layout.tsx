@@ -22,6 +22,16 @@ const sidebarNavItems: NavItem[] = [
         href: '/settings/appearance',
         icon: null,
     },
+    {
+        title: 'AFIP',
+        href: '/settings/afip',
+        icon: null,
+    },
+    {
+        title: 'MercadoPago',
+        href: '/settings/mercadopago',
+        icon: null,
+    },
 ];
 
 export default function SettingsLayout({ children }: PropsWithChildren) {
