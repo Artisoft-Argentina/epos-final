@@ -3,8 +3,8 @@
 # Uso: docker compose up -d
 #
 # Acceso:
-#   Central (admin):  http://epos.lvh.me:81
-#   Tenant ejemplo:   http://empresa1.epos.lvh.me:81
+#   Central (admin):  http://epos.lvh.me:${APP_PORT}
+#   Tenant ejemplo:   http://empresa1.epos.lvh.me:${APP_PORT}
 #
 # lvh.me es un DNS público que resuelve *.lvh.me → 127.0.0.1
 # No requiere configurar /etc/hosts.
@@ -18,7 +18,7 @@ services:
     container_name: epos-app
     restart: unless-stopped
     ports:
-      - '89:80'
+      - '${APP_PORT}:80'
       - '5173:5173'
     environment:
       - RUN_MIGRATIONS=true
@@ -52,7 +52,7 @@ services:
       # Otorga CREATE DATABASE al usuario (requerido para multitenant)
       - ./docker/mysql-init.sql:/docker-entrypoint-initdb.d/01-grants.sql
     ports:
-      - '3307:3306' # Acceso local desde herramientas como TablePlus/DBeaver
+      - '${DB_PORT}:3306' # Acceso local desde herramientas como TablePlus/DBeaver
     healthcheck:
       test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-uroot', '-pepos_root_2024']
       interval: 10s
@@ -66,6 +66,8 @@ services:
     image: redis:7-alpine
     container_name: epos-redis
     restart: unless-stopped
+    ports:
+      - '${REDIS_PORT}:6379'
     volumes:
       - redis_data:/data
     networks:
