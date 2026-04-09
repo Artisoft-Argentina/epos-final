@@ -28,6 +28,6 @@ jobs:
             git pull origin dev
 
             echo "🐳 Rebuilding Docker containers..."
-            make rebuild
+            make build && make up
 
             echo "✅ Deployment completed successfully!"
