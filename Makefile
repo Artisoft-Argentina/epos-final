@@ -25,6 +25,9 @@
         prod-up prod-down prod-deploy migrate-prod backup \
         artisan tinker queue-work
 
+-include .env
+export
+
 COMPOSE      = docker compose
 COMPOSE_PROD = docker compose -f docker-compose.prod.yml
 APP          = epos-app
@@ -34,9 +37,10 @@ APP          = epos-app
 up:
 	$(COMPOSE) up -d
 	@echo ""
-	@echo "✓ EPOS corriendo en http://epos.lvh.me:81"
-	@echo "  Central (admin empresas): http://epos.lvh.me:81/central"
-	@echo "  MySQL disponible en:      localhost:3307"
+	@echo "✓ EPOS corriendo en http://epos.lvh.me:$(APP_PORT)"
+	@echo "  Central (admin empresas): http://epos.lvh.me:$(APP_PORT)/central"
+	@echo "  MySQL disponible en:      localhost:$(DB_EXTERNAL_PORT)"
+	@echo "  Redis disponible en:      localhost:$(REDIS_EXTERNAL_PORT)"
 
 down:
 	$(COMPOSE) down

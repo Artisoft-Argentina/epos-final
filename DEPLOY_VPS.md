@@ -18,7 +18,7 @@ Internet (HTTPS)
 │  Certificado SSL wildcard Let's Encrypt     │
 │  *.epos.TUDOMINIO.com                       │
 │       ↓ proxy_pass                          │
-│  Docker: epos-app (127.0.0.1:81)          │
+│  Docker: epos-app (127.0.0.1:APP_PORT)          │
 │  Docker: epos-mysql (red interna)           │
 │  Docker: epos-redis (red interna)           │
 └─────────────────────────────────────────────┘
@@ -235,7 +235,7 @@ server {
 
     # Proxy al contenedor Docker
     location / {
-        proxy_pass         http://127.0.0.1:81;
+        proxy_pass         http://127.0.0.1:APP_PORT;
         proxy_http_version 1.1;
         proxy_set_header   Host              $host;
         proxy_set_header   X-Real-IP         $remote_addr;
@@ -394,7 +394,7 @@ cd /var/www/epos-final
 docker compose -f docker-compose.prod.yml exec app php artisan migrate --force
 
 # Verificar que la app responde
-curl -I http://127.0.0.1:81
+curl -I http://127.0.0.1:APP_PORT
 # Esperar: HTTP/1.1 200 OK o 302
 ```
 
@@ -598,7 +598,7 @@ docker ps
 docker compose -f docker-compose.prod.yml logs app | tail -50
 
 # Verificar que nginx del host puede alcanzar el contenedor
-curl -I http://127.0.0.1:81
+curl -I http://127.0.0.1:APP_PORT
 ```
 
 ### Error de SSL / certificado no válido

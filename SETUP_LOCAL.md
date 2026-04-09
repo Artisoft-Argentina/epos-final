@@ -22,11 +22,11 @@
 ```
 Tu browser
     ↓
-http://epos.lvh.me:81          ← Dominio central (panel de empresas)
-http://empresa1.epos.lvh.me:81 ← Tenant 1
-http://empresa2.epos.lvh.me:81 ← Tenant 2
+http://epos.lvh.me:APP_PORT          ← Dominio central (panel de empresas)
+http://empresa1.epos.lvh.me:APP_PORT ← Tenant 1
+http://empresa2.epos.lvh.me:APP_PORT ← Tenant 2
     ↓
-Docker (puerto 81:80)
+Docker (puerto APP_PORT:80)
     ↓
 Nginx → PHP-FPM → Laravel 12
          ↓
@@ -91,9 +91,9 @@ make up
 Deberías ver:
 
 ```
-✓ EPOS corriendo en http://epos.lvh.me:81
-  Central (admin empresas): http://epos.lvh.me:81/central
-  MySQL disponible en:      localhost:3307
+✓ EPOS corriendo en http://epos.lvh.me:APP_PORT
+  Central (admin empresas): http://epos.lvh.me:APP_PORT/central
+  MySQL disponible en:      localhost:DB_EXTERNAL_PORT
 ```
 
 ---
@@ -102,7 +102,7 @@ Deberías ver:
 
 ### 4.1 Panel Central (gestión de empresas)
 
-Abre: **http://epos.lvh.me:81/central**
+Abre: **http://epos.lvh.me:APP_PORT/central**
 
 Credenciales por defecto del seeder:
 ```
@@ -137,7 +137,7 @@ Admin:
 
 ### 4.3 Acceder a la empresa creada
 
-Abre: **http://empresa1.epos.lvh.me:81**
+Abre: **http://empresa1.epos.lvh.me:APP_PORT**
 
 ```
 Email:    admin@empresa1.com
@@ -173,7 +173,7 @@ make tinker
 ## Estructura de bases de datos
 
 ```
-MySQL (localhost:3307)
+MySQL (localhost:DB_EXTERNAL_PORT)
 ├── epos_central           ← Base central: tenants, dominios, usuarios centrales
 ├── epos_550e8400-...      ← Base de empresa1 (UUID del tenant)
 ├── epos_6ba7b810-...      ← Base de empresa2
@@ -183,7 +183,7 @@ MySQL (localhost:3307)
 Conectarte con TablePlus / DBeaver:
 ```
 Host:     127.0.0.1
-Port:     3307
+Port:     DB_EXTERNAL_PORT
 User:     epos_user
 Password: epos_password
 ```

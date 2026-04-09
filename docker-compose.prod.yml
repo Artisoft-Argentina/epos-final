@@ -4,7 +4,7 @@
 #
 # Arquitectura:
 #   Internet → Nginx del HOST (puerto 80/443, SSL wildcard)
-#            → Docker app (127.0.0.1:81, solo acceso local)
+#            → Docker app (127.0.0.1:${APP_PORT}, solo acceso local)
 #
 # Prerequisitos en el VPS:
 #   - Nginx instalado en el host (no en Docker)

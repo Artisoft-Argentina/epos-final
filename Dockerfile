@@ -16,12 +16,8 @@ RUN apk add --no-cache \
     nginx \
     supervisor \
     mysql-client \
-    nodejs \
-    npm \
     zip \
     unzip \
-    git \
-    curl \
     libpng-dev \
     libjpeg-turbo-dev \
     freetype-dev \
@@ -56,12 +52,16 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 # Configurar directorio de trabajo
 WORKDIR /var/www/html
 
-# Copiar archivos de la aplicación
+# Instalar dependencias PHP primero (aprovecha caché de Docker)
+COPY --chown=www-data:www-data composer.json composer.lock ./
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
+
+# Copiar el resto de la aplicación
 COPY --chown=www-data:www-data . .
 COPY --from=node-builder --chown=www-data:www-data /app/public/build ./public/build
 
-# Instalar dependencias PHP
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+# Ejecutar scripts post-install de Composer (eg. package:discover)
+RUN composer run-script post-autoload-dump --no-interaction 2>/dev/null || true
 
 # Configurar permisos
 RUN chown -R www-data:www-data /var/www/html \
