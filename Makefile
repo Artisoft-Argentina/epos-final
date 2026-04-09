@@ -34,8 +34,8 @@ APP          = epos-app
 up:
 	$(COMPOSE) up -d
 	@echo ""
-	@echo "✓ EPOS corriendo en http://epos.lvh.me:3000"
-	@echo "  Central (admin empresas): http://epos.lvh.me:3000/central"
+	@echo "✓ EPOS corriendo en http://epos.lvh.me:81"
+	@echo "  Central (admin empresas): http://epos.lvh.me:81/central"
 	@echo "  MySQL disponible en:      localhost:3307"
 
 down:

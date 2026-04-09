@@ -185,7 +185,7 @@ docker exec epos-final-app php artisan cache:clear
 ```
 
 ### Acceso
-HTTP: http://localhost:3000 
+HTTP: http://localhost:81 
 
 HTTPS: https://localhost:3443 
 

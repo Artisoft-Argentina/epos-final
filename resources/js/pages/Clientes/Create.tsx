@@ -81,24 +81,24 @@ export default function Create({ provincias, localidades }: Props) {
             
             const result = await response.json();
             
-            if (result.success && result.data) {
+            if (result) {
                 setData({
                     ...data,
-                    razonsocial: result.data.razonsocial || data.razonsocial,
-                    direccion: result.data.direccion || data.direccion,
-                    localidad: result.data.localidad || data.localidad,
-                    codigopostal: result.data.codigopostal || data.codigopostal,
-                    condicioniva: result.data.condicioniva || data.condicioniva,
-                    provincia: result.data.provincia || data.provincia
+                    razonsocial: result.razonsocial || data.razonsocial,
+                    direccion: result.direccion || data.direccion,
+                    localidad: result.localidad || data.localidad,
+                    codigopostal: result.codigopostal || data.codigopostal,
+                    condicioniva: result.condicioniva || data.condicioniva,
+                    provincia: result.provincia || data.provincia,
                 });
-                
-                if (result.data.provincia_id_afip !== null) {
-                    const provinciaAfip = provincias.find(p => p.id_afip === result.data.provincia_id_afip);
+
+                if (result.provincia_id_afip !== null) {
+                    const provinciaAfip = provincias.find((p) => p.id_afip === result.provincia_id_afip);
                     if (provinciaAfip) {
                         setSelectedProvinciaId(provinciaAfip.id.toString());
                     }
                 }
-                
+
                 toast.success('Datos cargados desde AFIP');
             } else {
                 toast.error(result.error || 'No se pudieron obtener datos de AFIP');
@@ -194,12 +194,13 @@ export default function Create({ provincias, localidades }: Props) {
                                     id="codigopostal"
                                     value={data.codigopostal}
                                     onChange={(e) => setData('codigopostal', e.target.value)}
+                                    error={errors.codigopostal}
                                 />
                             </div>
                             <div>
                                 <Label htmlFor="provincia">Provincia *</Label>
                                 <Select value={selectedProvinciaId} onValueChange={handleProvinciaChange}>
-                                    <SelectTrigger>
+                                    <SelectTrigger className={errors.provincia ? 'border-red-500' : ''}>
                                         <SelectValue placeholder="Seleccionar provincia" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -210,11 +211,12 @@ export default function Create({ provincias, localidades }: Props) {
                                         ))}
                                     </SelectContent>
                                 </Select>
+                                {errors.provincia && <p className="text-sm text-red-600 mt-1">{errors.provincia}</p>}
                             </div>
                             <div>
                                 <Label htmlFor="localidad">Localidad *</Label>
                                 <Select value={data.localidad} onValueChange={(value) => setData('localidad', value)} disabled={!selectedProvinciaId}>
-                                    <SelectTrigger>
+                                    <SelectTrigger className={errors.localidad ? 'border-red-500' : ''}>
                                         <SelectValue placeholder="Seleccionar localidad" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -225,11 +227,12 @@ export default function Create({ provincias, localidades }: Props) {
                                         ))}
                                     </SelectContent>
                                 </Select>
+                                {errors.localidad && <p className="text-sm text-red-600 mt-1">{errors.localidad}</p>}
                             </div>
                             <div className="md:col-span-2">
                                 <Label htmlFor="condicioniva">Condición IVA</Label>
                                 <Select value={data.condicioniva} onValueChange={(value) => setData('condicioniva', value)}>
-                                    <SelectTrigger>
+                                    <SelectTrigger className={errors.condicioniva ? 'border-red-500' : ''}>
                                         <SelectValue placeholder="Seleccionar condición IVA" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -239,6 +242,7 @@ export default function Create({ provincias, localidades }: Props) {
                                         <SelectItem value="Consumidor Final">Consumidor Final</SelectItem>
                                     </SelectContent>
                                 </Select>
+                                {errors.condicioniva && <p className="text-sm text-red-600 mt-1">{errors.condicioniva}</p>}
                             </div>
                         </div>
 

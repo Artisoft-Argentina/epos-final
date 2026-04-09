@@ -14,7 +14,7 @@ class ChatController extends Controller
 
     public function __construct()
     {
-        $this->apiUrl = env('CUSTOM_API_URL', 'http://localhost:3000');
+        $this->apiUrl = env('CUSTOM_API_URL', 'http://localhost:81');
         $this->client = new Client([
             'timeout' => 300,
             'connect_timeout' => 30,

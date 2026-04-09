@@ -57,7 +57,7 @@ El item "Proveedores" del sidebar apunta a `/proveedores`, pero esa ruta no exis
 
 **Pasos para reproducir:**
 1. Hacer clic en el item "Proveedores" del sidebar (botón padre, no el submenú)
-2. O navegar directamente a `http://principal.epos.lvh.me:3000/proveedores`
+2. O navegar directamente a `http://principal.epos.lvh.me:81/proveedores`
 3. Ver pantalla de error 404
 
 **Impacto en el usuario:**
@@ -82,7 +82,7 @@ Unificar la ruta a `/proveedores` tanto en el backend (`routes/web.php`) como en
 Al navegar directamente a `/logout` por GET (ya sea escribiendo la URL o por error), Laravel muestra la página de debug completa con: stack trace de la excepción `MethodNotAllowedHttpException`, código fuente de `public/index.php`, variables de la request, cookies de sesión, versión exacta de PHP (8.4.19) y Laravel (12.25.0), y datos de routing. Esta información es un vector de ataque serio en producción.
 
 **Pasos para reproducir:**
-1. Estando logueado, navegar a `http://principal.epos.lvh.me:3000/logout` directamente en la barra de direcciones
+1. Estando logueado, navegar a `http://principal.epos.lvh.me:81/logout` directamente en la barra de direcciones
 2. Ver la página de debug de Laravel con stack trace completo
 
 **Impacto en el usuario:**

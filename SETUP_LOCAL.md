@@ -22,11 +22,11 @@
 ```
 Tu browser
     ↓
-http://epos.lvh.me:3000          ← Dominio central (panel de empresas)
-http://empresa1.epos.lvh.me:3000 ← Tenant 1
-http://empresa2.epos.lvh.me:3000 ← Tenant 2
+http://epos.lvh.me:81          ← Dominio central (panel de empresas)
+http://empresa1.epos.lvh.me:81 ← Tenant 1
+http://empresa2.epos.lvh.me:81 ← Tenant 2
     ↓
-Docker (puerto 3000:80)
+Docker (puerto 81:80)
     ↓
 Nginx → PHP-FPM → Laravel 12
          ↓
@@ -91,8 +91,8 @@ make up
 Deberías ver:
 
 ```
-✓ EPOS corriendo en http://epos.lvh.me:3000
-  Central (admin empresas): http://epos.lvh.me:3000/central
+✓ EPOS corriendo en http://epos.lvh.me:81
+  Central (admin empresas): http://epos.lvh.me:81/central
   MySQL disponible en:      localhost:3307
 ```
 
@@ -102,7 +102,7 @@ Deberías ver:
 
 ### 4.1 Panel Central (gestión de empresas)
 
-Abre: **http://epos.lvh.me:3000/central**
+Abre: **http://epos.lvh.me:81/central**
 
 Credenciales por defecto del seeder:
 ```
@@ -137,7 +137,7 @@ Admin:
 
 ### 4.3 Acceder a la empresa creada
 
-Abre: **http://empresa1.epos.lvh.me:3000**
+Abre: **http://empresa1.epos.lvh.me:81**
 
 ```
 Email:    admin@empresa1.com
@@ -196,7 +196,7 @@ Cada empresa nueva que crees desde el panel central:
 
 1. Crea su base de datos automáticamente
 2. Ejecuta las migraciones de tenant
-3. Es accesible en `http://{slug}.epos.lvh.me:3000`
+3. Es accesible en `http://{slug}.epos.lvh.me:81`
 
 No se requiere ninguna configuración extra de Docker o DNS.
 

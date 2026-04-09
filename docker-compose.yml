@@ -1,19 +1,16 @@
-version: '3.8'
-
 # ============================================================
 # EPOS - Docker Compose para desarrollo LOCAL
 # Uso: docker compose up -d
 #
 # Acceso:
-#   Central (admin):  http://epos.lvh.me:3000
-#   Tenant ejemplo:   http://empresa1.epos.lvh.me:3000
+#   Central (admin):  http://epos.lvh.me:81
+#   Tenant ejemplo:   http://empresa1.epos.lvh.me:81
 #
 # lvh.me es un DNS público que resuelve *.lvh.me → 127.0.0.1
 # No requiere configurar /etc/hosts.
 # ============================================================
 
 services:
-
   app:
     build:
       context: .
@@ -21,13 +18,19 @@ services:
     container_name: epos-app
     restart: unless-stopped
     ports:
-      - "3000:80"
+      - '89:80'
+      - '5173:5173'
     environment:
       - RUN_MIGRATIONS=true
       - RUN_SEEDERS=true
     volumes:
+      # Do not mount the entire project into the container in this compose
+      # file to avoid overwriting files copied during image build (eg. public/build).
+      # Mount only the folders that need live sync for development.
+      - vendor_data:/var/www/html/vendor
+      - node_build:/var/www/html/public/build
       - ./storage:/var/www/html/storage
-      - ./.env.docker:/var/www/html/.env
+      - ./.env:/var/www/html/.env
     depends_on:
       mysql:
         condition: service_healthy
@@ -49,9 +52,9 @@ services:
       # Otorga CREATE DATABASE al usuario (requerido para multitenant)
       - ./docker/mysql-init.sql:/docker-entrypoint-initdb.d/01-grants.sql
     ports:
-      - "3307:3306"   # Acceso local desde herramientas como TablePlus/DBeaver
+      - '3307:3306' # Acceso local desde herramientas como TablePlus/DBeaver
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-pepos_root_2024"]
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-uroot', '-pepos_root_2024']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -71,6 +74,8 @@ services:
 volumes:
   mysql_data:
   redis_data:
+  vendor_data:
+  node_build:
 
 networks:
   epos-network:
