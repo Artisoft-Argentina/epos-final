@@ -18,7 +18,7 @@ services:
     container_name: epos-app
     restart: unless-stopped
     ports:
-      - '81:80'
+      - '89:80'
       - '5173:5173'
     environment:
       - RUN_MIGRATIONS=true
