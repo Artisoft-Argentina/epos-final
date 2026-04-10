@@ -1,9 +1,9 @@
-name: Deploy to Hostinger VPS (Dev)
+name: Deploy to Hostinger VPS (Prod)
 
 on:
   push:
     branches:
-      - dev
+      - main
 
 jobs:
   deploy:
@@ -20,14 +20,14 @@ jobs:
           command_timeout: 30m
           script: |
             # Fix git ownership
-            git config --global --add safe.directory /var/www/html/dev
+            git config --global --add safe.directory /var/www/html/prod
 
-            cd /var/www/html/dev
+            cd /var/www/html/prod
 
-            echo "📥 Pulling latest changes from dev branch..."
-            git pull origin dev
+            echo "📥 Pulling latest changes from main branch..."
+            git pull origin main
 
             echo "🐳 Rebuilding Docker containers..."
-            make rebuild
+            make build && make up
 
             echo "✅ Deployment completed successfully!"

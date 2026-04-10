@@ -7,6 +7,10 @@ use App\Http\Controllers\Central\CentralDashboardController;
 use App\Http\Controllers\Central\TenantController;
 use Illuminate\Support\Facades\Route;
 
+Route::get('/', function () {
+    return redirect()->route('central.dashboard');
+})->name('central.home');
+
 Route::prefix('central')->group(function () {
     // Login del superadmin central (público)
     Route::get('/login', [CentralAuthController::class, 'create'])->name('central.login');

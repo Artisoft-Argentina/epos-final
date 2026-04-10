@@ -18,8 +18,6 @@ RUN apk add --no-cache \
     mysql-client \
     zip \
     unzip \
-    git \
-    curl \
     libpng-dev \
     libjpeg-turbo-dev \
     freetype-dev \
@@ -39,24 +37,42 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
         bcmath \
         opcache
 
+# Instalar dependencias de compilación y phpredis (Alpine)
+RUN apk add --no-cache --virtual .build-deps autoconf gcc g++ make libtool openssl-dev \
+ && pecl install redis \
+ && docker-php-ext-enable redis \
+ && apk del .build-deps
+
+# Asegurar que la extensión redis quede habilitada (algunas versiones de pecl no crean el ini)
+RUN echo "extension=redis.so" > /usr/local/etc/php/conf.d/docker-php-ext-redis.ini || true
+
 # Instalar Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 # Configurar directorio de trabajo
 WORKDIR /var/www/html
 
-# Copiar archivos de la aplicación
+# Instalar dependencias PHP primero (aprovecha caché de Docker)
+COPY --chown=www-data:www-data composer.json composer.lock ./
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
+
+# Copiar el resto de la aplicación
 COPY --chown=www-data:www-data . .
 COPY --from=node-builder --chown=www-data:www-data /app/public/build ./public/build
 
-# Instalar dependencias PHP
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+# Ejecutar scripts post-install de Composer (eg. package:discover)
+RUN composer run-script post-autoload-dump --no-interaction 2>/dev/null || true
 
 # Configurar permisos
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html \
     && chmod -R 775 /var/www/html/storage \
     && chmod -R 775 /var/www/html/bootstrap/cache
+
+# Asegurarse de que no exista el archivo `public/hot` en la imagen final.
+# Si este archivo existe, Laravel/Vite detectará un dev-server y servirá assets
+# apuntando a :5173 en lugar de usar los assets construidos.
+RUN if [ -f public/hot ]; then rm -f public/hot; fi || true
 
 # Copiar configuraciones
 COPY docker/nginx.conf /etc/nginx/nginx.conf

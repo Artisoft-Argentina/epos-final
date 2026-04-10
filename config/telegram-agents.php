@@ -12,7 +12,7 @@ return [
     ],
     
     'custom_api' => [
-        'url' => env('CUSTOM_API_URL', 'http://localhost:3000'),
+        'url' => env('CUSTOM_API_URL', 'http://localhost:81'),
     ],
     
     'ollama' => [

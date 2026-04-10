@@ -1,12 +1,10 @@
-version: '3.8'
-
 # ============================================================
 # EPOS - Docker Compose para PRODUCCIÓN (VPS Hostinger)
 # Uso: docker compose -f docker-compose.prod.yml up -d
 #
 # Arquitectura:
 #   Internet → Nginx del HOST (puerto 80/443, SSL wildcard)
-#            → Docker app (127.0.0.1:3000, solo acceso local)
+#            → Docker app (127.0.0.1:${APP_PORT}, solo acceso local)
 #
 # Prerequisitos en el VPS:
 #   - Nginx instalado en el host (no en Docker)
@@ -21,12 +19,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: epos-app
+    container_name: ${APP_ENV}-epos-app
     restart: always
     ports:
-      # Solo accesible desde localhost del VPS.
-      # El nginx del host hace proxy_pass a este puerto.
-      - "127.0.0.1:3000:80"
+      - '${APP_PORT}:80'
     environment:
       - RUN_MIGRATIONS=false   # Ejecutar manualmente: make migrate-prod
       - RUN_SEEDERS=false
@@ -52,7 +48,7 @@ services:
 
   mysql:
     image: mysql:8.0
-    container_name: epos-mysql
+    container_name: ${APP_ENV}-epos-mysql
     restart: always
     environment:
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
@@ -85,7 +81,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: epos-redis
+    container_name: ${APP_ENV}-epos-redis
     restart: always
     command: redis-server --maxmemory 128mb --maxmemory-policy allkeys-lru
     volumes:
