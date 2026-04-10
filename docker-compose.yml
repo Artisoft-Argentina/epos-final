@@ -15,7 +15,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: epos-app
+    container_name: ${APP_ENV}-epos-app
     restart: unless-stopped
     ports:
       - '${APP_PORT}:80'
@@ -38,7 +38,7 @@ services:
 
   mysql:
     image: mysql:8.0
-    container_name: epos-mysql
+    container_name: ${APP_ENV}-epos-mysql
     restart: unless-stopped
     environment:
       - MYSQL_ROOT_PASSWORD=epos_root_2024
@@ -63,7 +63,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: epos-redis
+    container_name: ${APP_ENV}-epos-redis
     restart: unless-stopped
     ports:
       - '${REDIS_EXTERNAL_PORT}:6379'

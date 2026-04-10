@@ -30,7 +30,7 @@ export
 
 COMPOSE      = docker compose
 COMPOSE_PROD = docker compose -f docker-compose.prod.yml
-APP          = epos-app
+APP          = $(APP_ENV)-epos-app
 
 # ─── LOCAL ────────────────────────────────────────────────
 
