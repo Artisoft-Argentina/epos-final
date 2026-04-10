@@ -21,8 +21,8 @@
 #   make backup       Hacer backup de MySQL
 # ============================================================
 
-.PHONY: up down build logs shell migrate tenant-migrate fresh \
-        prod-up prod-down prod-deploy migrate-prod backup \
+.PHONY: up down build build-fresh logs shell migrate tenant-migrate fresh \
+        rebuild rebuild-fresh prod-up prod-down prod-deploy migrate-prod backup \
         artisan tinker queue-work
 
 -include .env
@@ -46,9 +46,14 @@ down:
 	$(COMPOSE) down
 
 build:
+	$(COMPOSE) build
+
+build-fresh:
 	$(COMPOSE) build --no-cache
 
 rebuild: down build up
+
+rebuild-fresh: down build-fresh up
 
 logs:
 	$(COMPOSE) logs -f app
@@ -103,7 +108,7 @@ prod-deploy:
 	@echo "==> Actualizando código..."
 	git pull origin main
 	@echo "==> Reconstruyendo imagen..."
-	$(COMPOSE_PROD) build --no-cache
+	$(COMPOSE_PROD) build
 	@echo "==> Reiniciando servicios..."
 	$(COMPOSE_PROD) up -d --force-recreate
 	@echo "==> Optimizando..."
