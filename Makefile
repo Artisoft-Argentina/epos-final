@@ -21,9 +21,12 @@
 #   make backup       Hacer backup de MySQL
 # ============================================================
 
-.PHONY: up down build logs shell migrate tenant-migrate fresh \
-        prod-up prod-down prod-deploy migrate-prod backup \
+.PHONY: up down build build-fresh logs shell migrate tenant-migrate fresh \
+        rebuild rebuild-fresh prod-up prod-down prod-deploy migrate-prod backup \
         artisan tinker queue-work
+
+-include .env
+export
 
 COMPOSE      = docker compose
 COMPOSE_PROD = docker compose -f docker-compose.prod.yml
@@ -34,17 +37,23 @@ APP          = epos-app
 up:
 	$(COMPOSE) up -d
 	@echo ""
-	@echo "✓ EPOS corriendo en http://epos.lvh.me:81"
-	@echo "  Central (admin empresas): http://epos.lvh.me:81/central"
-	@echo "  MySQL disponible en:      localhost:3307"
+	@echo "✓ EPOS corriendo en http://epos.lvh.me:$(APP_PORT)"
+	@echo "  Central (admin empresas): http://epos.lvh.me:$(APP_PORT)/central"
+	@echo "  MySQL disponible en:      localhost:$(DB_EXTERNAL_PORT)"
+	@echo "  Redis disponible en:      localhost:$(REDIS_EXTERNAL_PORT)"
 
 down:
 	$(COMPOSE) down
 
 build:
+	$(COMPOSE) build
+
+build-fresh:
 	$(COMPOSE) build --no-cache
 
 rebuild: down build up
+
+rebuild-fresh: down build-fresh up
 
 logs:
 	$(COMPOSE) logs -f app
@@ -99,7 +108,7 @@ prod-deploy:
 	@echo "==> Actualizando código..."
 	git pull origin main
 	@echo "==> Reconstruyendo imagen..."
-	$(COMPOSE_PROD) build --no-cache
+	$(COMPOSE_PROD) build
 	@echo "==> Reiniciando servicios..."
 	$(COMPOSE_PROD) up -d --force-recreate
 	@echo "==> Optimizando..."

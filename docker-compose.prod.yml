@@ -4,7 +4,7 @@
 #
 # Arquitectura:
 #   Internet → Nginx del HOST (puerto 80/443, SSL wildcard)
-#            → Docker app (127.0.0.1:81, solo acceso local)
+#            → Docker app (127.0.0.1:${APP_PORT}, solo acceso local)
 #
 # Prerequisitos en el VPS:
 #   - Nginx instalado en el host (no en Docker)
@@ -22,9 +22,7 @@ services:
     container_name: epos-app
     restart: always
     ports:
-      # Solo accesible desde localhost del VPS.
-      # El nginx del host hace proxy_pass a este puerto.
-      - "127.0.0.1:81:80"
+      - '${APP_PORT}:80'
     environment:
       - RUN_MIGRATIONS=false   # Ejecutar manualmente: make migrate-prod
       - RUN_SEEDERS=false
