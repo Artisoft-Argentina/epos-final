@@ -310,3 +310,8 @@ php artisan view:clear
 | `make fresh` | Reset completo (pide confirmación) |
 | `make tinker` | Abrir Laravel Tinker |
 | `make mysql-shell` | Abrir MySQL CLI |
+
+
+sentry_token=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
+
+jira=ATATT3xFfGF0ZXzLC4vzkEnLnuc-T7LEIM-mKXtqqsPlbkLOvbm1HoYfvJYih4ERRvkX57v3HdQSBwxYt4QVR57WAhcMzYRuYddk49dXaPST3aIKZEB01FpXNqjorYBSE7VKV1qQZLc8RdIljV0N_sDonQ0wz02hI1UbVJ-zbNgjpKypRvt97DY=B5336D1A
