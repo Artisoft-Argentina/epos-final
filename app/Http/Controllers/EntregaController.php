@@ -5,12 +5,15 @@ namespace App\Http\Controllers;
 use App\Models\Entrega;
 use App\Models\Factura;
 use App\Models\Inventario;
+use App\Models\Movimiento;
+use App\Services\MovimientoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class EntregaController extends Controller
 {
+    public function __construct(private MovimientoService $movimientoService) {}
     // Listar entregas pendientes
     public function index()
     {
@@ -55,7 +58,7 @@ class EntregaController extends Controller
                 }
 
                 // Crear entrega como ENTREGADA (no pendiente)
-                Entrega::create([
+                $entrega = Entrega::create([
                     'factura_id' => $factura->id,
                     'articulo_id' => $entregaData['articulo_id'],
                     'cantidad' => $entregaData['cantidad'],
@@ -64,6 +67,15 @@ class EntregaController extends Controller
                     'estado' => 'entregada',
                     'fecha_entrega_real' => now(),
                 ]);
+
+                if ($inventario) {
+                    $this->movimientoService->registrar(
+                        $inventario,
+                        Movimiento::TIPO_SALIDA_ENTREGA,
+                        $entregaData['cantidad'],
+                        $entrega
+                    );
+                }
             }
         });
 
@@ -87,6 +99,13 @@ class EntregaController extends Controller
                 }
                 $inventario->cantidad -= $entrega->cantidad;
                 $inventario->save();
+
+                $this->movimientoService->registrar(
+                    $inventario,
+                    Movimiento::TIPO_SALIDA_ENTREGA,
+                    $entrega->cantidad,
+                    $entrega
+                );
             }
 
             // Marcar como entregada
@@ -117,6 +136,15 @@ class EntregaController extends Controller
                 if ($inventario) {
                     $inventario->cantidad += $entrega->cantidad;
                     $inventario->save();
+
+                    $this->movimientoService->registrar(
+                        $inventario,
+                        Movimiento::TIPO_DEVOLUCION,
+                        $entrega->cantidad,
+                        $entrega,
+                        null,
+                        'Reversión por eliminación de entrega'
+                    );
                 }
             }
 

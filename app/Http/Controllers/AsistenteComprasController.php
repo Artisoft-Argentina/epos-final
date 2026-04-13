@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Movimiento;
+use App\Services\MovimientoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
@@ -11,8 +13,10 @@ class AsistenteComprasController extends Controller
 {
     private PdfProcessorService $pdfProcessor;
 
-    public function __construct(PdfProcessorService $pdfProcessor)
-    {
+    public function __construct(
+        PdfProcessorService $pdfProcessor,
+        private MovimientoService $movimientoService
+    ) {
         $this->pdfProcessor = $pdfProcessor;
     }
 
@@ -104,6 +108,15 @@ class AsistenteComprasController extends Controller
 
                 $inventario->cantidad += $item['cantidad'];
                 $inventario->save();
+
+                $this->movimientoService->registrar(
+                    $inventario,
+                    Movimiento::TIPO_ENTRADA_ASISTENTE,
+                    $item['cantidad'],
+                    null,
+                    null,
+                    'Ingreso por asistente IA'
+                );
 
                 $added[] = [
                     'articulo' => $articulo->articulo,

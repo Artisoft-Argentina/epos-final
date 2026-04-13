@@ -3,7 +3,7 @@ import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Plus, Edit, Search, Printer, Eye } from 'lucide-react';
+import { Plus, Edit, Search, Printer, Eye, BarChart2 } from 'lucide-react';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
 import { Pagination } from '@/components/pagination';
 import { toast } from 'sonner';
@@ -174,6 +174,11 @@ export default function Index({ articulos, filters }: Props) {
                                                     <Eye className="w-4 h-4" />
                                                 </Button>
                                             </Link>
+                                            <Link href={route('movimientos.index', articulo.id)}>
+                                                <Button variant="outline" size="sm" title="Ver movimientos de stock">
+                                                    <BarChart2 className="w-4 h-4" />
+                                                </Button>
+                                            </Link>
                                             <Link href={route('articulos.edit', articulo.id)}>
                                                 <Button variant="outline" size="sm" title="Editar">
                                                     <Edit className="w-4 h-4" />
@@ -214,6 +219,11 @@ export default function Index({ articulos, filters }: Props) {
                                     <Link href={route('articulos.show', articulo.id)}>
                                         <Button variant="outline" size="sm">
                                             <Eye className="w-4 h-4" />
+                                        </Button>
+                                    </Link>
+                                    <Link href={route('movimientos.index', articulo.id)}>
+                                        <Button variant="outline" size="sm" title="Ver movimientos de stock">
+                                            <BarChart2 className="w-4 h-4" />
                                         </Button>
                                     </Link>
                                     <Link href={route('articulos.edit', articulo.id)}>
