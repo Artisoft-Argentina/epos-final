@@ -7,13 +7,16 @@ use App\Models\Cliente;
 use App\Models\Factura;
 use App\Models\Inventario;
 use App\Models\ListaPrecio;
+use App\Models\Movimiento;
 use App\Services\AfipService;
+use App\Services\MovimientoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class VentaController extends Controller
 {
+    public function __construct(private MovimientoService $movimientoService) {}
     public function index()
     {
         return Inertia::render('Ventas/Index', [
@@ -119,6 +122,13 @@ class VentaController extends Controller
                         if ($inventario) {
                             $inventario->cantidad -= $cantidad;
                             $inventario->save();
+
+                            $this->movimientoService->registrar(
+                                $inventario,
+                                Movimiento::TIPO_SALIDA_VENTA_POS,
+                                $cantidad,
+                                $factura
+                            );
                         }
 
                         // Crear entrega completada
@@ -240,6 +250,15 @@ class VentaController extends Controller
                 if ($inventario) {
                     $inventario->cantidad += $articulo->pivot->cantidad;
                     $inventario->save();
+
+                    $this->movimientoService->registrar(
+                        $inventario,
+                        Movimiento::TIPO_DEVOLUCION,
+                        $articulo->pivot->cantidad,
+                        $venta,
+                        null,
+                        'Reversión por eliminación de factura'
+                    );
                 }
             }
 

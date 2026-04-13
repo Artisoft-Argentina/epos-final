@@ -4,12 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Models\Articulo;
 use App\Models\Inventario;
+use App\Models\Movimiento;
 use App\Models\Supplier;
+use App\Services\MovimientoService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class InventarioController extends Controller
 {
+    public function __construct(private MovimientoService $movimientoService) {}
     public function index()
     {
         return Inertia::render('Inventarios/Index', [
@@ -35,7 +38,18 @@ class InventarioController extends Controller
             'supplier_id' => 'nullable|exists:suppliers,id',
         ]);
 
-        Inventario::create($request->all());
+        $inventario = Inventario::create($request->all());
+
+        if ($inventario->cantidad > 0) {
+            $this->movimientoService->registrar(
+                $inventario,
+                Movimiento::TIPO_ENTRADA_AJUSTE,
+                $inventario->cantidad,
+                null,
+                null,
+                'Stock inicial al crear inventario'
+            );
+        }
 
         return redirect()->route('inventarios.index')->with('success', 'Inventario creado exitosamente');
     }
@@ -59,7 +73,29 @@ class InventarioController extends Controller
             'supplier_id' => 'nullable|exists:suppliers,id',
         ]);
 
+        $cantidadAnterior = $inventario->cantidad;
         $inventario->update($request->all());
+        $diff = $inventario->cantidad - $cantidadAnterior;
+
+        if ($diff > 0) {
+            $this->movimientoService->registrar(
+                $inventario,
+                Movimiento::TIPO_ENTRADA_AJUSTE,
+                $diff,
+                null,
+                null,
+                'Ajuste manual de inventario (+' . $diff . ')'
+            );
+        } elseif ($diff < 0) {
+            $this->movimientoService->registrar(
+                $inventario,
+                Movimiento::TIPO_SALIDA_AJUSTE,
+                abs($diff),
+                null,
+                null,
+                'Ajuste manual de inventario (' . $diff . ')'
+            );
+        }
 
         return redirect()->route('inventarios.index')->with('success', 'Inventario actualizado exitosamente');
     }

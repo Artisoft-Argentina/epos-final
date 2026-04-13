@@ -5,11 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\Remito;
 use App\Models\Supplier;
 use App\Models\Articulo;
+use App\Services\MovimientoService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class RemitoController extends Controller
 {
+    public function __construct(private MovimientoService $movimientoService) {}
     public function index()
     {
         return Inertia::render('Remitos/Index', [
@@ -107,16 +109,23 @@ class RemitoController extends Controller
 
         foreach ($remito->detalles as $detalle) {
             $inventario = \App\Models\Inventario::where('articulo_id', $detalle->articulo_id)->first();
-            
+
             if ($inventario) {
                 $inventario->increment('cantidad', $detalle->cantidad);
             } else {
-                \App\Models\Inventario::create([
+                $inventario = \App\Models\Inventario::create([
                     'articulo_id' => $detalle->articulo_id,
                     'cantidad' => $detalle->cantidad,
                     'supplier_id' => $remito->supplier_id,
                 ]);
             }
+
+            $this->movimientoService->registrar(
+                $inventario,
+                \App\Models\Movimiento::TIPO_ENTRADA_COMPRA,
+                $detalle->cantidad,
+                $remito
+            );
         }
 
         $remito->update(['convertido_inventario' => true]);

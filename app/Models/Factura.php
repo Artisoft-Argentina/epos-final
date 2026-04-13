@@ -89,4 +89,9 @@ class Factura extends Model
     {
         return $this->belongsTo(ListaPrecio::class);
     }
+
+    public function movimientos()
+    {
+        return $this->morphMany(Movimiento::class, 'referenciable');
+    }
 }

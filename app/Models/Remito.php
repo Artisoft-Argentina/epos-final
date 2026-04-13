@@ -37,4 +37,9 @@ class Remito extends Model
     {
         return $this->hasMany(ArticuloRemito::class);
     }
+
+    public function movimientos()
+    {
+        return $this->morphMany(Movimiento::class, 'referenciable');
+    }
 }

@@ -61,4 +61,9 @@ class Entrega extends Model
     {
         return $this->estado === 'entregada';
     }
+
+    public function movimientos()
+    {
+        return $this->morphMany(Movimiento::class, 'referenciable');
+    }
 }
