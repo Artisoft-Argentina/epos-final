@@ -13,7 +13,10 @@
 
 pest()->extend(Tests\TestCase::class)
  // ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
-    ->in('Feature');
+    ->in('Feature/Auth', 'Feature/Settings', 'Feature/DashboardTest.php', 'Feature/ExampleTest.php');
+
+pest()->extend(Tests\TenantTestCase::class)
+    ->in('Feature/Tenant');
 
 /*
 |--------------------------------------------------------------------------

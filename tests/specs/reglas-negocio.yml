@@ -1,0 +1,712 @@
+# =============================================================================
+# EPOS — Especificaciones de Reglas de Negocio
+# =============================================================================
+# Propósito : Fuente de verdad para generar tests automáticos con Claude Code.
+# Formato   : YAML estructurado con semántica Gherkin (Given/When/Then).
+# Uso       : Pasá este archivo a Claude con el prompt del archivo `dsl-prompt.md`
+#             para generar la suite de Pest tests correspondiente.
+# =============================================================================
+
+version: "1.0"
+proyecto: EPOS
+framework_tests: Pest (PHP)
+test_base_class: Tests\TenantTestCase
+contexto_global: >
+  Todos los tests corren dentro de un tenant (empresa) aislado.
+  El usuario autenticado por defecto es `adminUser` con rol `admin`.
+  La base de datos es SQLite en memoria (ver TenantTestCase).
+
+# =============================================================================
+# MÓDULO: MARCAS
+# =============================================================================
+modulos:
+
+  - nombre: Marcas
+    modelo: App\Models\Marca
+    tabla: marcas
+    ruta_store: marcas.store
+    ruta_update: marcas.update
+    ruta_destroy: marcas.destroy
+
+    campos:
+      - nombre: marca
+        tipo: string
+        requerido: true
+        max: 255
+
+    reglas:
+
+      - id: marca_crear_valida
+        descripcion: Se puede crear una marca con nombre válido
+        escenarios:
+          - id: happy_path
+            given:
+              - usuario autenticado como admin
+              - payload: { marca: "Nike" }
+            when: POST marcas.store
+            then:
+              - status: redirect
+              - db_has: { tabla: marcas, campos: { marca: "Nike" } }
+
+      - id: marca_nombre_requerido
+        descripcion: El nombre de la marca es obligatorio
+        escenarios:
+          - id: nombre_vacio
+            given:
+              - usuario autenticado como admin
+              - payload: { marca: "" }
+            when: POST marcas.store
+            then:
+              - validation_error: marca
+          - id: nombre_ausente
+            given:
+              - usuario autenticado como admin
+              - payload: {}
+            when: POST marcas.store
+            then:
+              - validation_error: marca
+
+      - id: marca_nombre_max
+        descripcion: El nombre no puede superar 255 caracteres
+        escenarios:
+          - id: supera_limite
+            given:
+              - usuario autenticado como admin
+              - payload: { marca: "A×256" }
+            when: POST marcas.store
+            then:
+              - validation_error: marca
+
+      - id: marca_actualizar
+        descripcion: Se puede actualizar el nombre de una marca existente
+        escenarios:
+          - id: update_valido
+            given:
+              - marca existente con nombre "Adidas"
+              - usuario autenticado como admin
+              - payload: { marca: "Puma" }
+            when: PUT marcas.update($marca)
+            then:
+              - status: redirect
+              - db_has: { tabla: marcas, campos: { marca: "Puma" } }
+          - id: update_nombre_vacio
+            given:
+              - marca existente
+              - usuario autenticado como admin
+              - payload: { marca: "" }
+            when: PUT marcas.update($marca)
+            then:
+              - validation_error: marca
+
+      - id: marca_eliminar
+        descripcion: Se puede eliminar una marca existente
+        escenarios:
+          - id: delete_ok
+            given:
+              - marca existente
+              - usuario autenticado como admin
+            when: DELETE marcas.destroy($marca)
+            then:
+              - status: redirect
+              - db_missing: { tabla: marcas, campos: { id: $marca->id } }
+
+      - id: marca_acceso_anonimo
+        descripcion: Un usuario no autenticado es redirigido al login
+        escenarios:
+          - id: sin_sesion
+            given:
+              - usuario NO autenticado
+              - payload: { marca: "Nike" }
+            when: POST marcas.store
+            then:
+              - status: redirect_to_login
+
+# =============================================================================
+# MÓDULO: CATEGORÍAS
+# =============================================================================
+
+  - nombre: Categorias
+    modelo: App\Models\Categoria
+    tabla: categorias
+    ruta_store: categorias.store
+    ruta_update: categorias.update
+    ruta_destroy: categorias.destroy
+
+    campos:
+      - nombre: categoria
+        tipo: string
+        requerido: true
+        max: 255
+        mutacion: ucfirst (primera letra en mayúscula automáticamente)
+
+    reglas:
+
+      - id: categoria_crear_valida
+        descripcion: Se puede crear una categoría con nombre válido
+        escenarios:
+          - id: happy_path
+            given:
+              - usuario autenticado como admin
+              - payload: { categoria: "herramientas" }
+            when: POST categorias.store
+            then:
+              - status: redirect
+              - db_has: { tabla: categorias, campos: { categoria: "Herramientas" } }
+
+      - id: categoria_ucfirst
+        descripcion: El modelo aplica ucfirst automáticamente al guardar
+        escenarios:
+          - id: minuscula_input
+            given:
+              - modelo Categoria con { categoria: "electrónica" }
+            when: save()
+            then:
+              - atributo categoria == "Electrónica"
+          - id: ya_mayuscula
+            given:
+              - modelo Categoria con { categoria: "Ropa" }
+            when: save()
+            then:
+              - atributo categoria == "Ropa"
+
+      - id: categoria_nombre_requerido
+        descripcion: El nombre de la categoría es obligatorio
+        escenarios:
+          - id: vacio
+            given:
+              - usuario autenticado como admin
+              - payload: { categoria: "" }
+            when: POST categorias.store
+            then:
+              - validation_error: categoria
+
+      - id: categoria_nombre_max
+        descripcion: El nombre no puede superar 255 caracteres
+        escenarios:
+          - id: supera_limite
+            given:
+              - payload: { categoria: "A×256" }
+            when: POST categorias.store
+            then:
+              - validation_error: categoria
+
+      - id: categoria_actualizar
+        descripcion: Se puede actualizar el nombre de una categoría
+        escenarios:
+          - id: update_valido
+            given:
+              - categoria existente
+              - payload: { categoria: "nueva" }
+            when: PUT categorias.update($categoria)
+            then:
+              - db_has: { tabla: categorias, campos: { categoria: "Nueva" } }
+
+      - id: categoria_eliminar
+        escenarios:
+          - id: delete_ok
+            given:
+              - categoria existente
+            when: DELETE categorias.destroy($categoria)
+            then:
+              - db_missing: { tabla: categorias, campos: { id: $categoria->id } }
+
+      - id: categoria_acceso_anonimo
+        escenarios:
+          - id: sin_sesion
+            given:
+              - usuario NO autenticado
+            when: POST categorias.store
+            then:
+              - status: redirect_to_login
+
+# =============================================================================
+# MÓDULO: ARTÍCULOS
+# =============================================================================
+
+  - nombre: Articulos
+    modelo: App\Models\Articulo
+    tabla: articulos
+    ruta_store: articulos.store
+    ruta_destroy: articulos.destroy
+    soft_delete: true
+
+    campos:
+      - nombre: codarticulo
+        tipo: string
+        requerido: true
+      - nombre: articulo
+        tipo: string
+        requerido: true
+      - nombre: descripcion
+        tipo: string
+        requerido: true
+      - nombre: medida
+        tipo: string
+        requerido: true
+      - nombre: precio
+        tipo: numeric
+        requerido: true
+        min: 0
+      - nombre: alicuota
+        tipo: numeric
+        requerido: true
+        min: 0
+      - nombre: stockminimo
+        tipo: integer
+        requerido: true
+        min: 0
+      - nombre: marca_id
+        tipo: foreign_key
+        tabla_ref: marcas
+        requerido: true
+      - nombre: categoria_id
+        tipo: foreign_key
+        tabla_ref: categorias
+        requerido: true
+      - nombre: supplier_id
+        tipo: foreign_key
+        tabla_ref: suppliers
+        requerido: false
+
+    reglas:
+
+      - id: articulo_crear_completo
+        descripcion: Se puede crear un artículo con todos los campos requeridos
+        escenarios:
+          - id: happy_path
+            given:
+              - marca existente
+              - categoria existente
+              - usuario autenticado como admin
+              - payload completo válido
+            when: POST articulos.store
+            then:
+              - status: redirect
+              - db_has: { tabla: articulos, campos: { codarticulo: $payload.codarticulo } }
+
+      - id: articulo_crear_con_supplier
+        descripcion: El supplier_id es opcional
+        escenarios:
+          - id: con_supplier
+            given:
+              - supplier existente
+              - payload con supplier_id
+            when: POST articulos.store
+            then:
+              - db_has: { tabla: articulos, campos: { supplier_id: $supplier->id } }
+
+      - id: articulo_campos_texto_requeridos
+        descripcion: Los campos de texto son obligatorios
+        escenarios:
+          - id: codarticulo_vacio
+            given: { codarticulo: "" }
+            then: { validation_error: codarticulo }
+          - id: articulo_vacio
+            given: { articulo: "" }
+            then: { validation_error: articulo }
+          - id: descripcion_vacia
+            given: { descripcion: "" }
+            then: { validation_error: descripcion }
+          - id: medida_vacia
+            given: { medida: "" }
+            then: { validation_error: medida }
+
+      - id: articulo_validaciones_numericas
+        descripcion: Precio, alícuota y stock mínimo deben ser >= 0
+        escenarios:
+          - id: precio_negativo
+            given: { precio: -1 }
+            then: { validation_error: precio }
+          - id: precio_no_numerico
+            given: { precio: "abc" }
+            then: { validation_error: precio }
+          - id: alicuota_negativa
+            given: { alicuota: -5 }
+            then: { validation_error: alicuota }
+          - id: stockminimo_negativo
+            given: { stockminimo: -1 }
+            then: { validation_error: stockminimo }
+          - id: stockminimo_cero_valido
+            given: { stockminimo: 0 }
+            then:
+              - no_validation_error: stockminimo
+              - db_has: { tabla: articulos, campos: { stockminimo: 0 } }
+
+      - id: articulo_foreign_keys
+        descripcion: marca_id y categoria_id deben existir en la BD
+        escenarios:
+          - id: marca_inexistente
+            given: { marca_id: 99999 }
+            then: { validation_error: marca_id }
+          - id: categoria_inexistente
+            given: { categoria_id: 99999 }
+            then: { validation_error: categoria_id }
+
+      - id: articulo_soft_delete
+        descripcion: Eliminar un artículo hace soft-delete (deleted_at se llena)
+        escenarios:
+          - id: soft_delete_ok
+            given:
+              - articulo existente
+            when: DELETE articulos.destroy($articulo)
+            then:
+              - soft_deleted: { tabla: articulos, id: $articulo->id }
+
+# =============================================================================
+# MÓDULO: INVENTARIO
+# =============================================================================
+
+  - nombre: Inventario
+    modelo: App\Models\Inventario
+    tabla: inventarios
+    ruta_store: inventarios.store
+    ruta_update: inventarios.update
+    ruta_destroy: inventarios.destroy
+
+    campos:
+      - nombre: articulo_id
+        tipo: foreign_key
+        requerido: true
+      - nombre: cantidad
+        tipo: integer
+        requerido: true
+        min: 0
+
+    reglas:
+
+      - id: inventario_crear_positivo
+        descripcion: Se puede crear un inventario con cantidad positiva
+        escenarios:
+          - id: happy_path
+            given:
+              - articulo existente
+              - payload: { articulo_id: $articulo->id, cantidad: 10 }
+            when: POST inventarios.store
+            then:
+              - db_has: { tabla: inventarios, campos: { articulo_id: $articulo->id, cantidad: 10 } }
+
+      - id: inventario_cantidad_no_negativa
+        descripcion: La cantidad no puede ser negativa
+        escenarios:
+          - id: cantidad_negativa
+            given: { cantidad: -1 }
+            when: POST inventarios.store
+            then: { validation_error: cantidad }
+
+      - id: inventario_actualizar_cantidad
+        descripcion: Se puede actualizar la cantidad de un inventario
+        escenarios:
+          - id: update_ok
+            given:
+              - inventario existente con cantidad 5
+              - payload: { cantidad: 20 }
+            when: PUT inventarios.update($inventario)
+            then:
+              - db_has: { tabla: inventarios, campos: { id: $inventario->id, cantidad: 20 } }
+
+      - id: inventario_eliminar
+        escenarios:
+          - id: delete_ok
+            given:
+              - inventario existente
+            when: DELETE inventarios.destroy($inventario)
+            then:
+              - db_missing: { tabla: inventarios, campos: { id: $inventario->id } }
+
+# =============================================================================
+# MÓDULO: REMITOS (Compras)
+# =============================================================================
+
+  - nombre: Remitos
+    modelo: App\Models\Remito
+    tabla: remitos
+    ruta_store: remitos.store
+    ruta_convertir: remitos.convertir-inventario
+
+    campos:
+      - nombre: ptoventa
+        tipo: integer
+        requerido: true
+      - nombre: numremito
+        tipo: integer
+        requerido: true
+      - nombre: fecha
+        tipo: date
+        requerido: true
+      - nombre: supplier_id
+        tipo: foreign_key
+        requerido: true
+      - nombre: detalles
+        tipo: array
+        requerido: true
+        items:
+          - articulo_id: foreign_key
+          - cantidad: integer min:1
+          - preciounitario: numeric min:0
+
+    reglas:
+
+      - id: remito_subtotal_calculado
+        descripcion: El subtotal del remito es la suma de (cantidad × preciounitario) de cada detalle
+        formula: subtotal = Σ(detalle.cantidad × detalle.preciounitario)
+        escenarios:
+          - id: dos_lineas
+            given:
+              - detalle 1: cantidad=3, preciounitario=200  → subtotal_linea=600
+              - detalle 2: cantidad=2, preciounitario=150  → subtotal_linea=300
+            when: POST remitos.store
+            then:
+              - db_has: { tabla: remitos, campos: { subtotal: 900, total: 900 } }
+
+      - id: remito_convertir_incrementa_stock
+        descripcion: Convertir un remito a inventario incrementa el stock del artículo
+        escenarios:
+          - id: articulo_con_stock_previo
+            given:
+              - inventario existente con cantidad=10
+              - remito con detalle: { articulo_id: $articulo->id, cantidad: 5 }
+            when: POST remitos.convertir-inventario($remito)
+            then:
+              - inventario.cantidad == 15
+              - remito.convertido_inventario == true
+
+          - id: articulo_sin_stock_previo
+            given:
+              - articulo sin registro de inventario
+              - remito con detalle: { articulo_id: $articulo->id, cantidad: 8 }
+            when: POST remitos.convertir-inventario($remito)
+            then:
+              - db_has: { tabla: inventarios, campos: { articulo_id: $articulo->id, cantidad: 8 } }
+
+      - id: remito_conversion_idempotente
+        descripcion: Un remito ya convertido no puede volver a convertirse
+        escenarios:
+          - id: doble_conversion
+            given:
+              - remito con convertido_inventario=true
+            when: POST remitos.convertir-inventario($remito)
+            then:
+              - session_has_error: true
+              - stock_sin_cambios: true
+
+# =============================================================================
+# MÓDULO: VENTAS (POS + Ecommerce)
+# =============================================================================
+
+  - nombre: Ventas
+    modelo: App\Models\Factura
+    tabla: facturas
+    ruta_store: ventas.store
+    ruta_destroy: ventas.destroy
+
+    campos:
+      - nombre: cliente_id
+        tipo: foreign_key
+        requerido: true
+      - nombre: tipo_venta
+        tipo: enum
+        valores: [pos, ecommerce]
+        requerido: true
+      - nombre: metodo_pago
+        tipo: string
+        requerido: true
+      - nombre: monto_pago
+        tipo: numeric
+        requerido: true
+      - nombre: articulos
+        tipo: array
+        requerido: true
+        items:
+          - articulo_id: foreign_key
+          - cantidad: integer min:1
+          - precio: numeric min:0
+      - nombre: auto_delivery
+        tipo: boolean
+        requerido: false
+        aplica_solo_a: pos
+      - nombre: recargo
+        tipo: numeric
+        requerido: false
+        default: 0
+      - nombre: descuento
+        tipo: numeric
+        requerido: false
+        default: 0
+
+    reglas:
+
+      - id: venta_pos_auto_delivery_descuenta_stock
+        descripcion: >
+          Una venta POS con auto_delivery=true descuenta el stock
+          inmediatamente al crearse la factura.
+        escenarios:
+          - id: stock_descontado
+            given:
+              - inventario con cantidad=10
+              - cliente existente
+              - payload: { tipo_venta: pos, auto_delivery: true, articulos: [{cantidad: 3}] }
+            when: POST ventas.store
+            then:
+              - inventario.cantidad == 7
+
+      - id: venta_pos_sin_auto_delivery_crea_entrega_pendiente
+        descripcion: >
+          Una venta POS con auto_delivery=false NO descuenta stock.
+          En cambio crea una entrega con estado "pendiente".
+        escenarios:
+          - id: entrega_pendiente_creada
+            given:
+              - inventario con cantidad=10
+              - payload: { tipo_venta: pos, auto_delivery: false, articulos: [{cantidad: 3}] }
+            when: POST ventas.store
+            then:
+              - inventario.cantidad == 10  # sin cambio
+              - db_has: { tabla: entregas, campos: { articulo_id: $articulo->id, estado: pendiente, cantidad: 3 } }
+
+      - id: venta_ecommerce_crea_entrega_pendiente
+        descripcion: >
+          Una venta de ecommerce siempre crea entrega pendiente
+          y NO descuenta stock al momento de la venta.
+        escenarios:
+          - id: ecommerce_sin_descuento_stock
+            given:
+              - inventario con cantidad=10
+              - payload: { tipo_venta: ecommerce, metodo_pago: mercadopago, articulos: [{cantidad: 2}] }
+            when: POST ventas.store
+            then:
+              - inventario.cantidad == 10
+              - db_has: { tabla: entregas, campos: { estado: pendiente } }
+
+      - id: venta_total_con_recargo
+        descripcion: total = subtotal + recargo - descuento
+        formula: total = Σ(cantidad × precio) + recargo - descuento
+        escenarios:
+          - id: con_recargo
+            given:
+              - articulos: [{ cantidad: 2, precio: 100 }]  → subtotal = 200
+              - recargo: 30
+              - descuento: 0
+            when: POST ventas.store
+            then:
+              - db_has: { tabla: facturas, campos: { subtotal: 200, recargo: 30, total: 230 } }
+
+      - id: venta_eliminar_restaura_stock
+        descripcion: >
+          Al eliminar una venta cuya entrega fue despachada (auto_delivery=true),
+          el stock de cada artículo vuelve al valor anterior.
+        escenarios:
+          - id: stock_restaurado
+            given:
+              - inventario con cantidad=10
+              - venta POS con auto_delivery=true y cantidad=4  → stock queda en 6
+            when: DELETE ventas.destroy($factura)
+            then:
+              - inventario.cantidad == 10  # restaurado
+
+# =============================================================================
+# MÓDULO: ENTREGAS
+# =============================================================================
+
+  - nombre: Entregas
+    modelo: App\Models\Entrega
+    tabla: entregas
+
+    estados:
+      - pendiente  # recién creada, stock aún no descontado
+      - entregada  # despachada, stock descontado
+      - cancelada  # anulada
+
+    reglas:
+
+      - id: entrega_marcar_entregada_descuenta_stock
+        descripcion: >
+          Marcar una entrega como "entregada" descuenta la cantidad
+          del inventario del artículo correspondiente.
+        escenarios:
+          - id: stock_descontado
+            given:
+              - entrega pendiente con cantidad=3
+              - inventario con cantidad=10
+            when: marcarEntregada($entrega)
+            then:
+              - entrega.estado == "entregada"
+              - inventario.cantidad == 7
+
+      - id: entrega_marcar_entregada_sin_stock_suficiente
+        descripcion: No se puede marcar como entregada si el stock es insuficiente
+        escenarios:
+          - id: stock_insuficiente
+            given:
+              - entrega pendiente con cantidad=10
+              - inventario con cantidad=3
+            when: marcarEntregada($entrega)
+            then:
+              - lanza_excepcion: "Stock insuficiente"
+              - entrega.estado == "pendiente"  # sin cambio
+
+      - id: entrega_no_regresar_estado
+        descripcion: Una entrega ya "entregada" no puede volver a marcarse como entregada
+        escenarios:
+          - id: doble_entrega
+            given:
+              - entrega con estado=entregada
+            when: marcarEntregada($entrega)
+            then:
+              - lanza_excepcion: "La entrega ya fue despachada"
+
+      - id: entrega_no_cancelar_entregada
+        descripcion: Una entrega ya "entregada" no puede cancelarse
+        escenarios:
+          - id: cancelar_entregada
+            given:
+              - entrega con estado=entregada
+            when: cancelar($entrega)
+            then:
+              - lanza_excepcion: "No se puede cancelar una entrega ya despachada"
+
+      - id: entrega_eliminar_pendiente_no_modifica_stock
+        descripcion: Eliminar una entrega "pendiente" no toca el stock
+        escenarios:
+          - id: delete_pendiente
+            given:
+              - entrega con estado=pendiente
+              - inventario con cantidad=10
+            when: DELETE entregas.destroy($entrega)
+            then:
+              - inventario.cantidad == 10
+
+      - id: entrega_eliminar_entregada_restaura_stock
+        descripcion: Eliminar una entrega "entregada" devuelve el stock al inventario
+        escenarios:
+          - id: delete_entregada
+            given:
+              - entrega con estado=entregada y cantidad=3
+              - inventario con cantidad=7  # ya fue descontado
+            when: DELETE entregas.destroy($entrega)
+            then:
+              - inventario.cantidad == 10  # restaurado
+
+# =============================================================================
+# MÓDULO: MODELOS — Comportamiento del dominio (Unit Tests)
+# =============================================================================
+
+  - nombre: Entrega_Modelo
+    tipo: unit
+    modelo: App\Models\Entrega
+    descripcion: Tests de métodos del modelo sin base de datos
+
+    reglas:
+
+      - id: entrega_is_pendiente
+        descripcion: isPendiente() retorna true solo cuando estado == "pendiente"
+        escenarios:
+          - id: estado_pendiente       → isPendiente() == true
+          - id: estado_entregada       → isPendiente() == false
+          - id: estado_cancelada       → isPendiente() == false
+
+      - id: entrega_is_entregada
+        descripcion: isEntregada() retorna true solo cuando estado == "entregada"
+        escenarios:
+          - id: estado_entregada       → isEntregada() == true
+          - id: estado_pendiente       → isEntregada() == false
+          - id: estado_cancelada       → isEntregada() == false
