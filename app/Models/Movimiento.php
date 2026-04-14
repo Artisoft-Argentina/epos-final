@@ -5,9 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Movimiento extends Model
 {
+    use SoftDeletes;
+
     // Tipos de movimiento (enum)
     const TIPO_ENTRADA_COMPRA    = 'entrada_compra';
     const TIPO_ENTRADA_ASISTENTE = 'entrada_asistente';

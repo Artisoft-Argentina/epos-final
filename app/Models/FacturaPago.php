@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class FacturaPago extends Model
 {
+    use SoftDeletes;
+
     protected $table = 'factura_pagos';
 
     protected $fillable = [

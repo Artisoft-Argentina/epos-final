@@ -134,11 +134,8 @@ class ArticuloController extends Controller
 
     public function destroy(Articulo $articulo)
     {
-        // Eliminar imágenes del storage
-        foreach ($articulo->imagenes as $imagen) {
-            $this->imageService->deleteArticuloImage($imagen->ruta, $imagen->ruta_thumb);
-        }
-
+        // Soft delete: no se borran archivos del storage.
+        // Las imágenes se eliminan físicamente solo al hacer forceDelete.
         $articulo->delete();
 
         return redirect()->route('articulos.index')->with('success', 'Artículo eliminado exitosamente');
