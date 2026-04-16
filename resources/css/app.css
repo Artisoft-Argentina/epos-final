@@ -72,7 +72,7 @@
 
 :root {
     /* Backgrounds & Surfaces */
-    --background: oklch(0.985 0.002 247.839);  /* gray-50 */
+    --background: oklch(0.985 0.002 247.839);  /* gray-50 — main content area */
     --foreground: oklch(0.145 0.005 286.067);  /* gray-900 */
     --card: oklch(1 0 0);                       /* white */
     --card-foreground: oklch(0.145 0.005 286.067); /* gray-900 */
@@ -89,7 +89,7 @@
 
     /* Muted */
     --muted: oklch(0.968 0.003 264.542);        /* gray-100 */
-    --muted-foreground: oklch(0.551 0.027 264.364); /* gray-500 */
+    --muted-foreground: oklch(0.446 0.03 256.802); /* gray-600 */
 
     /* Destructive — red */
     --destructive: oklch(0.577 0.245 27.325);   /* red-600 */
@@ -97,7 +97,7 @@
 
     /* Borders & Input */
     --border: oklch(0.928 0.006 264.531);       /* gray-200 */
-    --input: oklch(0.928 0.006 264.531);        /* gray-200 */
+    --input: oklch(92.8% 0.006 264.531);        /* gray-200 — input borders */
     --ring: oklch(0.527 0.105 172.545);         /* teal-700 */
 
     /* Semantic — success (emerald) */
@@ -125,8 +125,8 @@
     /* Radius — 12px base (DESIGN.md Medium) */
     --radius: 0.75rem;
 
-    /* Sidebar — teal themed */
-    --sidebar: oklch(0.985 0.002 247.839);      /* gray-50 */
+    /* Sidebar — white background */
+    --sidebar: oklch(1 0 0);                    /* white */
     --sidebar-foreground: oklch(0.145 0.005 286.067); /* gray-900 */
     --sidebar-primary: oklch(0.527 0.105 172.545); /* teal-700 */
     --sidebar-primary-foreground: oklch(0.985 0 0);
