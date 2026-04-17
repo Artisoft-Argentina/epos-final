@@ -28,7 +28,7 @@ jobs:
             git pull origin dev
 
             echo "🐳 Rebuilding Docker containers..."
-            make rebuild
+            make prod-build && make prod-up
 
             echo "✅ Deployment completed successfully!"
       
