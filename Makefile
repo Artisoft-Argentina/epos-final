@@ -92,8 +92,11 @@ queue-work:
 
 # ─── PRODUCCIÓN ───────────────────────────────────────────
 
+prod-build:
+	$(COMPOSE_PROD) build
+
 prod-up:
-	$(COMPOSE_PROD) up -d
+	$(COMPOSE_PROD) up -d --force-recreate
 
 prod-down:
 	$(COMPOSE_PROD) down
