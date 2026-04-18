@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Factura {{ $factura->letracomprobante }} {{ str_pad($factura->ptoventa, 4, '0', STR_PAD_LEFT) }}-{{ str_pad($factura->numfactura, 8, '0', STR_PAD_LEFT) }}</title>
+    <title>Factura {{ $factura->voucher_letter }} {{ str_pad($factura->pos_number, 4, '0', STR_PAD_LEFT) }}-{{ str_pad($factura->invoice_number, 8, '0', STR_PAD_LEFT) }}</title>
     <style>
         body { font-family: Arial, sans-serif; font-size: 10px; margin: 0; padding: 10px; }
         .factura-container { width: 100%; max-width: 210mm; }
@@ -42,29 +42,29 @@
                     <img src="{{ storage_path('app/public/' . $empresa->logo) }}" class="logo" alt="Logo">
                 @endif
                 <div class="empresa-datos">
-                    <strong>{{ $empresa->razonsocial }}</strong><br>
-                    Domicilio Comercial: {{ $empresa->domiciliocomercial ?: $empresa->direccion }}<br>
-                    Condición frente al IVA: {{ $empresa->condicioniva }}<br>
-                    @if($empresa->inicioactividades)
-                        Fecha de Inicio de Actividades: {{ $empresa->inicioactividades }}<br>
+                    <strong>{{ $empresa->business_name }}</strong><br>
+                    Domicilio Comercial: {{ $empresa->commercial_address ?: $empresa->address }}<br>
+                    Condición frente al IVA: {{ $empresa->tax_status }}<br>
+                    @if($empresa->activity_start_date)
+                        Fecha de Inicio de Actividades: {{ $empresa->activity_start_date }}<br>
                     @endif
                 </div>
             </div>
             
             <div class="letra-col">
-                <div class="letra-factura">{{ $factura->letracomprobante }}</div>
-                <div class="cod-doc">Cód. {{ $factura->letracomprobante === 'A' ? '01' : ($factura->letracomprobante === 'B' ? '06' : '11') }}</div>
+                <div class="letra-factura">{{ $factura->voucher_letter }}</div>
+                <div class="cod-doc">Cód. {{ $factura->voucher_letter === 'A' ? '01' : ($factura->voucher_letter === 'B' ? '06' : '11') }}</div>
             </div>
             
             <div class="factura-col">
                 <div class="factura-datos">
                     <strong>FACTURA</strong><br>
-                    Punto de Venta: {{ str_pad($factura->ptoventa, 4, '0', STR_PAD_LEFT) }}<br>
-                    Comp. Nro: {{ str_pad($factura->numfactura, 8, '0', STR_PAD_LEFT) }}<br>
-                    Fecha de Emisión: {{ $factura->fecha->format('d/m/Y') }}<br>
-                    <strong>CUIT: {{ $empresa->cuit }}</strong><br>
+                    Punto de Venta: {{ str_pad($factura->pos_number, 4, '0', STR_PAD_LEFT) }}<br>
+                    Comp. Nro: {{ str_pad($factura->invoice_number, 8, '0', STR_PAD_LEFT) }}<br>
+                    Fecha de Emisión: {{ $factura->date->format('d/m/Y') }}<br>
+                    <strong>CUIT: {{ $empresa->tax_id }}</strong><br>
                     Ingresos Brutos: EXENTO<br>
-                    Fecha de Vto. para el pago: {{ $factura->fecha->format('d/m/Y') }}
+                    Fecha de Vto. para el pago: {{ $factura->date->format('d/m/Y') }}
                 </div>
             </div>
         </div>
@@ -73,31 +73,31 @@
         <div class="cliente-section">
             <div class="cliente-row">
                 <div class="cliente-label">Período Facturado Desde:</div>
-                <div class="cliente-value">{{ $factura->fecha->format('d/m/Y') }}</div>
+                <div class="cliente-value">{{ $factura->date->format('d/m/Y') }}</div>
                 <div class="cliente-label">Hasta:</div>
-                <div class="cliente-value">{{ $factura->fecha->format('d/m/Y') }}</div>
+                <div class="cliente-value">{{ $factura->date->format('d/m/Y') }}</div>
                 <div class="cliente-label">Fecha de Vto. para el pago:</div>
-                <div class="cliente-value">{{ $factura->fecha->format('d/m/Y') }}</div>
+                <div class="cliente-value">{{ $factura->date->format('d/m/Y') }}</div>
             </div>
             <div class="cliente-row">
                 <div class="cliente-label">CUIT:</div>
-                <div class="cliente-value">{{ $factura->cliente->documentounico }}</div>
+                <div class="cliente-value">{{ $factura->customer->tax_id }}</div>
                 <div class="cliente-label">Condición de IVA:</div>
-                <div class="cliente-value">{{ $factura->cliente->condicioniva }}</div>
+                <div class="cliente-value">{{ $factura->customer->tax_status }}</div>
             </div>
             <div class="cliente-row">
                 <div class="cliente-label">Apellido y Nombre / Razón Social:</div>
-                <div class="cliente-value" style="width: 75%;">{{ $factura->cliente->razonsocial }}</div>
+                <div class="cliente-value" style="width: 75%;">{{ $factura->customer->business_name }}</div>
             </div>
             <div class="cliente-row">
                 <div class="cliente-label">Domicilio:</div>
-                <div class="cliente-value">{{ $factura->cliente->direccion }}</div>
+                <div class="cliente-value">{{ $factura->customer->address }}</div>
                 <div class="cliente-label">Localidad:</div>
-                <div class="cliente-value">{{ $factura->cliente->localidad }}</div>
+                <div class="cliente-value">{{ $factura->customer->city }}</div>
             </div>
             <div class="cliente-row">
                 <div class="cliente-label">Condición de venta:</div>
-                <div class="cliente-value">{{ $factura->condicionventa }}</div>
+                <div class="cliente-value">{{ $factura->sale_condition }}</div>
             </div>
         </div>
 
@@ -116,19 +116,19 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach($factura->articulos as $articulo)
+                @foreach($factura->products as $product)
                 <tr>
-                    <td>{{ $articulo->codarticulo }}</td>
-                    <td>{{ $articulo->articulo }}</td>
-                    <td class="text-center">{{ number_format($articulo->pivot->cantidad, 2) }}</td>
-                    <td class="text-center">{{ $articulo->medida }}</td>
-                    <td class="text-right">${{ number_format($articulo->pivot->preciounitario, 2) }}</td>
-                    <td class="text-center">{{ number_format($articulo->pivot->bonificacion, 2) }}%</td>
-                    <td class="text-center">{{ $articulo->pivot->alicuota }}%</td>
-                    <td class="text-right">${{ number_format($articulo->pivot->subtotal, 2) }}</td>
+                    <td>{{ $product->sku }}</td>
+                    <td>{{ $product->name }}</td>
+                    <td class="text-center">{{ number_format($product->pivot->quantity, 2) }}</td>
+                    <td class="text-center">{{ $product->unit }}</td>
+                    <td class="text-right">${{ number_format($product->pivot->unit_price, 2) }}</td>
+                    <td class="text-center">{{ number_format($product->pivot->discount, 2) }}%</td>
+                    <td class="text-center">{{ $product->pivot->tax_rate }}%</td>
+                    <td class="text-right">${{ number_format($product->pivot->subtotal, 2) }}</td>
                 </tr>
                 @endforeach
-                @for($i = count($factura->articulos); $i < 10; $i++)
+                @for($i = count($factura->products); $i < 10; $i++)
                 <tr>
                     <td>&nbsp;</td>
                     <td>&nbsp;</td>
@@ -173,7 +173,7 @@
             </div>
             <div class="cae-row">
                 <div class="cae-label">Fecha de Vto. de CAE:</div>
-                <div class="cae-value">{{ $factura->vencimiento_cae ? \Carbon\Carbon::parse($factura->vencimiento_cae)->format('d/m/Y') : 'N/A' }}</div>
+                <div class="cae-value">{{ $factura->cae_expiration ? \Carbon\Carbon::parse($factura->cae_expiration)->format('d/m/Y') : 'N/A' }}</div>
             </div>
             <div style="margin-top: 5px; font-size: 8px;">
                 <strong>Esta Administración Federal no se responsabiliza por los datos ingresados en el detalle de la operación</strong>
