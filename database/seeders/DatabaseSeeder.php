@@ -14,7 +14,7 @@ class DatabaseSeeder extends Seeder
         $this->call(CentralAdminSeeder::class);
 
         // ── TENANT DE EJEMPLO ────────────────────────────────────────────
-        $centralDomain = env('CENTRAL_DOMAIN', 'epos.test');
+        $centralDomain = env('CENTRAL_DOMAIN', 'epos.lvh.me');
         $subdomain     = 'principal.' . $centralDomain;
         $tenantDb      = env('TENANCY_DB_PREFIX', 'epos_') . 'principal';
 

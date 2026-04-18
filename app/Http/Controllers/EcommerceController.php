@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cart;
-use App\Models\Articulo;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -11,110 +11,53 @@ class EcommerceController extends Controller
 {
     public function index()
     {
-        $articulos = Articulo::with(['categoria', 'marca', 'imagenes'])
-            ->paginate(12);
-
-        $articulos->getCollection()->transform(function ($articulo) {
-            if ($articulo->imagenes) {
-                $articulo->imagenes->transform(function ($imagen) {
-                    $imagen->url = asset('storage/' . $imagen->ruta);
-                    return $imagen;
-                });
-            }
-            return $articulo;
-        });
+        $articulos = Product::with(['category', 'brand', 'images'])->paginate(12);
 
         $cartCount = $this->getCartCount();
 
         return Inertia::render('ecommerce/index', compact('articulos', 'cartCount'));
     }
 
-    public function show(Articulo $articulo)
+    public function show(Product $articulo)
     {
-        $articulo->load(['categoria', 'marca', 'imagenes']);
+        $articulo->load(['category', 'brand', 'images']);
 
-        if ($articulo->imagenes) {
-            $articulo->imagenes->transform(function ($imagen) {
-                $imagen->url = asset('storage/' . $imagen->ruta);
-                return $imagen;
-            });
-        }
-
-        $relacionados = Articulo::with(['imagenes'])
-            ->where('categoria_id', $articulo->categoria_id)
+        $relacionados = Product::with(['images'])
+            ->where('category_id', $articulo->category_id)
             ->where('id', '!=', $articulo->id)
             ->limit(4)
             ->get();
-
-        $relacionados->transform(function ($art) {
-            if ($art->imagenes) {
-                $art->imagenes->transform(function ($imagen) {
-                    $imagen->url = asset('storage/' . $imagen->ruta);
-                    return $imagen;
-                });
-            }
-            return $art;
-        });
 
         $cartCount = $this->getCartCount();
 
         return Inertia::render('ecommerce/show', compact('articulo', 'relacionados', 'cartCount'));
     }
 
-    private function getCartCount()
+    public function addToCart(Request $request, Product $articulo)
     {
-        $sessionId = session()->getId();
-        $userId = auth()->id();
-
-        return Cart::where(function($query) use ($userId, $sessionId) {
-                if ($userId) {
-                    $query->where('user_id', $userId);
-                } else {
-                    $query->where('session_id', $sessionId);
-                }
-            })
-            ->sum('quantity');
-    }
-
-    public function addToCart(Request $request, Articulo $articulo)
-    {
-        $request->validate([
-            'quantity' => 'required|integer|min:1',
-        ]);
+        $request->validate(['quantity' => 'required|integer|min:1']);
 
         $sessionId = session()->getId();
-        $userId = auth()->id();
-        
-        $cart = Cart::where('articulo_id', $articulo->id)
-            ->where(function($query) use ($userId, $sessionId) {
-                if ($userId) {
-                    $query->where('user_id', $userId);
-                } else {
-                    $query->where('session_id', $sessionId);
-                }
+        $userId    = auth()->id();
+
+        $cart = Cart::where('product_id', $articulo->id)
+            ->where(function ($q) use ($userId, $sessionId) {
+                $userId ? $q->where('user_id', $userId) : $q->where('session_id', $sessionId);
             })
             ->first();
 
         if ($cart) {
-            $cart->quantity += $request->quantity;
-            $cart->save();
+            $cart->increment('quantity', $request->quantity);
         } else {
             Cart::create([
-                'user_id' => $userId,
+                'user_id'    => $userId,
                 'session_id' => $userId ? null : $sessionId,
-                'articulo_id' => $articulo->id,
-                'quantity' => $request->quantity,
+                'product_id' => $articulo->id,
+                'quantity'   => $request->quantity,
             ]);
         }
 
-        $cartCount = Cart::where(function($query) use ($userId, $sessionId) {
-                if ($userId) {
-                    $query->where('user_id', $userId);
-                } else {
-                    $query->where('session_id', $sessionId);
-                }
-            })
-            ->sum('quantity');
+        $cartCount = $this->getCartCount();
 
         return back()->with(['success' => 'Producto agregado al carrito', 'cartCount' => $cartCount]);
     }
@@ -122,15 +65,11 @@ class EcommerceController extends Controller
     public function cart()
     {
         $sessionId = session()->getId();
-        $userId = auth()->id();
-        
-        $cartItems = Cart::with(['articulo', 'articulo.imagenes'])
-            ->where(function($query) use ($userId, $sessionId) {
-                if ($userId) {
-                    $query->where('user_id', $userId);
-                } else {
-                    $query->where('session_id', $sessionId);
-                }
+        $userId    = auth()->id();
+
+        $cartItems = Cart::with(['product', 'product.images'])
+            ->where(function ($q) use ($userId, $sessionId) {
+                $userId ? $q->where('user_id', $userId) : $q->where('session_id', $sessionId);
             })
             ->get();
 
@@ -140,16 +79,11 @@ class EcommerceController extends Controller
     public function clearCart()
     {
         $sessionId = session()->getId();
-        $userId = auth()->id();
-        
-        Cart::where(function($query) use ($userId, $sessionId) {
-                if ($userId) {
-                    $query->where('user_id', $userId);
-                } else {
-                    $query->where('session_id', $sessionId);
-                }
-            })
-            ->delete();
+        $userId    = auth()->id();
+
+        Cart::where(function ($q) use ($userId, $sessionId) {
+            $userId ? $q->where('user_id', $userId) : $q->where('session_id', $sessionId);
+        })->delete();
 
         return redirect()->route('cart.index')->with('success', 'Carrito vaciado');
     }
@@ -157,11 +91,7 @@ class EcommerceController extends Controller
     public function updateCartItem(Request $request, Cart $cartItem)
     {
         $this->authorizeCartItem($cartItem);
-
-        $request->validate([
-            'quantity' => 'required|integer|min:1',
-        ]);
-
+        $request->validate(['quantity' => 'required|integer|min:1']);
         $cartItem->update(['quantity' => $request->quantity]);
 
         return back()->with('success', 'Cantidad actualizada');
@@ -170,53 +100,46 @@ class EcommerceController extends Controller
     public function removeCartItem(Cart $cartItem)
     {
         $this->authorizeCartItem($cartItem);
-
         $cartItem->delete();
 
         return back()->with('success', 'Producto eliminado del carrito');
     }
 
-    private function authorizeCartItem(Cart $cartItem)
+    private function getCartCount(): int
     {
-        $userId = auth()->id();
+        $sessionId = session()->getId();
+        $userId    = auth()->id();
+
+        return Cart::where(function ($q) use ($userId, $sessionId) {
+            $userId ? $q->where('user_id', $userId) : $q->where('session_id', $sessionId);
+        })->sum('quantity');
+    }
+
+    private function authorizeCartItem(Cart $cartItem): void
+    {
+        $userId    = auth()->id();
         $sessionId = session()->getId();
 
         if ($userId) {
-            if ($cartItem->user_id !== $userId) {
-                abort(403, 'No autorizado');
-            }
+            if ($cartItem->user_id !== $userId) abort(403);
         } else {
-            if ($cartItem->session_id !== $sessionId) {
-                abort(403, 'No autorizado');
-            }
+            if ($cartItem->session_id !== $sessionId) abort(403);
         }
     }
 
-    public function mergeSessionCart($userId, $sessionId)
+    public function mergeSessionCart(int $userId, string $sessionId): void
     {
-        $sessionCartItems = Cart::where('session_id', $sessionId)
-            ->whereNull('user_id')
-            ->get();
+        $sessionItems = Cart::where('session_id', $sessionId)->whereNull('user_id')->get();
 
-        foreach ($sessionCartItems as $sessionItem) {
-            $userCartItem = Cart::where('user_id', $userId)
-                ->where('articulo_id', $sessionItem->articulo_id)
-                ->first();
+        foreach ($sessionItems as $item) {
+            $existing = Cart::where('user_id', $userId)->where('product_id', $item->product_id)->first();
 
-            if ($userCartItem) {
-                $userCartItem->quantity += $sessionItem->quantity;
-                $userCartItem->save();
+            if ($existing) {
+                $existing->increment('quantity', $item->quantity);
+                $item->delete();
             } else {
-                $sessionItem->update([
-                    'user_id' => $userId,
-                    'session_id' => null
-                ]);
+                $item->update(['user_id' => $userId, 'session_id' => null]);
             }
         }
-
-        Cart::where('session_id', $sessionId)
-            ->whereNull('user_id')
-            ->where('user_id', '!=', $userId)
-            ->delete();
     }
 }
