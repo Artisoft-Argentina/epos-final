@@ -4,20 +4,18 @@ namespace App\Services;
 
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Picqer\Barcode\BarcodeGeneratorPNG;
-use App\Models\Articulo;
+use App\Models\Product;
 
 class CodigoService
 {
     public function generarCodigoBarras($articulo)
     {
-        // Usar el código del artículo directamente para el código de barras
-        return $articulo->codarticulo;
+        return $articulo->sku;
     }
 
     public function generarCodigoQR($articulo)
     {
-        // Usar el código del artículo directamente para el QR
-        return $articulo->codarticulo;
+        return $articulo->sku;
     }
 
     public function generarImagenCodigoBarras($codigo)
@@ -38,9 +36,9 @@ class CodigoService
 
     public function buscarArticuloPorCodigo($codigo)
     {
-        return Articulo::where('codigo_barras', $codigo)
-            ->orWhere('codigo_qr', $codigo)
-            ->orWhere('codarticulo', $codigo)
+        return Product::where('barcode', $codigo)
+            ->orWhere('qr_code', $codigo)
+            ->orWhere('sku', $codigo)
             ->first();
     }
 

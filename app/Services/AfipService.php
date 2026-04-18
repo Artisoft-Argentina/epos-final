@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\Factura;
+use App\Models\Sale;
 use App\Services\Afip\AfipWebService;
 
 require_once base_path('vendor/afipsdk/afip.php/src/Afip.php');
@@ -35,7 +35,7 @@ class AfipService
         }
     }
 
-    public function autorizarFactura(Factura $factura)
+    public function autorizarFactura(Sale $factura)
     {
         try {
 
@@ -52,8 +52,8 @@ class AfipService
             $ivaCondReceptor = 5; // Consumidor Final por defecto
             $cbteTipo = 6; // Factura B por defecto
 
-            if ($factura->cliente && $factura->cliente->condicioniva) {
-                $condicion = strtolower($factura->cliente->condicioniva);
+            if ($factura->customer && $factura->customer->tax_status) {
+                $condicion = strtolower($factura->customer->tax_status);
                 if (str_contains($condicion, 'responsable inscripto')) {
                     $ivaCondReceptor = 1;
                     $cbteTipo = 1; // Factura A para Resp. Inscripto
@@ -70,7 +70,7 @@ class AfipService
             }
 
             // Determinar tipo de documento
-            $cuitCliente = $factura->cliente?->cuit ? preg_replace('/[^0-9]/', '', $factura->cliente->cuit) : '';
+            $cuitCliente = $factura->customer?->cuit ? preg_replace('/[^0-9]/', '', $factura->customer->cuit) : '';
             $docTipo = 80; // CUIT por defecto
             $docNro = 0;
 
@@ -86,8 +86,8 @@ class AfipService
             }
 
             // Punto de venta desde factura, InitialSetting o default
-            $empresa = \App\Models\InitialSetting::first();
-            $ptoVta = $factura->ptoventa ?: ($empresa?->puntoventa ?: 1);
+            $empresa = \App\Models\Setting::first();
+            $ptoVta = $factura->pos_number ?: ($empresa?->pos_number ?: 1);
 
             $datos = [
                 'PtoVta' => $ptoVta,
@@ -95,7 +95,7 @@ class AfipService
                 'Concepto' => 1, // 1=Productos, 2=Servicios, 3=Productos y Servicios
                 'DocTipo' => $docTipo,
                 'DocNro' => $docNro,
-                'CbteFch' => $factura->fecha ? $factura->fecha->format('Ymd') : date('Ymd'),
+                'CbteFch' => $factura->date ? $factura->date->format('Ymd') : date('Ymd'),
                 'ImpTotal' => $total,
                 'ImpTotConc' => 0, // No gravado
                 'ImpNeto' => $neto,
@@ -112,10 +112,10 @@ class AfipService
 
             if ($res['success']) {
                 $factura->update([
-                    'numfactura' => $res['numero'],
-                    'cae' => $res['cae'],
-                    'vencimiento_cae' => $res['vencimiento_cae'],
-                    'autorizada_afip' => true,
+                    'invoice_number'  => $res['numero'],
+                    'cae'             => $res['cae'],
+                    'cae_expiration'  => $res['vencimiento_cae'],
+                    'afip_authorized' => true,
                 ]);
 
                 return [
@@ -133,42 +133,32 @@ class AfipService
         }
     }
 
-    private function calcularIvaDesdeArticulos(Factura $factura): array
+    private function calcularIvaDesdeArticulos(Sale $factura): array
     {
         $alicuotasAgrupadas = [];
         $totalNeto = 0;
-        $totalIva = 0;
+        $totalIva  = 0;
 
-        // Mapeo de alícuotas AFIP
-        // 3 = 0%, 4 = 10.5%, 5 = 21%, 6 = 27%, 8 = 5%, 9 = 2.5%
         $mapeoAlicuotas = [
-            '0' => 3,      // 0%
-            '10.5' => 4,   // 10.5%
-            '21' => 5,     // 21%
-            '27' => 6,     // 27%
-            '5' => 8,      // 5%
-            '2.5' => 9,    // 2.5%
+            '0' => 3, '10.5' => 4, '21' => 5, '27' => 6, '5' => 8, '2.5' => 9,
         ];
 
-        foreach ($factura->articulos as $articulo) {
-            $subtotal = floatval($articulo->pivot->subtotal ?? 0);
-            $alicuota = floatval($articulo->pivot->alicuota ?? 21);
+        foreach ($factura->products as $product) {
+            $subtotal  = floatval($product->pivot->subtotal ?? 0);
+            $alicuota  = floatval($product->pivot->tax_rate ?? 21);
+            $factor    = 1 + ($alicuota / 100);
+            $neto      = round($subtotal / $factor, 2);
+            $iva       = round($subtotal - $neto, 2);
 
-            // Calcular neto e IVA del artículo
-            $factor = 1 + ($alicuota / 100);
-            $netoArticulo = round($subtotal / $factor, 2);
-            $ivaArticulo = round($subtotal - $netoArticulo, 2);
+            $totalNeto += $neto;
+            $totalIva  += $iva;
 
-            $totalNeto += $netoArticulo;
-            $totalIva += $ivaArticulo;
-
-            // Agrupar por alícuota
-            $idAlicuota = $mapeoAlicuotas[(string)$alicuota] ?? 5; // Default 21%
-            if (!isset($alicuotasAgrupadas[$idAlicuota])) {
+            $idAlicuota = $mapeoAlicuotas[(string) $alicuota] ?? 5;
+            if (! isset($alicuotasAgrupadas[$idAlicuota])) {
                 $alicuotasAgrupadas[$idAlicuota] = ['BaseImp' => 0, 'Importe' => 0];
             }
-            $alicuotasAgrupadas[$idAlicuota]['BaseImp'] += $netoArticulo;
-            $alicuotasAgrupadas[$idAlicuota]['Importe'] += $ivaArticulo;
+            $alicuotasAgrupadas[$idAlicuota]['BaseImp'] += $neto;
+            $alicuotasAgrupadas[$idAlicuota]['Importe'] += $iva;
         }
 
         // Si no hay artículos, calcular desde el total

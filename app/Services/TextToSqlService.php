@@ -90,25 +90,25 @@ class TextToSqlService
         $prompt = "SQL MySQL. Solo el query.{$context}
 
 TABLAS:
-articulos: id, articulo, precio, marca_id, categoria_id
-clientes: id, razonsocial, documentounico
-facturas: id, cliente_id, fecha, total
-articulo_factura: factura_id, articulo_id, cantidad
-marcas: id, marca
-categorias: id, categoria
+products: id, sku, name, price, brand_id, category_id
+customers: id, business_name, tax_id
+sales: id, customer_id, date, total
+sale_products: sale_id, product_id, quantity
+brands: id, name
+categories: id, name
 
 EJEMPLOS:
 P: cuantos clientes
-R: SELECT COUNT(*) FROM clientes;
+R: SELECT COUNT(*) FROM customers;
 
 P: cuantos productos tengo
-R: SELECT COUNT(*) FROM articulos;
+R: SELECT COUNT(*) FROM products;
 
 P: cliente que mas compro
-R: SELECT clientes.razonsocial, SUM(facturas.total) as total FROM clientes JOIN facturas ON clientes.id=facturas.cliente_id GROUP BY clientes.id, clientes.razonsocial ORDER BY total DESC LIMIT 1;
+R: SELECT customers.business_name, SUM(sales.total) as total FROM customers JOIN sales ON customers.id=sales.customer_id GROUP BY customers.id, customers.business_name ORDER BY total DESC LIMIT 1;
 
 P: total de ventas
-R: SELECT SUM(total) as total FROM facturas;
+R: SELECT SUM(total) as total FROM sales;
 
 P: {$question}
 R:";
@@ -155,65 +155,65 @@ R:";
     {
         $schema = "ESQUEMA DE BASE DE DATOS MYSQL:\n\n";
 
-        $schema .= "TABLA: articulos\n";
+        $schema .= "TABLA: products\n";
         $schema .= "- id (PK)\n";
-        $schema .= "- codarticulo (código del artículo)\n";
-        $schema .= "- articulo (nombre del producto)\n";
-        $schema .= "- descripcion\n";
-        $schema .= "- precio\n";
-        $schema .= "- alicuota (IVA)\n";
-        $schema .= "- marca_id (FK a marcas.id)\n";
-        $schema .= "- categoria_id (FK a categorias.id)\n\n";
+        $schema .= "- sku (código del artículo)\n";
+        $schema .= "- name (nombre del producto)\n";
+        $schema .= "- description\n";
+        $schema .= "- price\n";
+        $schema .= "- tax_rate (IVA)\n";
+        $schema .= "- brand_id (FK a brands.id)\n";
+        $schema .= "- category_id (FK a categories.id)\n\n";
 
-        $schema .= "TABLA: clientes\n";
+        $schema .= "TABLA: customers\n";
         $schema .= "- id (PK)\n";
-        $schema .= "- razonsocial\n";
-        $schema .= "- documentounico (CUIT)\n";
-        $schema .= "- condicioniva\n";
-        $schema .= "- direccion\n";
-        $schema .= "- telefono\n";
+        $schema .= "- business_name\n";
+        $schema .= "- tax_id (CUIT)\n";
+        $schema .= "- tax_status\n";
+        $schema .= "- address\n";
+        $schema .= "- phone\n";
         $schema .= "- email\n\n";
 
-        $schema .= "TABLA: facturas\n";
+        $schema .= "TABLA: sales\n";
         $schema .= "- id (PK)\n";
-        $schema .= "- cliente_id (FK a clientes.id)\n";
-        $schema .= "- fecha (DATE)\n";
+        $schema .= "- customer_id (FK a customers.id)\n";
+        $schema .= "- date (DATE)\n";
         $schema .= "- total (DECIMAL)\n";
-        $schema .= "- autorizada_afip (BOOLEAN)\n";
+        $schema .= "- afip_authorized (BOOLEAN)\n";
         $schema .= "- cae\n";
-        $schema .= "- vencimiento_cae\n\n";
+        $schema .= "- cae_expiration\n\n";
 
-        $schema .= "TABLA: articulo_factura (relación muchos a muchos)\n";
-        $schema .= "- factura_id (FK a facturas.id)\n";
-        $schema .= "- articulo_id (FK a articulos.id)\n";
-        $schema .= "- cantidad\n";
-        $schema .= "- precio\n";
+        $schema .= "TABLA: sale_products (relación muchos a muchos)\n";
+        $schema .= "- sale_id (FK a sales.id)\n";
+        $schema .= "- product_id (FK a products.id)\n";
+        $schema .= "- quantity\n";
+        $schema .= "- unit_price\n";
         $schema .= "- subtotal\n\n";
 
-        $schema .= "TABLA: inventarios\n";
+        $schema .= "TABLA: stocks\n";
         $schema .= "- id (PK)\n";
-        $schema .= "- articulo_id (FK a articulos.id)\n";
-        $schema .= "- cantidad\n\n";
+        $schema .= "- product_id (FK a products.id)\n";
+        $schema .= "- quantity\n\n";
 
-        $schema .= "TABLA: categorias\n";
+        $schema .= "TABLA: categories\n";
         $schema .= "- id (PK)\n";
-        $schema .= "- categoria (nombre)\n\n";
+        $schema .= "- name (nombre)\n\n";
 
-        $schema .= "TABLA: marcas\n";
+        $schema .= "TABLA: brands\n";
         $schema .= "- id (PK)\n";
-        $schema .= "- marca (nombre)\n\n";
+        $schema .= "- name (nombre)\n\n";
 
-        $schema .= "TABLA: presupuestos\n";
+        $schema .= "TABLA: quotes\n";
         $schema .= "- id (PK)\n";
-        $schema .= "- cliente_id (FK a clientes.id)\n";
-        $schema .= "- fecha\n";
+        $schema .= "- customer_id (FK a customers.id)\n";
+        $schema .= "- date\n";
         $schema .= "- total\n\n";
 
         $schema .= "NOTAS IMPORTANTES:\n";
-        $schema .= "- Para obtener el nombre de la marca: JOIN con tabla marcas usando articulos.marca_id = marcas.id\n";
-        $schema .= "- Para obtener el nombre de la categoría: JOIN con tabla categorias usando articulos.categoria_id = categorias.id\n";
-        $schema .= "- La tabla articulos NO tiene columna 'marca' ni 'categoria', solo marca_id y categoria_id\n";
-        $schema .= "- Para ventas: usar articulo_factura que relaciona facturas con articulos\n";
+        $schema .= "- Para obtener el nombre de la marca: JOIN con tabla brands usando products.brand_id = brands.id\n";
+        $schema .= "- Para obtener el nombre de la categoría: JOIN con tabla categories usando products.category_id = categories.id\n";
+        $schema .= "- La tabla products NO tiene columna 'brand' ni 'category', solo brand_id y category_id\n";
+        $schema .= "- Para ventas: usar sale_products que relaciona sales con products\n";
 
         return $schema;
     }

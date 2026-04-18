@@ -2,7 +2,7 @@
 
 namespace App\Services\Functions;
 
-use App\Models\Cliente;
+use App\Models\Customer;
 
 class SearchClientFunction
 {
@@ -11,13 +11,13 @@ class SearchClientFunction
         $query = $params['query'] ?? '';
 
         // Buscar sin acentos para mayor flexibilidad
-        $clientes = Cliente::where('razonsocial', 'like', "%{$query}%")
-            ->orWhere('documentounico', 'like', "%{$query}%")
-            ->orWhereRaw('LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(razonsocial, "á", "a"), "é", "e"), "í", "i"), "ó", "o"), "ú", "u")) LIKE ?', ["%" . strtolower($query) . "%"])
+        $customers = Customer::where('business_name', 'like', "%{$query}%")
+            ->orWhere('tax_id', 'like', "%{$query}%")
+            ->orWhereRaw('LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(business_name, "á", "a"), "é", "e"), "í", "i"), "ó", "o"), "ú", "u")) LIKE ?', ["%" . strtolower($query) . "%"])
             ->limit(5)
-            ->get(['id', 'razonsocial', 'documentounico', 'email']);
+            ->get(['id', 'business_name', 'tax_id', 'email']);
 
-        if ($clientes->isEmpty()) {
+        if ($customers->isEmpty()) {
             return [
                 'success' => false,
                 'message' => "No se encontraron clientes con '{$query}'",
@@ -26,11 +26,11 @@ class SearchClientFunction
 
         return [
             'success' => true,
-            'clientes' => $clientes->map(fn($c) => [
-                'id' => $c->id,
-                'nombre' => $c->razonsocial,
-                'documento' => $c->documentounico,
-                'email' => $c->email,
+            'clientes' => $customers->map(fn($c) => [
+                'id'        => $c->id,
+                'nombre'    => $c->business_name,
+                'documento' => $c->tax_id,
+                'email'     => $c->email,
             ])->toArray(),
         ];
     }

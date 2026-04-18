@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use App\Models\Inventario;
-use App\Models\Movimiento;
+use App\Models\Stock;
+use App\Models\StockMovement;
 use Illuminate\Database\Eloquent\Model;
 
 class MovimientoService
@@ -23,26 +23,26 @@ class MovimientoService
      * @param  string|null  $motivo      Texto libre para ajustes manuales
      */
     public function registrar(
-        Inventario $inventario,
+        Stock $inventario,
         string $tipo,
         int $cantidad,
         ?Model $referencia = null,
         ?int $userId = null,
         ?string $motivo = null
-    ): Movimiento {
-        if (! array_key_exists($tipo, Movimiento::TIPOS)) {
+    ): StockMovement {
+        if (! array_key_exists($tipo, StockMovement::TYPES)) {
             throw new \InvalidArgumentException("Tipo de movimiento inválido: {$tipo}");
         }
 
-        return Movimiento::create([
-            'inventario_id'      => $inventario->id,
+        return StockMovement::create([
+            'stock_id'           => $inventario->id,
             'user_id'            => $userId ?? auth()->id(),
-            'tipo'               => $tipo,
-            'cantidad'           => abs($cantidad),
-            'referenciable_type' => $referencia ? get_class($referencia) : null,
-            'referenciable_id'   => $referencia?->id,
-            'motivo'             => $motivo,
-            'fecha'              => now()->toDateString(),
+            'type'               => $tipo,
+            'quantity'           => abs($cantidad),
+            'referenceable_type' => $referencia ? get_class($referencia) : null,
+            'referenceable_id'   => $referencia?->id,
+            'reason'             => $motivo,
+            'date'               => now()->toDateString(),
         ]);
     }
 }

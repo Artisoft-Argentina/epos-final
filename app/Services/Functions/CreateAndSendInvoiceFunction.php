@@ -2,8 +2,8 @@
 
 namespace App\Services\Functions;
 
-use App\Models\Cliente;
-use App\Models\Articulo;
+use App\Models\Customer;
+use App\Models\Product;
 
 class CreateAndSendInvoiceFunction
 {
@@ -23,41 +23,33 @@ class CreateAndSendInvoiceFunction
                 ];
             }
 
-            $cliente = Cliente::where('razonsocial', 'LIKE', "%{$clienteTerm}%")
-                ->orWhere('documentounico', 'LIKE', "%{$clienteTerm}%")
+            $customer = Customer::where('business_name', 'LIKE', "%{$clienteTerm}%")
+                ->orWhere('tax_id', 'LIKE', "%{$clienteTerm}%")
                 ->first();
 
-            if (!$cliente) {
-                return [
-                    'success' => false,
-                    'message' => "Cliente '{$clienteTerm}' no encontrado",
-                    'steps' => $steps,
-                ];
+            if (!$customer) {
+                return ['success' => false, 'message' => "Cliente '{$clienteTerm}' no encontrado", 'steps' => $steps];
             }
-            $steps[] = "✓ Cliente encontrado: {$cliente->razonsocial}";
+            $steps[] = "✓ Cliente encontrado: {$customer->business_name}";
 
             // Paso 2: Buscar productos
             $steps[] = 'Buscando productos...';
             $items = [];
             foreach ($params['productos'] as $prod) {
-                $articulo = Articulo::where('articulo', 'LIKE', "%{$prod['nombre']}%")
-                    ->orWhere('codarticulo', 'LIKE', "%{$prod['nombre']}%")
+                $product = Product::where('name', 'LIKE', "%{$prod['nombre']}%")
+                    ->orWhere('sku', 'LIKE', "%{$prod['nombre']}%")
                     ->first();
 
-                if (!$articulo) {
-                    return [
-                        'success' => false,
-                        'message' => "Producto '{$prod['nombre']}' no encontrado",
-                        'steps' => $steps,
-                    ];
+                if (!$product) {
+                    return ['success' => false, 'message' => "Producto '{$prod['nombre']}' no encontrado", 'steps' => $steps];
                 }
 
                 $items[] = [
-                    'articulo_id' => $articulo->id,
-                    'cantidad' => $prod['cantidad'] ?? 1,
-                    'precio' => $prod['precio'] ?? null,
+                    'articulo_id' => $product->id,
+                    'cantidad'    => $prod['cantidad'] ?? 1,
+                    'precio'      => $prod['precio'] ?? null,
                 ];
-                $steps[] = "✓ Producto encontrado: {$articulo->articulo} x{$prod['cantidad']}";
+                $steps[] = "✓ Producto encontrado: {$product->name} x{$prod['cantidad']}";
             }
 
             // Paso 3: Crear venta
@@ -103,15 +95,15 @@ class CreateAndSendInvoiceFunction
             }
 
             return [
-                'success' => true,
-                'factura_id' => $saleResult['factura_id'],
-                'numero' => $saleResult['numero'],
-                'cliente' => $cliente->razonsocial,
-                'total' => $saleResult['total'],
-                'cae' => $afipResult['cae'],
-                'email_enviado' => $afipResult['email_enviado'] ?? false,
-                'steps' => $steps,
-                'message' => "Proceso completado: Factura #{$saleResult['numero']} creada, autorizada (CAE: {$afipResult['cae']}) y enviada a {$cliente->email}",
+                'success'      => true,
+                'factura_id'   => $saleResult['factura_id'],
+                'numero'       => $saleResult['numero'],
+                'cliente'      => $customer->business_name,
+                'total'        => $saleResult['total'],
+                'cae'          => $afipResult['cae'],
+                'email_enviado'=> $afipResult['email_enviado'] ?? false,
+                'steps'        => $steps,
+                'message'      => "Proceso completado: Factura #{$saleResult['numero']} creada, autorizada (CAE: {$afipResult['cae']}) y enviada a {$customer->email}",
             ];
 
         } catch (\Exception $e) {

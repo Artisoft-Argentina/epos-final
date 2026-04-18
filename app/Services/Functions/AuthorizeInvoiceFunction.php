@@ -2,7 +2,7 @@
 
 namespace App\Services\Functions;
 
-use App\Models\Factura;
+use App\Models\Sale;
 use App\Services\AfipService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -23,66 +23,52 @@ class AuthorizeInvoiceFunction
                 ];
             }
 
-            $factura = Factura::with(['cliente', 'articulos'])->find($facturaId);
-            if (!$factura) {
-                return [
-                    'success' => false,
-                    'message' => "Factura con ID {$facturaId} no encontrada",
-                ];
+            $sale = Sale::with(['customer', 'products'])->find($facturaId);
+            if (!$sale) {
+                return ['success' => false, 'message' => "Factura con ID {$facturaId} no encontrada"];
             }
 
-            if ($factura->autorizada_afip) {
-                return [
-                    'success' => false,
-                    'message' => "La factura ya está autorizada en AFIP (CAE: {$factura->cae})",
-                ];
+            if ($sale->afip_authorized) {
+                return ['success' => false, 'message' => "La factura ya está autorizada en AFIP (CAE: {$sale->cae})"];
             }
 
             DB::beginTransaction();
 
-            // Autorizar en AFIP
             $afipService = new AfipService();
-            $resultado = $afipService->autorizarFactura($factura);
+            $resultado   = $afipService->autorizarFactura($sale);
 
             if (!$resultado['success']) {
                 DB::rollBack();
-                return [
-                    'success' => false,
-                    'message' => 'Error al autorizar en AFIP: ' . $resultado['message'],
-                ];
+                return ['success' => false, 'message' => 'Error al autorizar en AFIP: ' . $resultado['message']];
             }
 
-            // Actualizar factura con datos de AFIP
-            $factura->update([
-                'cae' => $resultado['cae'],
-                'vencimiento_cae' => $resultado['vencimiento'],
-                'autorizada_afip' => true,
+            $sale->update([
+                'cae'            => $resultado['cae'],
+                'cae_expiration' => $resultado['vencimiento'],
+                'afip_authorized'=> true,
             ]);
 
             DB::commit();
 
             $response = [
-                'success' => true,
-                'factura_id' => $factura->id,
-                'numero' => $factura->numfactura,
-                'cae' => $resultado['cae'],
-                'vencimiento_cae' => $resultado['vencimiento'],
-                'message' => "Factura #{$factura->numfactura} autorizada en AFIP. CAE: {$resultado['cae']}",
+                'success'        => true,
+                'factura_id'     => $sale->id,
+                'numero'         => $sale->invoice_number,
+                'cae'            => $resultado['cae'],
+                'vencimiento_cae'=> $resultado['vencimiento'],
+                'message'        => "Factura #{$sale->invoice_number} autorizada en AFIP. CAE: {$resultado['cae']}",
             ];
 
-            // Enviar email si se solicita
-            if ($enviarEmail && $factura->cliente->email) {
+            if ($enviarEmail && $sale->customer->email) {
                 try {
-                    $pdf = Pdf::loadView('facturas.pdf', ['factura' => $factura]);
-                    
-                    Mail::send('emails.factura', ['factura' => $factura], function ($message) use ($factura, $pdf) {
-                        $message->to($factura->cliente->email)
-                            ->subject("Factura #{$factura->numfactura} - " . config('app.name'))
-                            ->attachData($pdf->output(), "factura_{$factura->numfactura}.pdf");
+                    $pdf = Pdf::loadView('facturas.pdf', ['factura' => $sale]);
+                    Mail::send('emails.factura', ['factura' => $sale], function ($message) use ($sale, $pdf) {
+                        $message->to($sale->customer->email)
+                            ->subject("Factura #{$sale->invoice_number} - " . config('app.name'))
+                            ->attachData($pdf->output(), "factura_{$sale->invoice_number}.pdf");
                     });
-
                     $response['email_enviado'] = true;
-                    $response['message'] .= " Email enviado a {$factura->cliente->email}";
+                    $response['message'] .= " Email enviado a {$sale->customer->email}";
                 } catch (\Exception $e) {
                     $response['email_enviado'] = false;
                     $response['message'] .= " (Error al enviar email: {$e->getMessage()})";

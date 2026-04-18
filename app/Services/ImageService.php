@@ -19,49 +19,37 @@ class ImageService
     /**
      * Procesa una imagen: redimensiona y crea thumbnail
      */
-    public function processArticuloImage(UploadedFile $file, int $articuloId, int $index): array
+    public function processProductImage(UploadedFile $file, int $productId, int $index): array
     {
         $extension = $file->getClientOriginalExtension();
         $timestamp = time();
 
-        // Nombres de archivo
-        $nombreArchivo = "{$timestamp}_{$index}.{$extension}";
-        $nombreThumb = "{$timestamp}_{$index}_thumb.{$extension}";
+        $filename      = "{$timestamp}_{$index}.{$extension}";
+        $thumbFilename = "{$timestamp}_{$index}_thumb.{$extension}";
+        $directory     = "products/{$productId}";
 
-        // Directorio
-        $directorio = "articulos/{$articuloId}";
+        $main = Image::read($file->getRealPath());
+        $main->scaleDown(self::MAIN_MAX_WIDTH, self::MAIN_MAX_HEIGHT);
+        $path = "{$directory}/{$filename}";
+        Storage::disk('public')->put($path, $main->toJpeg(85));
 
-        // Procesar imagen principal
-        $imagenPrincipal = Image::read($file->getRealPath());
-        $imagenPrincipal->scaleDown(self::MAIN_MAX_WIDTH, self::MAIN_MAX_HEIGHT);
-
-        // Guardar imagen principal
-        $rutaPrincipal = "{$directorio}/{$nombreArchivo}";
-        Storage::disk('public')->put($rutaPrincipal, $imagenPrincipal->toJpeg(85));
-
-        // Crear y guardar thumbnail
-        $thumbnail = Image::read($file->getRealPath());
-        $thumbnail->cover(self::THUMB_WIDTH, self::THUMB_HEIGHT);
-
-        $rutaThumb = "{$directorio}/{$nombreThumb}";
-        Storage::disk('public')->put($rutaThumb, $thumbnail->toJpeg(80));
+        $thumb = Image::read($file->getRealPath());
+        $thumb->cover(self::THUMB_WIDTH, self::THUMB_HEIGHT);
+        $thumbPath = "{$directory}/{$thumbFilename}";
+        Storage::disk('public')->put($thumbPath, $thumb->toJpeg(80));
 
         return [
-            'nombre_archivo' => $nombreArchivo,
-            'ruta' => $rutaPrincipal,
-            'ruta_thumb' => $rutaThumb,
+            'filename'       => $filename,
+            'path'           => $path,
+            'thumbnail_path' => $thumbPath,
         ];
     }
 
-    /**
-     * Elimina imagen y su thumbnail
-     */
-    public function deleteArticuloImage(string $ruta, ?string $rutaThumb = null): void
+    public function deleteProductImage(string $path, ?string $thumbnailPath = null): void
     {
-        Storage::disk('public')->delete($ruta);
-
-        if ($rutaThumb) {
-            Storage::disk('public')->delete($rutaThumb);
+        Storage::disk('public')->delete($path);
+        if ($thumbnailPath) {
+            Storage::disk('public')->delete($thumbnailPath);
         }
     }
 }
