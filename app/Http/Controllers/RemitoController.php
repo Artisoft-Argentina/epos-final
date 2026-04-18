@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Remito;
+use App\Models\Order;
 use App\Models\Supplier;
-use App\Models\Articulo;
+use App\Models\Product;
+use App\Models\Stock;
+use App\Models\StockMovement;
 use App\Services\MovimientoService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -12,10 +14,11 @@ use Inertia\Inertia;
 class RemitoController extends Controller
 {
     public function __construct(private MovimientoService $movimientoService) {}
+
     public function index()
     {
         return Inertia::render('Remitos/Index', [
-            'remitos' => Remito::with(['supplier', 'detalles'])->orderBy('fecha', 'desc')->get(),
+            'remitos' => Order::with(['supplier', 'products'])->orderBy('date', 'desc')->get(),
         ]);
     }
 
@@ -29,107 +32,102 @@ class RemitoController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'ptoventa' => 'required|integer',
-            'numremito' => 'required|integer',
-            'fecha' => 'required|date',
-            'supplier_id' => 'required|exists:suppliers,id',
-            'detalles' => 'required|array|min:1',
-            'detalles.*.articulo_id' => 'required|exists:articulos,id',
-            'detalles.*.cantidad' => 'required|integer|min:1',
-            'detalles.*.preciounitario' => 'required|numeric|min:0',
+            'pos_number'                    => 'required|integer',
+            'order_number'                  => 'required|integer',
+            'date'                          => 'required|date',
+            'supplier_id'                   => 'required|exists:suppliers,id',
+            'detalles'                      => 'required|array|min:1',
+            'detalles.*.articulo_id'        => 'required|exists:products,id',
+            'detalles.*.cantidad'           => 'required|integer|min:1',
+            'detalles.*.preciounitario'     => 'required|numeric|min:0',
         ]);
 
-        $remito = Remito::create([
-            'ptoventa' => $request->ptoventa,
-            'numremito' => $request->numremito,
-            'fecha' => $request->fecha,
-            'supplier_id' => $request->supplier_id,
-            'user_id' => auth()->id(),
-            'recargo' => 0,
-            'bonificacion' => 0,
-            'subtotal' => 0,
-            'total' => 0,
+        $order = Order::create([
+            'pos_number'    => $request->pos_number,
+            'order_number'  => $request->order_number,
+            'date'          => $request->date,
+            'supplier_id'   => $request->supplier_id,
+            'user_id'       => auth()->id(),
+            'surcharge'     => 0,
+            'discount'      => 0,
+            'subtotal'      => 0,
+            'total'         => 0,
         ]);
 
         $subtotal = 0;
         foreach ($request->detalles as $detalle) {
-            $articulo = Articulo::find($detalle['articulo_id']);
-            $subtotalDetalle = $detalle['cantidad'] * $detalle['preciounitario'];
-            
-            $remito->detalles()->create([
-                'codprov' => $articulo->codprov,
-                'codarticulo' => $articulo->codarticulo,
-                'articulo' => $articulo->articulo,
-                'medida' => $articulo->medida,
-                'cantidad' => $detalle['cantidad'],
-                'bonificacion' => 0,
-                'alicuota' => $articulo->alicuota,
-                'preciounitario' => $detalle['preciounitario'],
-                'subtotal' => $subtotalDetalle,
-                'articulo_id' => $detalle['articulo_id'],
+            $product      = Product::find($detalle['articulo_id']);
+            $itemSubtotal = $detalle['cantidad'] * $detalle['preciounitario'];
+
+            $order->products()->create([
+                'supplier_code' => $product->supplier_code,
+                'sku'           => $product->sku,
+                'name'          => $product->name,
+                'unit'          => $product->unit,
+                'quantity'      => $detalle['cantidad'],
+                'discount'      => 0,
+                'tax_rate'      => $product->tax_rate,
+                'unit_price'    => $detalle['preciounitario'],
+                'subtotal'      => $itemSubtotal,
+                'product_id'    => $detalle['articulo_id'],
             ]);
-            $subtotal += $subtotalDetalle;
+
+            $subtotal += $itemSubtotal;
         }
 
-        $remito->update([
-            'subtotal' => $subtotal,
-            'total' => $subtotal,
-        ]);
+        $order->update(['subtotal' => $subtotal, 'total' => $subtotal]);
 
-        return redirect()->route('remitos.index')->with('success', 'Remito creado exitosamente');
+        return redirect()->route('remitos.index')->with('success', 'Orden creada exitosamente');
     }
 
-    public function show(Remito $remito)
+    public function show(Order $remito)
     {
         return Inertia::render('Remitos/Show', [
-            'remito' => $remito->load(['supplier', 'detalles.articulo']),
+            'remito' => $remito->load(['supplier', 'products.product']),
         ]);
     }
 
-    public function destroy(Remito $remito)
+    public function destroy(Order $remito)
     {
         $remito->delete();
-        return redirect()->route('remitos.index')->with('success', 'Remito eliminado exitosamente');
+
+        return redirect()->route('remitos.index')->with('success', 'Orden eliminada exitosamente');
     }
 
     public function getArticulosBySupplier($supplierId)
     {
-        $articulos = Articulo::where('supplier_id', $supplierId)
-            ->with(['categoria', 'marca'])
-            ->get();
-        
-        return response()->json($articulos);
+        return response()->json(
+            Product::where('supplier_id', $supplierId)->with(['category', 'brand'])->get()
+        );
     }
 
-    public function convertirAInventario(Remito $remito)
+    public function convertirAInventario(Order $remito)
     {
-        if ($remito->convertido_inventario) {
-            return redirect()->back()->with('error', 'Este remito ya fue convertido a inventario');
+        if ($remito->converted_to_inventory) {
+            return redirect()->back()->with('error', 'Esta orden ya fue convertida a inventario');
         }
 
-        foreach ($remito->detalles as $detalle) {
-            $inventario = \App\Models\Inventario::where('articulo_id', $detalle->articulo_id)->first();
+        foreach ($remito->products as $detail) {
+            $stock = Stock::where('product_id', $detail->product_id)->first();
 
-            if ($inventario) {
-                $inventario->increment('cantidad', $detalle->cantidad);
+            if ($stock) {
+                $stock->increment('quantity', $detail->quantity);
             } else {
-                $inventario = \App\Models\Inventario::create([
-                    'articulo_id' => $detalle->articulo_id,
-                    'cantidad' => $detalle->cantidad,
+                $stock = Stock::create([
+                    'product_id'  => $detail->product_id,
+                    'quantity'    => $detail->quantity,
                     'supplier_id' => $remito->supplier_id,
                 ]);
             }
 
             $this->movimientoService->registrar(
-                $inventario,
-                \App\Models\Movimiento::TIPO_ENTRADA_COMPRA,
-                $detalle->cantidad,
-                $remito
+                $stock, StockMovement::TYPE_PURCHASE_ENTRY,
+                $detail->quantity, $remito
             );
         }
 
-        $remito->update(['convertido_inventario' => true]);
+        $remito->update(['converted_to_inventory' => true]);
 
-        return redirect()->back()->with('success', 'Remito convertido a inventario exitosamente');
+        return redirect()->back()->with('success', 'Orden convertida a inventario exitosamente');
     }
 }

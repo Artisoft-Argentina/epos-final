@@ -2,67 +2,59 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Factura;
-use App\Models\FacturaPago;
+use App\Models\Sale;
+use App\Models\SalePayment;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class PagoController extends Controller
 {
-    public function create(Factura $factura)
+    public function create(Sale $factura)
     {
         return Inertia::render('Pagos/Create', [
-            'factura' => $factura->load(['cliente', 'pagos']),
+            'factura' => $factura->load(['customer', 'payments']),
         ]);
     }
 
-    public function store(Request $request, Factura $factura)
+    public function store(Request $request, Sale $factura)
     {
-        $saldoPendiente = $factura->total - $factura->pagos->sum('monto');
+        $pendingBalance = $factura->total - $factura->payments->sum('amount');
 
         $request->validate([
-            'monto' => 'required|numeric|min:1|max:' . $saldoPendiente,
-            'metodo_pago' => 'required|string',
-            'fecha_pago' => 'required|date',
-            'observaciones' => 'nullable|string',
+            'amount'         => 'required|numeric|min:1|max:' . $pendingBalance,
+            'payment_method' => 'required|string',
+            'payment_date'   => 'required|date',
+            'notes'          => 'nullable|string',
         ]);
 
-        FacturaPago::create([
-            'factura_id' => $factura->id,
-            'monto' => $request->monto,
-            'metodo_pago' => $request->metodo_pago,
-            'fecha_pago' => $request->fecha_pago,
-            'observaciones' => $request->observaciones,
+        SalePayment::create([
+            'sale_id'        => $factura->id,
+            'amount'         => $request->amount,
+            'payment_method' => $request->payment_method,
+            'payment_date'   => $request->payment_date,
+            'notes'          => $request->notes,
         ]);
 
-        // Recargar pagos y actualizar estado de factura
-        $factura->load('pagos');
-        $totalPagado = $factura->pagos->sum('monto');
-        $saldoPendiente = $factura->total - $totalPagado;
+        $factura->load('payments');
+        $totalPaid      = $factura->payments->sum('amount');
+        $pendingBalance = $factura->total - $totalPaid;
 
-        $factura->update([
-            'pagada' => $saldoPendiente <= 0 ? 'SI' : 'NO',
-        ]);
+        $factura->update(['payment_status' => $pendingBalance <= 0 ? 'SI' : 'NO']);
 
-        return redirect()->route('ventas.index')
-                        ->with('success', 'Pago registrado exitosamente');
+        return redirect()->route('ventas.index')->with('success', 'Pago registrado exitosamente');
     }
 
-    public function destroy(FacturaPago $pago)
+    public function destroy(SalePayment $pago)
     {
-        $factura = $pago->factura;
+        $sale = $pago->sale;
         $pago->delete();
 
-        // Recargar pagos y actualizar estado de factura
-        $factura->load('pagos');
-        $totalPagado = $factura->pagos->sum('monto');
-        $saldoPendiente = $factura->total - $totalPagado;
+        $sale->load('payments');
+        $totalPaid      = $sale->payments->sum('amount');
+        $pendingBalance = $sale->total - $totalPaid;
 
-        $factura->update([
-            'pagada' => $saldoPendiente <= 0 ? 'SI' : 'NO',
-        ]);
+        $sale->update(['payment_status' => $pendingBalance <= 0 ? 'SI' : 'NO']);
 
-        return redirect()->route('ventas.index')
-                        ->with('success', 'Pago eliminado exitosamente');
+        return redirect()->route('ventas.index')->with('success', 'Pago eliminado exitosamente');
     }
 }

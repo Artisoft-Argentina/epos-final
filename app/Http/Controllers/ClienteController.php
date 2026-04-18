@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Cliente;
-use App\Models\Localidad;
-use App\Models\Provincia;
+use App\Models\Customer;
+use App\Models\City;
+use App\Models\State;
 use App\Services\Afip\AfipWebService;
 use App\Traits\HasToastNotifications;
 use Illuminate\Http\Request;
@@ -15,13 +15,13 @@ class ClienteController extends Controller
     use HasToastNotifications;
     public function index(Request $request)
     {
-        $query = Cliente::query();
+        $query = Customer::query();
         
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
-                $q->where('razonsocial', 'like', "%{$search}%")
-                  ->orWhere('documentounico', 'like', "%{$search}%")
+                $q->where('business_name', 'like', "%{$search}%")
+                  ->orWhere('tax_id', 'like', "%{$search}%")
                   ->orWhere('email', 'like', "%{$search}%");
             });
         }
@@ -38,51 +38,51 @@ class ClienteController extends Controller
     public function create()
     {
         return Inertia::render('Clientes/Create', [
-            'provincias' => Provincia::all(),
-            'localidades' => Localidad::with('provincia')->get(),
+            'provincias' => State::all(),
+            'localidades' => City::with('state')->get(),
         ]);
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'razonsocial' => 'required|string|max:255',
-            'documentounico' => 'required|string|max:20',
-            'direccion' => 'required|string|max:255',
-            'telefono' => 'required|string|max:20',
+            'business_name' => 'required|string|max:255',
+            'tax_id' => 'required|string|max:20',
+            'address' => 'required|string|max:255',
+            'phone' => 'required|string|max:20',
             'email' => 'nullable|email',
-            'codigopostal' => 'required|string|max:10',
-            'localidad' => 'required|string|max:100',
-            'provincia' => 'required|string|max:100',
-            'condicioniva' => 'nullable|string|max:50',
+            'zip_code' => 'required|string|max:10',
+            'city' => 'required|string|max:100',
+            'state' => 'required|string|max:100',
+            'tax_status' => 'nullable|string|max:50',
         ]);
 
-        Cliente::create($request->all());
+        Customer::create($request->all());
 
         return redirect()->route('clientes.index')->with('success', 'Cliente creado exitosamente');
     }
 
-    public function edit(Cliente $cliente)
+    public function edit(Customer $cliente)
     {
         return Inertia::render('Clientes/Edit', [
             'cliente' => $cliente,
-            'provincias' => Provincia::all(),
-            'localidades' => Localidad::with('provincia')->get(),
+            'provincias' => State::all(),
+            'localidades' => City::with('state')->get(),
         ]);
     }
 
-    public function update(Request $request, Cliente $cliente)
+    public function update(Request $request, Customer $cliente)
     {
         $request->validate([
-            'razonsocial' => 'required|string|max:255',
-            'documentounico' => 'required|string|max:20',
-            'direccion' => 'required|string|max:255',
-            'telefono' => 'required|string|max:20',
+            'business_name' => 'required|string|max:255',
+            'tax_id' => 'required|string|max:20',
+            'address' => 'required|string|max:255',
+            'phone' => 'required|string|max:20',
             'email' => 'nullable|email',
-            'codigopostal' => 'nullable|string|max:10',
-            'localidad' => 'required|string|max:100',
-            'provincia' => 'required|string|max:100',
-            'condicioniva' => 'nullable|string|max:50',
+            'zip_code' => 'nullable|string|max:10',
+            'city' => 'required|string|max:100',
+            'state' => 'required|string|max:100',
+            'tax_status' => 'nullable|string|max:50',
         ]);
 
         $cliente->update($request->all());
@@ -90,69 +90,62 @@ class ClienteController extends Controller
         return redirect()->route('clientes.index')->with('success', 'Cliente actualizado exitosamente');
     }
 
-    public function destroy(Cliente $cliente)
+    public function destroy(Customer $cliente)
     {
         $cliente->delete();
 
         return redirect()->route('clientes.index')->with('success', 'Cliente eliminado exitosamente');
     }
 
-    public function estadoCuenta(Cliente $cliente)
+    public function estadoCuenta(Customer $cliente)
     {
-        $facturas = $cliente->facturas()->with(['pagos'])->orderBy('fecha', 'desc')->get();
+        $sales = $cliente->sales()->with(['payments'])->orderBy('date', 'desc')->get();
         
         $resumen = [
-            'total_compras' => $facturas->sum('total'),
-            'total_pagado' => $facturas->sum(function($factura) {
-                return $factura->pagos->sum('monto');
-            }),
-            'saldo_pendiente' => 0
+            'total_compras'   => $sales->sum('total'),
+            'total_pagado'    => $sales->sum(fn($s) => $s->payments->sum('amount')),
+            'saldo_pendiente' => 0,
         ];
-        
         $resumen['saldo_pendiente'] = $resumen['total_compras'] - $resumen['total_pagado'];
         
         return Inertia::render('Clientes/EstadoCuenta', [
-            'cliente' => $cliente,
-            'facturas' => $facturas,
-            'resumen' => $resumen
+            'cliente'  => $cliente,
+            'facturas' => $sales,
+            'resumen'  => $resumen,
         ]);
     }
 
-    public function exportarExcel(Cliente $cliente)
+    public function exportarExcel(Customer $cliente)
     {
-        $facturas = $cliente->facturas()->with(['pagos'])->orderBy('fecha', 'desc')->get();
+        $sales = $cliente->sales()->with(['payments'])->orderBy('date', 'desc')->get();
         
         $resumen = [
-            'total_compras' => $facturas->sum('total'),
-            'total_pagado' => $facturas->sum(function($factura) {
-                return $factura->pagos->sum('monto');
-            }),
-            'saldo_pendiente' => 0
+            'total_compras'   => $sales->sum('total'),
+            'total_pagado'    => $sales->sum(fn($s) => $s->payments->sum('amount')),
+            'saldo_pendiente' => 0,
         ];
-        
         $resumen['saldo_pendiente'] = $resumen['total_compras'] - $resumen['total_pagado'];
         
-        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\EstadoCuentaExport($cliente, $facturas, $resumen), 
-            'estado-cuenta-' . $cliente->razonsocial . '.xlsx');
+        return \Maatwebsite\Excel\Facades\Excel::download(
+            new \App\Exports\EstadoCuentaExport($cliente, $sales, $resumen),
+            'estado-cuenta-' . $cliente->business_name . '.xlsx'
+        );
     }
 
-    public function exportarPdf(Cliente $cliente)
+    public function exportarPdf(Customer $cliente)
     {
-        $facturas = $cliente->facturas()->with(['pagos'])->orderBy('fecha', 'desc')->get();
+        $sales = $cliente->sales()->with(['payments'])->orderBy('date', 'desc')->get();
         
         $resumen = [
-            'total_compras' => $facturas->sum('total'),
-            'total_pagado' => $facturas->sum(function($factura) {
-                return $factura->pagos->sum('monto');
-            }),
-            'saldo_pendiente' => 0
+            'total_compras'   => $sales->sum('total'),
+            'total_pagado'    => $sales->sum(fn($s) => $s->payments->sum('amount')),
+            'saldo_pendiente' => 0,
         ];
-        
         $resumen['saldo_pendiente'] = $resumen['total_compras'] - $resumen['total_pagado'];
         
-        $pdf = \PDF::loadView('pdf.estado-cuenta', compact('cliente', 'facturas', 'resumen'));
+        $pdf = \PDF::loadView('pdf.estado-cuenta', compact('cliente', 'sales', 'resumen'));
         
-        return $pdf->download('estado-cuenta-' . $cliente->razonsocial . '.pdf');
+        return $pdf->download('estado-cuenta-' . $cliente->business_name . '.pdf');
     }
 
     public function consultarCuit(Request $request)
@@ -173,19 +166,16 @@ class ClienteController extends Controller
 
     public function estadosCuenta()
     {
-        $clientes = Cliente::whereHas('facturas', function($query) {
-            $query->where('pagada', 'NO');
-        })->with(['facturas' => function($query) {
-            $query->where('pagada', 'NO')->with('pagos');
+        $clientes = Customer::whereHas('sales', function($query) {
+            $query->where('payment_status', 'NO');
+        })->with(['sales' => function($query) {
+            $query->where('payment_status', 'NO')->with('payments');
         }])->paginate(10);
 
-        // Calcular saldo pendiente para cada cliente
         $clientes->getCollection()->transform(function($cliente) {
-            $totalFacturas = $cliente->facturas->sum('total');
-            $totalPagado = $cliente->facturas->sum(function($factura) {
-                return $factura->pagos->sum('monto');
-            });
-            $cliente->saldo_pendiente = $totalFacturas - $totalPagado;
+            $totalSales    = $cliente->sales->sum('total');
+            $totalPaid     = $cliente->sales->sum(fn($s) => $s->payments->sum('amount'));
+            $cliente->saldo_pendiente = $totalSales - $totalPaid;
             return $cliente;
         });
 

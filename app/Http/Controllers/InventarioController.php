@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Articulo;
-use App\Models\Inventario;
-use App\Models\Movimiento;
+use App\Models\Product;
+use App\Models\Stock;
+use App\Models\StockMovement;
 use App\Models\Supplier;
 use App\Services\MovimientoService;
 use Illuminate\Http\Request;
@@ -13,17 +13,18 @@ use Inertia\Inertia;
 class InventarioController extends Controller
 {
     public function __construct(private MovimientoService $movimientoService) {}
+
     public function index()
     {
         return Inertia::render('Inventarios/Index', [
-            'inventarios' => Inventario::with(['articulo', 'supplier'])->get(),
+            'inventarios' => Stock::with(['product', 'supplier'])->get(),
         ]);
     }
 
     public function create()
     {
         return Inertia::render('Inventarios/Create', [
-            'articulos' => Articulo::all(),
+            'articulos' => Product::all(),
             'suppliers' => Supplier::all(),
         ]);
     }
@@ -31,22 +32,21 @@ class InventarioController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'cantidad' => 'required|integer|min:0',
-            'lote' => 'nullable|integer',
-            'vencimiento' => 'nullable|date',
-            'articulo_id' => 'required|exists:articulos,id',
-            'supplier_id' => 'nullable|exists:suppliers,id',
+            'quantity'        => 'required|integer|min:0',
+            'batch'           => 'nullable|integer',
+            'expiration_date' => 'nullable|date',
+            'product_id'      => 'required|exists:products,id',
+            'supplier_id'     => 'nullable|exists:suppliers,id',
         ]);
 
-        $inventario = Inventario::create($request->all());
+        $stock = Stock::create($request->all());
 
-        if ($inventario->cantidad > 0) {
+        if ($stock->quantity > 0) {
             $this->movimientoService->registrar(
-                $inventario,
-                Movimiento::TIPO_ENTRADA_AJUSTE,
-                $inventario->cantidad,
-                null,
-                null,
+                $stock,
+                StockMovement::TYPE_ADJUSTMENT_ENTRY,
+                $stock->quantity,
+                null, null,
                 'Stock inicial al crear inventario'
             );
         }
@@ -54,53 +54,45 @@ class InventarioController extends Controller
         return redirect()->route('inventarios.index')->with('success', 'Inventario creado exitosamente');
     }
 
-    public function edit(Inventario $inventario)
+    public function edit(Stock $inventario)
     {
         return Inertia::render('Inventarios/Edit', [
             'inventario' => $inventario,
-            'articulos' => Articulo::all(),
-            'suppliers' => Supplier::all(),
+            'articulos'  => Product::all(),
+            'suppliers'  => Supplier::all(),
         ]);
     }
 
-    public function update(Request $request, Inventario $inventario)
+    public function update(Request $request, Stock $inventario)
     {
         $request->validate([
-            'cantidad' => 'required|integer|min:0',
-            'lote' => 'nullable|integer',
-            'vencimiento' => 'nullable|date',
-            'articulo_id' => 'required|exists:articulos,id',
-            'supplier_id' => 'nullable|exists:suppliers,id',
+            'quantity'        => 'required|integer|min:0',
+            'batch'           => 'nullable|integer',
+            'expiration_date' => 'nullable|date',
+            'product_id'      => 'required|exists:products,id',
+            'supplier_id'     => 'nullable|exists:suppliers,id',
         ]);
 
-        $cantidadAnterior = $inventario->cantidad;
+        $previousQuantity = $inventario->quantity;
         $inventario->update($request->all());
-        $diff = $inventario->cantidad - $cantidadAnterior;
+        $diff = $inventario->quantity - $previousQuantity;
 
         if ($diff > 0) {
             $this->movimientoService->registrar(
-                $inventario,
-                Movimiento::TIPO_ENTRADA_AJUSTE,
-                $diff,
-                null,
-                null,
-                'Ajuste manual de inventario (+' . $diff . ')'
+                $inventario, StockMovement::TYPE_ADJUSTMENT_ENTRY,
+                $diff, null, null, 'Ajuste manual de inventario (+' . $diff . ')'
             );
         } elseif ($diff < 0) {
             $this->movimientoService->registrar(
-                $inventario,
-                Movimiento::TIPO_SALIDA_AJUSTE,
-                abs($diff),
-                null,
-                null,
-                'Ajuste manual de inventario (' . $diff . ')'
+                $inventario, StockMovement::TYPE_ADJUSTMENT_EXIT,
+                abs($diff), null, null, 'Ajuste manual de inventario (' . $diff . ')'
             );
         }
 
         return redirect()->route('inventarios.index')->with('success', 'Inventario actualizado exitosamente');
     }
 
-    public function destroy(Inventario $inventario)
+    public function destroy(Stock $inventario)
     {
         $inventario->delete();
 

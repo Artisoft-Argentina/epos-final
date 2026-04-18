@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Marca;
+use App\Models\Brand;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -11,7 +11,7 @@ class MarcaController extends Controller
     public function index()
     {
         return Inertia::render('Marcas/Index', [
-            'marcas' => Marca::paginate(10),
+            'marcas' => Brand::paginate(10),
         ]);
     }
 
@@ -23,25 +23,25 @@ class MarcaController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'marca' => 'required|string|max:255',
+            'name' => 'required|string|max:255',
         ]);
 
-        Marca::create($request->all());
+        Brand::create($request->all());
 
         return redirect()->route('marcas.index')->with('success', 'Marca creada exitosamente');
     }
 
-    public function edit(Marca $marca)
+    public function edit(Brand $marca)
     {
         return Inertia::render('Marcas/Edit', [
             'marca' => $marca,
         ]);
     }
 
-    public function update(Request $request, Marca $marca)
+    public function update(Request $request, Brand $marca)
     {
         $request->validate([
-            'marca' => 'required|string|max:255',
+            'name' => 'required|string|max:255',
         ]);
 
         $marca->update($request->all());
@@ -49,7 +49,7 @@ class MarcaController extends Controller
         return redirect()->route('marcas.index')->with('success', 'Marca actualizada exitosamente');
     }
 
-    public function destroy(Marca $marca)
+    public function destroy(Brand $marca)
     {
         $marca->delete();
 
