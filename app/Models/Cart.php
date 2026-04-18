@@ -11,7 +11,7 @@ class Cart extends Model
 
     protected $fillable = [
         'user_id',
-        'articulo_id',
+        'product_id',
         'quantity',
         'session_id',
     ];
@@ -19,15 +19,14 @@ class Cart extends Model
     protected function casts(): array
     {
         return [
-            'id' => 'integer',
-            'user_id' => 'integer',
-            'articulo_id' => 'integer',
+            'user_id'    => 'integer',
+            'product_id' => 'integer',
         ];
     }
 
-    public function articulo()
+    public function product()
     {
-        return $this->belongsTo(Articulo::class);
+        return $this->belongsTo(Product::class);
     }
 
     public function user()
