@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
 use App\Models\InitialSetting;
-use App\Services\Afip\AfipWebService;
+use App\Services\AfipService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -18,27 +18,29 @@ class AfipController extends Controller
 
     public function index()
     {
-        $empresa  = InitialSetting::first();
-        $afipDir  = $this->afipDir();
+        $empresa = InitialSetting::first();
+        $afipDir = $this->afipDir();
 
         return Inertia::render('settings/afip', [
             'config' => [
-                'cuit'        => $empresa?->cuit,
-                'ambiente'    => $empresa?->afip_ambiente ?? 'homologacion',
+                'cuit' => $empresa?->cuit,
+                'ambiente' => $empresa?->afip_ambiente ?? 'homologacion',
                 'punto_venta' => $empresa?->puntoventa ?? 1,
                 'cert_exists' => file_exists("{$afipDir}/cert.pem"),
-                'key_exists'  => file_exists("{$afipDir}/key.pem"),
-            ]
+                'key_exists' => file_exists("{$afipDir}/key.pem"),
+            ],
         ]);
     }
 
     public function healthCheck()
     {
+        $afipDir = $this->afipDir();
+
         $results = [
-            'api_publica'   => $this->checkApiPublica(),
-            'wsfe'          => $this->checkWsfe(),
-            'padron'        => $this->checkPadron(),
-            'certificados'  => $this->checkCertificados(),
+            'api_publica' => $this->checkApiPublica(),
+            'wsfe' => $this->checkWsfe(),
+            'padron' => $this->checkPadron(),
+            'certificados' => $this->checkCertificados(),
         ];
 
         return response()->json($results);
@@ -58,7 +60,7 @@ class AfipController extends Controller
 
             $response = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            $error    = curl_error($ch);
+            $error = curl_error($ch);
             curl_close($ch);
 
             if ($error) {
@@ -73,7 +75,6 @@ class AfipController extends Controller
             }
 
             return ['status' => 'error', 'message' => "API respondió con código HTTP {$httpCode}"];
-
         } catch (\Exception $e) {
             return ['status' => 'error', 'message' => $e->getMessage()];
         }
@@ -88,18 +89,14 @@ class AfipController extends Controller
                 return ['status' => 'warning', 'message' => 'Certificados no configurados'];
             }
 
-            $afipWS     = new AfipWebService();
-            $reflection = new \ReflectionClass($afipWS);
-            $method     = $reflection->getMethod('getAuth');
-            $method->setAccessible(true);
-            $auth = $method->invoke($afipWS, 'wsfe');
+            $afipService = new AfipService();
+            $connected = $afipService->getSdk()->testConnection('wsfe');
 
-            if (!empty($auth['token']) && !empty($auth['sign'])) {
+            if ($connected) {
                 return ['status' => 'ok', 'message' => 'Autenticación WSFE exitosa'];
             }
 
             return ['status' => 'error', 'message' => 'No se pudo obtener token de autenticación'];
-
         } catch (\Exception $e) {
             $message = $e->getMessage();
             if (str_contains($message, 'no le permite actuar')) {
@@ -118,18 +115,14 @@ class AfipController extends Controller
                 return ['status' => 'warning', 'message' => 'Certificados no configurados'];
             }
 
-            $afipWS     = new AfipWebService();
-            $reflection = new \ReflectionClass($afipWS);
-            $method     = $reflection->getMethod('getAuth');
-            $method->setAccessible(true);
-            $auth = $method->invoke($afipWS, 'ws_sr_padron_a5');
+            $afipService = new AfipService();
+            $connected = $afipService->getSdk()->testConnection('ws_sr_padron_a5');
 
-            if (!empty($auth['token']) && !empty($auth['sign'])) {
+            if ($connected) {
                 return ['status' => 'ok', 'message' => 'Autenticación Padrón exitosa'];
             }
 
             return ['status' => 'error', 'message' => 'No se pudo obtener token de autenticación'];
-
         } catch (\Exception $e) {
             $message = $e->getMessage();
             if (str_contains($message, 'no le permite actuar')) {
@@ -141,70 +134,15 @@ class AfipController extends Controller
 
     private function checkCertificados(): array
     {
-        $afipDir  = $this->afipDir();
-        $certPath = "{$afipDir}/cert.pem";
-        $keyPath  = "{$afipDir}/key.pem";
-
-        $certExists = file_exists($certPath);
-        $keyExists  = file_exists($keyPath);
-
-        if (!$certExists || !$keyExists) {
-            return [
-                'status'  => 'error',
-                'message' => 'Faltan archivos de certificado',
-                'details' => [
-                    'cert' => $certExists ? 'OK' : 'No encontrado',
-                    'key'  => $keyExists  ? 'OK' : 'No encontrado',
-                ]
-            ];
-        }
-
-        try {
-            $certContent = file_get_contents($certPath);
-            $certInfo    = openssl_x509_parse($certContent);
-
-            if (!$certInfo) {
-                return ['status' => 'error', 'message' => 'Certificado inválido o corrupto'];
-            }
-
-            $validTo  = $certInfo['validTo_time_t'];
-            $daysLeft = floor(($validTo - time()) / 86400);
-
-            if ($daysLeft < 0) {
-                return ['status' => 'error', 'message' => 'Certificado expirado hace ' . abs($daysLeft) . ' días'];
-            }
-
-            if ($daysLeft < 30) {
-                return [
-                    'status'  => 'warning',
-                    'message' => "Certificado expira en {$daysLeft} días",
-                    'details' => [
-                        'subject'   => $certInfo['subject']['CN'] ?? 'N/A',
-                        'expires'   => date('d/m/Y', $validTo),
-                    ]
-                ];
-            }
-
-            return [
-                'status'  => 'ok',
-                'message' => 'Certificados válidos',
-                'details' => [
-                    'subject'   => $certInfo['subject']['CN'] ?? 'N/A',
-                    'expires'   => date('d/m/Y', $validTo),
-                    'days_left' => $daysLeft,
-                ]
-            ];
-
-        } catch (\Exception $e) {
-            return ['status' => 'error', 'message' => 'Error verificando certificado: ' . $e->getMessage()];
-        }
+        $afipService = new AfipService();
+        return $afipService->getSdk()->validateCertificates();
     }
 
     public function upload(Request $request)
     {
         $request->validate([
             'cert_file' => 'required|file',
-            'key_file'  => 'required|file',
+            'key_file' => 'required|file',
         ]);
 
         $afipDir = $this->afipDir();
@@ -216,10 +154,8 @@ class AfipController extends Controller
         $request->file('cert_file')->move($afipDir, 'cert.pem');
         $request->file('key_file')->move($afipDir, 'key.pem');
 
-        // Limpiar tokens existentes para que se regeneren con los nuevos certificados
-        foreach (glob("{$afipDir}/token_*.json") as $file) {
-            unlink($file);
-        }
+        $afipService = new AfipService();
+        $afipService->getSdk()->clearTokens();
 
         return back()->with('success', 'Certificados subidos correctamente');
     }

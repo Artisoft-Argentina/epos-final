@@ -8,39 +8,42 @@ use Illuminate\Console\Command;
 class TestAfipConnection extends Command
 {
     protected $signature = 'afip:test-connection';
+
     protected $description = 'Test AFIP connection and configuration';
 
     public function handle()
     {
         try {
             $this->info('Testing AFIP connection...');
-            
-            // Verificar configuración
-            $this->info('CUIT: ' . config('afip.cuit'));
-            $this->info('Environment: ' . config('afip.environment'));
-            $this->info('Certificate path: ' . config('afip.certificate_path'));
-            $this->info('Key path: ' . config('afip.key_path'));
-            
-            // Verificar archivos
-            if (!file_exists(config('afip.certificate_path'))) {
-                $this->error('Certificate file not found: ' . config('afip.certificate_path'));
-                return 1;
-            }
-            
-            if (!file_exists(config('afip.key_path'))) {
-                $this->error('Key file not found: ' . config('afip.key_path'));
-                return 1;
-            }
-            
-            $this->info('Certificate and key files found.');
-            
-            // Crear instancia del servicio
+
             $afipService = new AfipService();
-            $this->info('AFIP Service created successfully.');
-            
-            $this->info('✅ AFIP connection test completed successfully!');
+            $sdk = $afipService->getSdk();
+
+            $this->info('CUIT: ' . $sdk->getCuit());
+            $this->info('Environment: ' . ($sdk->isProduction() ? 'production' : 'homologacion'));
+
+            $certResult = $sdk->validateCertificates();
+            $this->info('Certificates: ' . ($certResult['valid'] ? 'Valid' : 'Invalid'));
+            if (isset($certResult['expires'])) {
+                $this->info('Expires: ' . $certResult['expires']);
+            }
+
+            $this->info('Testing WSFE connection...');
+            if ($sdk->testConnection('wsfe')) {
+                $this->info('✓ WSFE connection successful');
+            } else {
+                $this->warn('✗ WSFE connection failed');
+            }
+
+            $this->info('Testing Padrón A5 connection...');
+            if ($sdk->testConnection('ws_sr_padron_a5')) {
+                $this->info('✓ Padrón A5 connection successful');
+            } else {
+                $this->warn('✗ Padrón A5 connection failed');
+            }
+
+            $this->info('✅ AFIP connection test completed!');
             return 0;
-            
         } catch (\Exception $e) {
             $this->error('❌ AFIP connection test failed: ' . $e->getMessage());
             $this->error('File: ' . $e->getFile());

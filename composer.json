@@ -8,9 +8,15 @@
         "framework"
     ],
     "license": "MIT",
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/Artisoft-Argentina/afip-sdk"
+        }
+    ],
     "require": {
         "php": "^8.2",
-        "afipsdk/afip.php": "^1.2",
+        "artisoft/afip-sdk": "dev-main",
         "barryvdh/laravel-dompdf": "^3.1",
         "guzzlehttp/guzzle": "^7.9",
         "inertiajs/inertia-laravel": "^2.0",
