@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function Create() {
     const { data, setData, post, processing, errors } = useForm({
-        categoria: '',
+        name: '',
     });
 
     const submit = (e: React.FormEvent) => {
@@ -26,12 +26,12 @@ export default function Create() {
                 <CardContent>
                     <form onSubmit={submit} className="space-y-4">
                         <div>
-                            <Label htmlFor="categoria">Categoría *</Label>
+                            <Label htmlFor="name">Nombre *</Label>
                             <Input
-                                id="categoria"
-                                value={data.categoria}
-                                onChange={(e) => setData('categoria', e.target.value)}
-                                error={errors.categoria}
+                                id="name"
+                                value={data.name}
+                                onChange={(e) => setData('name', e.target.value)}
+                                error={errors.name}
                                 placeholder="Ingrese el nombre de la categoría"
                             />
                         </div>

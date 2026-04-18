@@ -8,28 +8,28 @@ import AppSidebarLayout from '@/layouts/app/app-sidebar-layout';
 
 interface Empresa {
     id?: number;
-    cuit?: number;
-    razonsocial?: string;
-    direccion?: string;
-    telefono?: string;
+    tax_id?: number;
+    business_name?: string;
+    address?: string;
+    phone?: string;
     email?: string;
-    codigopostal?: number;
-    localidad?: string;
-    provincia?: string;
-    condicioniva?: string;
-    iibb?: string;
-    inicioactividades?: string;
-    puntoventa?: number;
-    afip_ambiente?: string;
-    nombrefantasia?: string;
-    domiciliocomercial?: string;
+    zip_code?: number;
+    city?: string;
+    state?: string;
+    tax_status?: string;
+    gross_income_tax?: string;
+    activity_start_date?: string;
+    pos_number?: number;
+    afip_environment?: string;
+    trade_name?: string;
+    commercial_address?: string;
     tagline?: string;
     logo?: string;
-    numfactura?: number;
-    numremito?: number;
-    numpresupuesto?: number;
-    numpago?: number;
-    numrecibo?: number;
+    next_invoice_number?: number;
+    next_order_number?: number;
+    next_quote_number?: number;
+    next_payment_number?: number;
+    next_receipt_number?: number;
 }
 
 interface Props {
@@ -38,28 +38,28 @@ interface Props {
 
 export default function Index({ empresa }: Props) {
     const { data, setData, post, processing, errors } = useForm({
-        cuit: empresa.cuit || '',
-        razonsocial: empresa.razonsocial || '',
-        direccion: empresa.direccion || '',
-        telefono: empresa.telefono || '',
+        tax_id: empresa.tax_id || '',
+        business_name: empresa.business_name || '',
+        address: empresa.address || '',
+        phone: empresa.phone || '',
         email: empresa.email || '',
-        codigopostal: empresa.codigopostal || '',
-        localidad: empresa.localidad || '',
-        provincia: empresa.provincia || '',
-        condicioniva: empresa.condicioniva || '',
-        iibb: empresa.iibb || '',
-        inicioactividades: empresa.inicioactividades || '',
-        puntoventa: empresa.puntoventa || '',
-        afip_ambiente: empresa.afip_ambiente || 'homologacion',
-        nombrefantasia: empresa.nombrefantasia || '',
-        domiciliocomercial: empresa.domiciliocomercial || '',
+        zip_code: empresa.zip_code || '',
+        city: empresa.city || '',
+        state: empresa.state || '',
+        tax_status: empresa.tax_status || '',
+        gross_income_tax: empresa.gross_income_tax || '',
+        activity_start_date: empresa.activity_start_date || '',
+        pos_number: empresa.pos_number || '',
+        afip_environment: empresa.afip_environment || 'homologacion',
+        trade_name: empresa.trade_name || '',
+        commercial_address: empresa.commercial_address || '',
         tagline: empresa.tagline || '',
         logo: null as File | null,
-        numfactura: empresa.numfactura || '',
-        numremito: empresa.numremito || '',
-        numpresupuesto: empresa.numpresupuesto || '',
-        numpago: empresa.numpago || '',
-        numrecibo: empresa.numrecibo || '',
+        next_invoice_number: empresa.next_invoice_number || '',
+        next_order_number: empresa.next_order_number || '',
+        next_quote_number: empresa.next_quote_number || '',
+        next_payment_number: empresa.next_payment_number || '',
+        next_receipt_number: empresa.next_receipt_number || '',
         cert_file: null as File | null,
         key_file: null as File | null,
     });
@@ -88,39 +88,21 @@ export default function Index({ empresa }: Props) {
                         </CardHeader>
                         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <Label htmlFor="cuit">CUIT</Label>
-                                <Input
-                                    id="cuit"
-                                    type="number"
-                                    value={data.cuit}
-                                    onChange={(e) => setData('cuit', e.target.value)}
-                                    error={errors.cuit}
-                                />
+                                <Label htmlFor="tax_id">CUIT</Label>
+                                <Input id="tax_id" type="number" value={data.tax_id} onChange={(e) => setData('tax_id', e.target.value)} error={errors.tax_id} />
                             </div>
                             <div>
-                                <Label htmlFor="razonsocial">Razón Social</Label>
-                                <Input
-                                    id="razonsocial"
-                                    value={data.razonsocial}
-                                    onChange={(e) => setData('razonsocial', e.target.value)}
-                                    error={errors.razonsocial}
-                                />
+                                <Label htmlFor="business_name">Razón Social</Label>
+                                <Input id="business_name" value={data.business_name} onChange={(e) => setData('business_name', e.target.value)} error={errors.business_name} />
                             </div>
                             <div>
-                                <Label htmlFor="nombrefantasia">Nombre de Fantasía</Label>
-                                <Input
-                                    id="nombrefantasia"
-                                    value={data.nombrefantasia}
-                                    onChange={(e) => setData('nombrefantasia', e.target.value)}
-                                    error={errors.nombrefantasia}
-                                />
+                                <Label htmlFor="trade_name">Nombre de Fantasía</Label>
+                                <Input id="trade_name" value={data.trade_name} onChange={(e) => setData('trade_name', e.target.value)} error={errors.trade_name} />
                             </div>
                             <div>
-                                <Label htmlFor="condicioniva">Condición IVA</Label>
-                                <Select value={data.condicioniva} onValueChange={(value) => setData('condicioniva', value)}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Seleccionar condición" />
-                                    </SelectTrigger>
+                                <Label htmlFor="tax_status">Condición IVA</Label>
+                                <Select value={data.tax_status} onValueChange={(value) => setData('tax_status', value)}>
+                                    <SelectTrigger><SelectValue placeholder="Seleccionar condición" /></SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="Responsable Inscripto">Responsable Inscripto</SelectItem>
                                         <SelectItem value="Monotributo">Monotributo</SelectItem>
@@ -129,22 +111,12 @@ export default function Index({ empresa }: Props) {
                                 </Select>
                             </div>
                             <div>
-                                <Label htmlFor="iibb">Nº Ingresos Brutos</Label>
-                                <Input
-                                    id="iibb"
-                                    value={data.iibb}
-                                    onChange={(e) => setData('iibb', e.target.value)}
-                                    placeholder="Ej: 123-456789-0"
-                                />
+                                <Label htmlFor="gross_income_tax">Nº Ingresos Brutos</Label>
+                                <Input id="gross_income_tax" value={data.gross_income_tax} onChange={(e) => setData('gross_income_tax', e.target.value)} placeholder="Ej: 123-456789-0" />
                             </div>
                             <div>
-                                <Label htmlFor="inicioactividades">Inicio de Actividades</Label>
-                                <Input
-                                    id="inicioactividades"
-                                    value={data.inicioactividades}
-                                    onChange={(e) => setData('inicioactividades', e.target.value)}
-                                    placeholder="Ej: 01/01/2020"
-                                />
+                                <Label htmlFor="activity_start_date">Inicio de Actividades</Label>
+                                <Input id="activity_start_date" value={data.activity_start_date} onChange={(e) => setData('activity_start_date', e.target.value)} placeholder="Ej: 01/01/2020" />
                             </div>
                             <div>
                                 <Label htmlFor="logo">Logo</Label>
@@ -174,60 +146,28 @@ export default function Index({ empresa }: Props) {
                         </CardHeader>
                         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <Label htmlFor="direccion">Dirección</Label>
-                                <Input
-                                    id="direccion"
-                                    value={data.direccion}
-                                    onChange={(e) => setData('direccion', e.target.value)}
-                                    error={errors.direccion}
-                                />
+                                <Label htmlFor="address">Dirección</Label>
+                                <Input id="address" value={data.address} onChange={(e) => setData('address', e.target.value)} error={errors.address} />
                             </div>
                             <div>
-                                <Label htmlFor="domiciliocomercial">Domicilio Comercial</Label>
-                                <Input
-                                    id="domiciliocomercial"
-                                    value={data.domiciliocomercial}
-                                    onChange={(e) => setData('domiciliocomercial', e.target.value)}
-                                    error={errors.domiciliocomercial}
-                                />
+                                <Label htmlFor="commercial_address">Domicilio Comercial</Label>
+                                <Input id="commercial_address" value={data.commercial_address} onChange={(e) => setData('commercial_address', e.target.value)} error={errors.commercial_address} />
                             </div>
                             <div>
-                                <Label htmlFor="telefono">Teléfono</Label>
-                                <Input
-                                    id="telefono"
-                                    value={data.telefono}
-                                    onChange={(e) => setData('telefono', e.target.value)}
-                                    error={errors.telefono}
-                                />
+                                <Label htmlFor="phone">Teléfono</Label>
+                                <Input id="phone" value={data.phone} onChange={(e) => setData('phone', e.target.value)} error={errors.phone} />
                             </div>
                             <div>
                                 <Label htmlFor="email">Email</Label>
-                                <Input
-                                    id="email"
-                                    type="email"
-                                    value={data.email}
-                                    onChange={(e) => setData('email', e.target.value)}
-                                    error={errors.email}
-                                />
+                                <Input id="email" type="email" value={data.email} onChange={(e) => setData('email', e.target.value)} error={errors.email} />
                             </div>
                             <div>
-                                <Label htmlFor="localidad">Localidad</Label>
-                                <Input
-                                    id="localidad"
-                                    value={data.localidad}
-                                    onChange={(e) => setData('localidad', e.target.value)}
-                                    error={errors.localidad}
-                                />
+                                <Label htmlFor="city">Localidad</Label>
+                                <Input id="city" value={data.city} onChange={(e) => setData('city', e.target.value)} error={errors.city} />
                             </div>
                             <div>
-                                <Label htmlFor="codigopostal">Código Postal</Label>
-                                <Input
-                                    id="codigopostal"
-                                    type="number"
-                                    value={data.codigopostal}
-                                    onChange={(e) => setData('codigopostal', e.target.value)}
-                                    error={errors.codigopostal}
-                                />
+                                <Label htmlFor="zip_code">Código Postal</Label>
+                                <Input id="zip_code" type="number" value={data.zip_code} onChange={(e) => setData('zip_code', e.target.value)} error={errors.zip_code} />
                             </div>
                         </CardContent>
                     </Card>
@@ -238,34 +178,16 @@ export default function Index({ empresa }: Props) {
                         </CardHeader>
                         <CardContent className="grid grid-cols-2 md:grid-cols-3 gap-4">
                             <div>
-                                <Label htmlFor="puntoventa">Punto de Venta</Label>
-                                <Input
-                                    id="puntoventa"
-                                    type="number"
-                                    value={data.puntoventa}
-                                    onChange={(e) => setData('puntoventa', e.target.value)}
-                                    error={errors.puntoventa}
-                                />
+                                <Label htmlFor="pos_number">Punto de Venta</Label>
+                                <Input id="pos_number" type="number" value={data.pos_number} onChange={(e) => setData('pos_number', e.target.value)} error={errors.pos_number} />
                             </div>
                             <div>
-                                <Label htmlFor="numfactura">Próxima Factura</Label>
-                                <Input
-                                    id="numfactura"
-                                    type="number"
-                                    value={data.numfactura}
-                                    onChange={(e) => setData('numfactura', e.target.value)}
-                                    error={errors.numfactura}
-                                />
+                                <Label htmlFor="next_invoice_number">Próxima Factura</Label>
+                                <Input id="next_invoice_number" type="number" value={data.next_invoice_number} onChange={(e) => setData('next_invoice_number', e.target.value)} error={errors.next_invoice_number} />
                             </div>
                             <div>
-                                <Label htmlFor="numremito">Próximo Remito</Label>
-                                <Input
-                                    id="numremito"
-                                    type="number"
-                                    value={data.numremito}
-                                    onChange={(e) => setData('numremito', e.target.value)}
-                                    error={errors.numremito}
-                                />
+                                <Label htmlFor="next_order_number">Próxima Orden</Label>
+                                <Input id="next_order_number" type="number" value={data.next_order_number} onChange={(e) => setData('next_order_number', e.target.value)} error={errors.next_order_number} />
                             </div>
                         </CardContent>
                     </Card>
@@ -276,11 +198,9 @@ export default function Index({ empresa }: Props) {
                         </CardHeader>
                         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <Label htmlFor="afip_ambiente">Ambiente AFIP</Label>
-                                <Select value={data.afip_ambiente} onValueChange={(value) => setData('afip_ambiente', value)}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Seleccionar ambiente" />
-                                    </SelectTrigger>
+                                <Label htmlFor="afip_environment">Ambiente AFIP</Label>
+                                <Select value={data.afip_environment} onValueChange={(value) => setData('afip_environment', value)}>
+                                    <SelectTrigger><SelectValue placeholder="Seleccionar ambiente" /></SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="homologacion">Homologación (Pruebas)</SelectItem>
                                         <SelectItem value="production">Producción</SelectItem>

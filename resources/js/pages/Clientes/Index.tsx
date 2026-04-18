@@ -11,10 +11,10 @@ import { useEffect, useState, useRef } from 'react';
 
 interface Cliente {
     id: number;
-    razonsocial: string;
-    documentounico: string;
+    business_name: string;
+    tax_id: string;
     email: string;
-    telefono: string;
+    phone: string;
 }
 
 interface Props {
@@ -105,14 +105,14 @@ export default function Index({ clientes, filters }: Props) {
                             {clientes.data.map((cliente) => (
                                 <tr key={cliente.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{cliente.razonsocial}</div>
+                                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{cliente.business_name}</div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm text-gray-500 dark:text-gray-300">{cliente.documentounico}</div>
+                                        <div className="text-sm text-gray-500 dark:text-gray-300">{cliente.tax_id}</div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="text-sm text-gray-500 dark:text-gray-300">{cliente.email}</div>
-                                        <div className="text-sm text-gray-400 dark:text-gray-400">{cliente.telefono}</div>
+                                        <div className="text-sm text-gray-400 dark:text-gray-400">{cliente.phone}</div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <div className="flex justify-end gap-2">
@@ -129,7 +129,7 @@ export default function Index({ clientes, filters }: Props) {
                                             <DeleteConfirmationDialog 
                                                 url={route('clientes.destroy', cliente.id)}
                                                 title="Eliminar cliente"
-                                                description={`¿Está seguro que desea eliminar al cliente ${cliente.razonsocial}? Esta acción no se puede deshacer.`}
+                                                description={`¿Está seguro que desea eliminar al cliente ${cliente.business_name}? Esta acción no se puede deshacer.`}
                                             />
                                         </div>
                                     </td>
@@ -144,13 +144,13 @@ export default function Index({ clientes, filters }: Props) {
                     {clientes.data.map((cliente) => (
                         <Card key={cliente.id}>
                             <CardHeader>
-                                <CardTitle className="text-lg">{cliente.razonsocial}</CardTitle>
+                                <CardTitle className="text-lg">{cliente.business_name}</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-2 mb-4">
-                                    <p className="text-sm text-gray-600">Doc: {cliente.documentounico}</p>
+                                    <p className="text-sm text-gray-600">Doc: {cliente.tax_id}</p>
                                     <p className="text-sm text-gray-600">{cliente.email}</p>
-                                    <p className="text-sm text-gray-600">{cliente.telefono}</p>
+                                    <p className="text-sm text-gray-600">{cliente.phone}</p>
                                 </div>
                                 <div className="flex gap-2">
                                     <Link href={route('clientes.estado-cuenta', cliente.id)}>
@@ -166,7 +166,7 @@ export default function Index({ clientes, filters }: Props) {
                                     <DeleteConfirmationDialog 
                                         url={route('clientes.destroy', cliente.id)}
                                         title="Eliminar cliente"
-                                        description={`¿Está seguro que desea eliminar al cliente ${cliente.razonsocial}? Esta acción no se puede deshacer.`}
+                                        description={`¿Está seguro que desea eliminar al cliente ${cliente.business_name}? Esta acción no se puede deshacer.`}
                                     />
                                 </div>
                             </CardContent>

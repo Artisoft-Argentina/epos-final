@@ -10,7 +10,7 @@ import { useEffect } from 'react';
 
 interface Marca {
     id: number;
-    marca: string;
+    name: string;
 }
 
 interface Props {
@@ -62,7 +62,7 @@ export default function Index({ marcas }: Props) {
                             {marcas.data.map((marca) => (
                                 <tr key={marca.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{marca.marca}</div>
+                                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{marca.name}</div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <div className="flex justify-end gap-2">
@@ -74,7 +74,7 @@ export default function Index({ marcas }: Props) {
                                             <DeleteConfirmationDialog 
                                                 url={route('marcas.destroy', marca.id)}
                                                 title="Eliminar marca"
-                                                description={`¿Está seguro que desea eliminar la marca ${marca.marca}? Esta acción no se puede deshacer.`}
+                                                description={`¿Está seguro que desea eliminar la marca ${marca.name}? Esta acción no se puede deshacer.`}
                                             />
                                         </div>
                                     </td>
@@ -89,7 +89,7 @@ export default function Index({ marcas }: Props) {
                     {marcas.data.map((marca) => (
                         <Card key={marca.id}>
                             <CardHeader>
-                                <CardTitle className="text-lg">{marca.marca}</CardTitle>
+                                <CardTitle className="text-lg">{marca.name}</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <div className="flex gap-2">
@@ -102,7 +102,7 @@ export default function Index({ marcas }: Props) {
                                     <DeleteConfirmationDialog 
                                         url={route('marcas.destroy', marca.id)}
                                         title="Eliminar marca"
-                                        description={`¿Está seguro que desea eliminar la marca ${marca.marca}? Esta acción no se puede deshacer.`}
+                                        description={`¿Está seguro que desea eliminar la marca ${marca.name}? Esta acción no se puede deshacer.`}
                                     />
                                 </div>
                             </CardContent>

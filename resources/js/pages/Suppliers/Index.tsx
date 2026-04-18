@@ -10,10 +10,10 @@ import { useEffect } from 'react';
 
 interface Supplier {
     id: number;
-    razonsocial: string;
-    cuit: string;
-    direccion: string;
-    telefono: string;
+    business_name: string;
+    tax_id: string;
+    address: string;
+    phone: string;
     email?: string;
 }
 
@@ -75,14 +75,14 @@ export default function Index({ suppliers }: Props) {
                             {suppliers.data.map((supplier) => (
                                 <tr key={supplier.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{supplier.razonsocial}</div>
-                                        <div className="text-sm text-gray-500 dark:text-gray-300">{supplier.direccion}</div>
+                                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{supplier.business_name}</div>
+                                        <div className="text-sm text-gray-500 dark:text-gray-300">{supplier.address}</div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm font-mono text-gray-900 dark:text-gray-100">{supplier.cuit}</div>
+                                        <div className="text-sm font-mono text-gray-900 dark:text-gray-100">{supplier.tax_id}</div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm text-gray-900 dark:text-gray-100">{supplier.telefono}</div>
+                                        <div className="text-sm text-gray-900 dark:text-gray-100">{supplier.phone}</div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="text-sm text-gray-500 dark:text-gray-300">{supplier.email || '-'}</div>
@@ -97,7 +97,7 @@ export default function Index({ suppliers }: Props) {
                                             <DeleteConfirmationDialog 
                                                 url={route('suppliers.destroy', supplier.id)}
                                                 title="Eliminar proveedor"
-                                                description={`¿Está seguro que desea eliminar el proveedor ${supplier.razonsocial}? Esta acción no se puede deshacer.`}
+                                                description={`¿Está seguro que desea eliminar el proveedor ${supplier.business_name}? Esta acción no se puede deshacer.`}
                                             />
                                         </div>
                                     </td>
@@ -112,13 +112,13 @@ export default function Index({ suppliers }: Props) {
                     {suppliers.data.map((supplier) => (
                         <Card key={supplier.id}>
                             <CardHeader>
-                                <CardTitle className="text-lg">{supplier.razonsocial}</CardTitle>
+                                <CardTitle className="text-lg">{supplier.business_name}</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-2 mb-4">
-                                    <p className="text-sm text-gray-600">CUIT: {supplier.cuit}</p>
-                                    <p className="text-sm text-gray-600">Dirección: {supplier.direccion}</p>
-                                    <p className="text-sm text-gray-600">Teléfono: {supplier.telefono}</p>
+                                    <p className="text-sm text-gray-600">CUIT: {supplier.tax_id}</p>
+                                    <p className="text-sm text-gray-600">Dirección: {supplier.address}</p>
+                                    <p className="text-sm text-gray-600">Teléfono: {supplier.phone}</p>
                                     {supplier.email && <p className="text-sm text-gray-600">Email: {supplier.email}</p>}
                                 </div>
                                 <div className="flex gap-2">
@@ -131,7 +131,7 @@ export default function Index({ suppliers }: Props) {
                                     <DeleteConfirmationDialog 
                                         url={route('suppliers.destroy', supplier.id)}
                                         title="Eliminar proveedor"
-                                        description={`¿Está seguro que desea eliminar el proveedor ${supplier.razonsocial}? Esta acción no se puede deshacer.`}
+                                        description={`¿Está seguro que desea eliminar el proveedor ${supplier.business_name}? Esta acción no se puede deshacer.`}
                                     />
                                 </div>
                             </CardContent>
