@@ -6,6 +6,28 @@
         "-y",
         "@playwright/mcp"
       ]
+    },
+    "db": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-server-mysql"
+      ],
+      "env": {
+        "MYSQL_HOST": "127.0.0.1",
+        "MYSQL_PORT": "3307",
+        "MYSQL_USER": "epos_user",
+        "MYSQL_PASS": "epos_password",
+        "MYSQL_DB": "epos_central"
+      }
+    },
+    "logs": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/Users/francodicampli/proyectos/artisoft/epos-final/storage/logs"
+      ]
     }
   }
 }

@@ -59,6 +59,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('remitos/{remito}/convertir-inventario', [\App\Http\Controllers\RemitoController::class, 'convertirAInventario'])->name('remitos.convertir-inventario');
         Route::resource('compras', \App\Http\Controllers\CompraController::class);
         Route::resource('inventarios', \App\Http\Controllers\InventarioController::class);
+        Route::get('articulos/{articulo}/movimientos', [\App\Http\Controllers\MovimientoController::class, 'index'])->name('movimientos.index');
         Route::resource('listas-precios', \App\Http\Controllers\ListaPrecioController::class);
         Route::post('listas-precios/{listas_precio}/regenerar', [\App\Http\Controllers\ListaPrecioController::class, 'regenerarPrecios'])->name('listas-precios.regenerar');
     });
