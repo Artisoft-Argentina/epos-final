@@ -7,45 +7,34 @@ import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialo
 import { toast } from 'sonner';
 import { useEffect } from 'react';
 
-interface Inventario {
+interface Stock {
     id: number;
-    cantidad: number;
-    lote?: number;
-    vencimiento?: string;
-    articulo: {
-        articulo: string;
-        codarticulo: string;
-    };
-    supplier?: {
-        razonsocial: string;
-    };
+    quantity: number;
+    batch?: number;
+    expiration_date?: string;
+    product?: { name: string; sku: string; };
+    supplier?: { business_name: string; };
 }
 
 interface Props {
-    inventarios: Inventario[];
+    inventarios: Stock[];
 }
 
 export default function Index({ inventarios }: Props) {
     const page = usePage<any>();
-    
+
     useEffect(() => {
-        if (page.props.flash?.success) {
-            toast.success(page.props.flash.success);
-        }
+        if (page.props.flash?.success) toast.success(page.props.flash.success);
     }, [page.props.flash]);
 
     return (
         <AppLayout>
             <Head title="Inventarios" />
-            
             <div className="p-6">
                 <div className="flex justify-between items-center mb-6">
                     <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Inventarios</h1>
                     <Link href={route('inventarios.create')}>
-                        <Button>
-                            <Plus className="w-4 h-4 mr-2" />
-                            Nuevo Inventario
-                        </Button>
+                        <Button><Plus className="w-4 h-4 mr-2" />Nuevo Inventario</Button>
                     </Link>
                 </div>
 
@@ -54,47 +43,37 @@ export default function Index({ inventarios }: Props) {
                     <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                         <thead className="bg-gray-50 dark:bg-gray-700">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                    Artículo
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                    Cantidad
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                    Proveedor
-                                </th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                    Acciones
-                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Artículo</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Cantidad</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Proveedor</th>
+                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Acciones</th>
                             </tr>
                         </thead>
                         <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                            {inventarios.map((inventario) => (
-                                <tr key={inventario.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                            {inventarios.map((stock) => (
+                                <tr key={stock.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{inventario.articulo.articulo}</div>
-                                        <div className="text-sm text-gray-500 dark:text-gray-300">{inventario.articulo.codarticulo}</div>
+                                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{stock.product?.name ?? '-'}</div>
+                                        <div className="text-sm text-gray-500 dark:text-gray-300">{stock.product?.sku}</div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center">
-                                            <Package className="w-4 h-4 mr-2 text-gray-400 dark:text-gray-400" />
-                                            <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{inventario.cantidad}</span>
+                                            <Package className="w-4 h-4 mr-2 text-gray-400" />
+                                            <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{stock.quantity}</span>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm text-gray-500 dark:text-gray-300">{inventario.supplier?.razonsocial || '-'}</div>
+                                        <div className="text-sm text-gray-500 dark:text-gray-300">{stock.supplier?.business_name || '-'}</div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <div className="flex justify-end gap-2">
-                                            <Link href={route('inventarios.edit', inventario.id)}>
-                                                <Button variant="outline" size="sm">
-                                                    <Edit className="w-4 h-4" />
-                                                </Button>
+                                            <Link href={route('inventarios.edit', stock.id)}>
+                                                <Button variant="outline" size="sm"><Edit className="w-4 h-4" /></Button>
                                             </Link>
-                                            <DeleteConfirmationDialog 
-                                                url={route('inventarios.destroy', inventario.id)}
+                                            <DeleteConfirmationDialog
+                                                url={route('inventarios.destroy', stock.id)}
                                                 title="Eliminar inventario"
-                                                description={`¿Está seguro que desea eliminar el inventario de ${inventario.articulo.articulo}? Esta acción no se puede deshacer.`}
+                                                description={`¿Está seguro que desea eliminar el inventario de ${stock.product?.name}? Esta acción no se puede deshacer.`}
                                             />
                                         </div>
                                     </td>
@@ -106,39 +85,30 @@ export default function Index({ inventarios }: Props) {
 
                 {/* Mobile Cards */}
                 <div className="md:hidden space-y-4">
-                    {inventarios.map((inventario) => (
-                        <Card key={inventario.id}>
-                            <CardHeader>
-                                <CardTitle className="text-lg">{inventario.articulo.articulo}</CardTitle>
-                            </CardHeader>
+                    {inventarios.map((stock) => (
+                        <Card key={stock.id}>
+                            <CardHeader><CardTitle className="text-lg">{stock.product?.name ?? '-'}</CardTitle></CardHeader>
                             <CardContent>
                                 <div className="space-y-2 mb-4">
-                                    <p className="text-sm text-gray-600">Código: {inventario.articulo.codarticulo}</p>
+                                    <p className="text-sm text-gray-600">SKU: {stock.product?.sku}</p>
                                     <div className="flex items-center">
                                         <Package className="w-4 h-4 mr-2 text-gray-400" />
-                                        <span className="text-sm font-semibold">Cantidad: {inventario.cantidad}</span>
+                                        <span className="text-sm font-semibold">Cantidad: {stock.quantity}</span>
                                     </div>
-                                    {inventario.lote && <p className="text-sm text-gray-600">Lote: {inventario.lote}</p>}
-                                    {inventario.vencimiento && (
-                                        <p className="text-sm text-gray-600">
-                                            Vencimiento: {new Date(inventario.vencimiento).toLocaleDateString()}
-                                        </p>
+                                    {stock.batch && <p className="text-sm text-gray-600">Lote: {stock.batch}</p>}
+                                    {stock.expiration_date && (
+                                        <p className="text-sm text-gray-600">Vencimiento: {new Date(stock.expiration_date).toLocaleDateString()}</p>
                                     )}
-                                    {inventario.supplier && (
-                                        <p className="text-sm text-gray-600">Proveedor: {inventario.supplier.razonsocial}</p>
-                                    )}
+                                    {stock.supplier && <p className="text-sm text-gray-600">Proveedor: {stock.supplier.business_name}</p>}
                                 </div>
                                 <div className="flex gap-2">
-                                    <Link href={route('inventarios.edit', inventario.id)}>
-                                        <Button variant="outline" size="sm">
-                                            <Edit className="w-4 h-4 mr-2" />
-                                            Editar
-                                        </Button>
+                                    <Link href={route('inventarios.edit', stock.id)}>
+                                        <Button variant="outline" size="sm"><Edit className="w-4 h-4 mr-2" />Editar</Button>
                                     </Link>
-                                    <DeleteConfirmationDialog 
-                                        url={route('inventarios.destroy', inventario.id)}
+                                    <DeleteConfirmationDialog
+                                        url={route('inventarios.destroy', stock.id)}
                                         title="Eliminar inventario"
-                                        description={`¿Está seguro que desea eliminar el inventario de ${inventario.articulo.articulo}? Esta acción no se puede deshacer.`}
+                                        description={`¿Está seguro que desea eliminar el inventario de ${stock.product?.name}? Esta acción no se puede deshacer.`}
                                     />
                                 </div>
                             </CardContent>
