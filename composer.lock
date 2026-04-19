@@ -12,12 +12,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/Artisoft-Argentina/afip-sdk.git",
-                "reference": "70874942c59a1d910ca037b33c7dadb3b537fafe"
+                "reference": "8cde73ca1dd61a82173798a6bad607435f564194"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Artisoft-Argentina/afip-sdk/zipball/70874942c59a1d910ca037b33c7dadb3b537fafe",
-                "reference": "70874942c59a1d910ca037b33c7dadb3b537fafe",
+                "url": "https://api.github.com/repos/Artisoft-Argentina/afip-sdk/zipball/8cde73ca1dd61a82173798a6bad607435f564194",
+                "reference": "8cde73ca1dd61a82173798a6bad607435f564194",
                 "shasum": ""
             },
             "require": {
@@ -61,10 +61,10 @@
             ],
             "description": "Laravel SDK for AFIP Web Services (WSAA, WSFEv1, Padrón A5)",
             "support": {
-                "source": "https://github.com/Artisoft-Argentina/afip-sdk/tree/v1.0.0",
+                "source": "https://github.com/Artisoft-Argentina/afip-sdk/tree/main",
                 "issues": "https://github.com/Artisoft-Argentina/afip-sdk/issues"
             },
-            "time": "2026-04-18T03:59:37+00:00"
+            "time": "2026-04-19T03:22:22+00:00"
         },
         {
             "name": "bacon/bacon-qr-code",
@@ -12653,6 +12653,6 @@
     "platform": {
         "php": "^8.2"
     },
-    "platform-dev": [],
-    "plugin-api-version": "2.3.0"
+    "platform-dev": {},
+    "plugin-api-version": "2.9.0"
 }

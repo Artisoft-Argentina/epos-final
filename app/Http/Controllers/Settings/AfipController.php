@@ -48,36 +48,40 @@ class AfipController extends Controller
 
     private function checkApiPublica(): array
     {
-        try {
-            $url = 'https://soa.afip.gob.ar/sr-padron/v2/persona/33693450239';
+        // Endpoint deprecado: https://soa.afip.gob.ar/sr-padron/v2/persona ya no responde (404)
+        // Se desactiva hasta encontrar el endpoint actualizado.
+        return ['status' => 'warning', 'message' => 'Verificación deshabilitada (endpoint deprecado)'];
 
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $url);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+        // try {
+        //     $url = 'https://soa.afip.gob.ar/sr-padron/v2/persona/33693450239';
 
-            $response = curl_exec($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            $error = curl_error($ch);
-            curl_close($ch);
+        //     $ch = curl_init();
+        //     curl_setopt($ch, CURLOPT_URL, $url);
+        //     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        //     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        //     curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+        //     curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
 
-            if ($error) {
-                return ['status' => 'error', 'message' => 'Error de conexión: ' . $error];
-            }
+        //     $response = curl_exec($ch);
+        //     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        //     $error = curl_error($ch);
+        //     curl_close($ch);
 
-            if ($httpCode === 200) {
-                $data = json_decode($response, true);
-                if (isset($data['datosGenerales'])) {
-                    return ['status' => 'ok', 'message' => 'API pública funcionando correctamente'];
-                }
-            }
+        //     if ($error) {
+        //         return ['status' => 'error', 'message' => 'Error de conexión: ' . $error];
+        //     }
 
-            return ['status' => 'error', 'message' => "API respondió con código HTTP {$httpCode}"];
-        } catch (\Exception $e) {
-            return ['status' => 'error', 'message' => $e->getMessage()];
-        }
+        //     if ($httpCode === 200) {
+        //         $data = json_decode($response, true);
+        //         if (isset($data['datosGenerales'])) {
+        //             return ['status' => 'ok', 'message' => 'API pública funcionando correctamente'];
+        //         }
+        //     }
+
+        //     return ['status' => 'error', 'message' => "API respondió con código HTTP {$httpCode}"];
+        // } catch (\Exception $e) {
+        //     return ['status' => 'error', 'message' => $e->getMessage()];
+        // }
     }
 
     private function checkWsfe(): array
@@ -151,8 +155,11 @@ class AfipController extends Controller
             mkdir($afipDir, 0755, true);
         }
 
-        $request->file('cert_file')->move($afipDir, 'cert.pem');
-        $request->file('key_file')->move($afipDir, 'key.pem');
+        $certPath = $request->file('cert_file')->move($afipDir, 'cert.pem')->getPathname();
+        $keyPath = $request->file('key_file')->move($afipDir, 'key.pem')->getPathname();
+
+        file_put_contents($certPath, preg_replace('/\r\n?/', "\n", file_get_contents($certPath)));
+        file_put_contents($keyPath, preg_replace('/\r\n?/', "\n", file_get_contents($keyPath)));
 
         $afipService = new AfipService();
         $afipService->getSdk()->clearTokens();
