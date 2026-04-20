@@ -47,6 +47,8 @@ class Sale extends Model
     protected $casts = [
         'date'            => 'date',
         'due_date'        => 'date',
+        'cae_expiration'  => 'date',
+        'tax_id'          => 'string',
         'afip_authorized' => 'boolean',
         'active'          => 'boolean',
     ];

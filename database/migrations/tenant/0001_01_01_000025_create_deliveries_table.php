@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('sale_id')->constrained('sales');
             $table->foreignId('product_id')->constrained('products');
-            $table->integer('quantity');                                                    // cantidad → quantity
+            $table->unsignedInteger('quantity');                                                    // cantidad → quantity
             $table->date('delivery_date');                                                  // fecha_entrega → delivery_date
             $table->text('notes')->nullable();                                              // observaciones → notes
             $table->enum('status', ['pending', 'delivered', 'cancelled'])->default('pending'); // valores en inglés

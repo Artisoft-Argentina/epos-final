@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('stocks', function (Blueprint $table) {
             $table->id();
-            $table->integer('quantity');                   // cantidad → quantity
+            $table->unsignedInteger('quantity');                   // cantidad → quantity
             $table->integer('batch')->nullable();          // lote → batch
             $table->date('expiration_date')->nullable();   // vencimiento → expiration_date
             $table->foreignId('product_id')->constrained('products');

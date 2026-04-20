@@ -18,7 +18,7 @@ class Supplier extends Model
         'active',
     ];
 
-    protected $casts = ['active' => 'boolean'];
+    protected $casts = ['active' => 'boolean', 'tax_id' => 'string'];
 
     public function products()
     {

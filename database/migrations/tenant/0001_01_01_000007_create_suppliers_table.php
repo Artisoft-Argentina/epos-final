@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('suppliers', function (Blueprint $table) {
             $table->id();
             $table->string('business_name');          // razonsocial → business_name
-            $table->bigInteger('tax_id');              // cuit → tax_id
+            $table->string('tax_id', 13);              // cuit → tax_id
             $table->string('address');                 // direccion → address
             $table->string('phone');                   // telefono → phone
             $table->string('email')->nullable();

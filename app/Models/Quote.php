@@ -26,8 +26,10 @@ class Quote extends Model
     ];
 
     protected $casts = [
-        'date'   => 'date',
-        'active' => 'boolean',
+        'date'            => 'date',
+        'expiration_date' => 'date',
+        'tax_id'          => 'string',
+        'active'          => 'boolean',
     ];
 
     public function customer()

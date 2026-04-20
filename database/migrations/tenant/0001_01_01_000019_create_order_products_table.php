@@ -14,11 +14,11 @@ return new class extends Migration
             $table->string('sku');                         // codarticulo → sku
             $table->string('name');                        // articulo → name
             $table->string('unit');                        // medida → unit
-            $table->integer('quantity');                   // cantidad → quantity
-            $table->decimal('discount', 15, 2);           // bonificacion → discount
-            $table->decimal('tax_rate', 8, 2);            // alicuota → tax_rate
-            $table->decimal('unit_price', 15, 2);         // preciounitario → unit_price
-            $table->decimal('subtotal', 15, 2);
+            $table->unsignedInteger('quantity');                   // cantidad → quantity
+            $table->decimal('discount', 12, 2);           // bonificacion → discount
+            $table->decimal('tax_rate', 12, 2);            // alicuota → tax_rate
+            $table->decimal('unit_price', 12, 2);         // preciounitario → unit_price
+            $table->decimal('subtotal', 12, 2);
             $table->integer('batch')->nullable();          // lote → batch
             $table->foreignId('product_id')->constrained('products');
             $table->foreignId('order_id')->constrained('orders');

@@ -19,10 +19,10 @@ return new class extends Migration
                 'adjustment_exit',   // salida_ajuste
                 'return',            // devolucion
             ]);
-            $table->integer('quantity');                                // cantidad → quantity
-            $table->string('date');                                     // fecha → date
+            $table->unsignedInteger('quantity');                                // cantidad → quantity
+            $table->date('date');                                     // fecha → date
             $table->foreignId('stock_id')->constrained('stocks');      // inventario_id → stock_id
-            $table->bigInteger('voucher_number')->nullable();           // numcomprobante → voucher_number
+            $table->unsignedBigInteger('voucher_number')->nullable();           // numcomprobante → voucher_number
             $table->string('referenceable_type')->nullable();           // referenciable_type → referenceable_type
             $table->unsignedBigInteger('referenceable_id')->nullable(); // referenciable_id → referenceable_id
             $table->string('reason')->nullable();                       // motivo → reason

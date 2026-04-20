@@ -15,7 +15,7 @@ return new class extends Migration
             $table->string('name');                        // articulo → name
             $table->text('description');                   // descripcion → description
             $table->string('unit');                        // medida → unit
-            $table->decimal('price', 8, 2);                // precio → price
+            $table->decimal('price', 12, 2);                // precio → price
             $table->decimal('tax_rate', 8, 2);             // alicuota → tax_rate
             $table->integer('min_stock');                  // stockminimo → min_stock
             $table->foreignId('brand_id')->constrained('brands');

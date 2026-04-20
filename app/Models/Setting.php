@@ -40,7 +40,7 @@ class Setting extends Model
 
     protected $casts = [
         'tax_id'               => 'string',
-        'zip_code'             => 'integer',
+        'zip_code'             => 'string',
         'pos_number'           => 'integer',
         'next_invoice_number'  => 'integer',
         'next_order_number'    => 'integer',

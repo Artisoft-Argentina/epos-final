@@ -13,8 +13,8 @@ return new class extends Migration
             $table->integer('pos_number');                                  // ptoventa → pos_number
             $table->integer('voucher_code')->nullable();                    // codcomprobante → voucher_code
             $table->string('voucher_letter');                               // letracomprobante → voucher_letter
-            $table->bigInteger('invoice_number');                           // numfactura → invoice_number
-            $table->bigInteger('tax_id');                                   // cuit → tax_id
+            $table->unsignedInteger('invoice_number');                           // numfactura → invoice_number
+            $table->string('tax_id', 13);                                   // cuit → tax_id
             $table->string('date');                                         // fecha → date
             $table->decimal('discount', 12, 2);                            // bonificacion → discount
             $table->decimal('surcharge', 12, 2);                           // recargo → surcharge
@@ -23,9 +23,9 @@ return new class extends Migration
             $table->decimal('total', 12, 2);
             $table->string('payment_status');                               // pagada → payment_status
             $table->string('sale_condition');                               // condicionventa → sale_condition
-            $table->bigInteger('afip_voucher')->nullable();                 // comprobanteafip → afip_voucher
+            $table->string('afip_voucher', 20)->nullable();                 // comprobanteafip → afip_voucher
             $table->string('cae', 50)->nullable();
-            $table->string('cae_expiration')->nullable();                   // vencimiento_cae → cae_expiration
+            $table->date('cae_expiration')->nullable();                   // vencimiento_cae → cae_expiration
             $table->date('due_date')->nullable();                           // fechavto → due_date
             $table->string('barcode_string')->nullable();                   // codbarra → barcode_string
             $table->string('payment_code')->nullable();                     // compago → payment_code

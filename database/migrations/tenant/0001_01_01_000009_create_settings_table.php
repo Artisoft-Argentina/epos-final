@@ -10,12 +10,12 @@ return new class extends Migration
     {
         Schema::create('settings', function (Blueprint $table) {
             $table->id();
-            $table->bigInteger('tax_id')->nullable();                    // cuit → tax_id
+            $table->string('tax_id', 13)->nullable();                    // cuit → tax_id
             $table->string('business_name')->nullable();                  // razonsocial → business_name
             $table->string('address')->nullable();                        // direccion → address
             $table->string('phone')->nullable();                          // telefono → phone
             $table->string('email')->nullable();
-            $table->integer('zip_code')->nullable();                      // codigopostal → zip_code
+            $table->string('zip_code', 10)->nullable();                      // codigopostal → zip_code
             $table->string('city')->nullable();                           // localidad → city
             $table->string('state')->nullable();                          // provincia → state
             $table->string('tax_status')->nullable();                     // condicioniva → tax_status

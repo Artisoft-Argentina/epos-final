@@ -14,11 +14,11 @@ return new class extends Migration
             $table->id();
             $table->integer('pos_number');                                  // ptoventa → pos_number
             $table->integer('order_number');                                // numremito → order_number
-            $table->string('date');                                         // fecha → date
-            $table->decimal('surcharge', 15, 2);                           // recargo → surcharge
-            $table->decimal('discount', 15, 2);                            // bonificacion → discount
-            $table->decimal('subtotal', 15, 2);
-            $table->decimal('total', 15, 2);
+            $table->date('date');                                         // fecha → date
+            $table->decimal('surcharge', 12, 2);                           // recargo → surcharge
+            $table->decimal('discount', 12, 2);                            // bonificacion → discount
+            $table->decimal('subtotal', 12, 2);
+            $table->decimal('total', 12, 2);
             $table->string('supplier_receipt_number')->nullable();          // ✚ nuevo
             $table->boolean('converted_to_inventory')->default(false);     // convertido_inventario → converted_to_inventory
             $table->foreignId('supplier_id')->constrained('suppliers');

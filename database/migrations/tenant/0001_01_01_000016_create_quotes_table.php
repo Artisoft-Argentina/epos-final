@@ -13,13 +13,13 @@ return new class extends Migration
             $table->integer('pos_number');                  // ptoventa → pos_number
             $table->string('voucher_letter');               // letracomprobante → voucher_letter
             $table->integer('quote_number');                // numpresupuesto → quote_number
-            $table->bigInteger('tax_id');                   // cuit → tax_id
-            $table->string('date');                         // fecha → date
-            $table->decimal('discount', 8, 2);             // bonificacion → discount
-            $table->decimal('surcharge', 8, 2);            // recargo → surcharge
-            $table->decimal('subtotal', 8, 2);
-            $table->decimal('total', 8, 2);
-            $table->string('expiration_date')->nullable();  // vencimiento → expiration_date
+            $table->string('tax_id', 13);                   // cuit → tax_id
+            $table->date('date');                                    // fecha → date
+            $table->decimal('discount', 12, 2);             // bonificacion → discount
+            $table->decimal('surcharge', 12, 2);            // recargo → surcharge
+            $table->decimal('subtotal', 12, 2);
+            $table->decimal('total', 12, 2);
+            $table->date('expiration_date')->nullable();  // vencimiento → expiration_date
             $table->foreignId('customer_id')->constrained('customers');
             $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->boolean('active')->default(true);

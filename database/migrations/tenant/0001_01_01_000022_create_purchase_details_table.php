@@ -12,9 +12,9 @@ return new class extends Migration
             $table->id();
             $table->foreignId('purchase_id')->constrained('purchases')->cascadeOnDelete();
             $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
-            $table->integer('quantity');           // cantidad → quantity
-            $table->decimal('unit_price', 10, 2); // precio_unitario → unit_price
-            $table->decimal('subtotal', 10, 2);
+            $table->unsignedInteger('quantity');           // cantidad → quantity
+            $table->decimal('unit_price', 12, 2); // precio_unitario → unit_price
+            $table->decimal('subtotal', 12, 2);
             $table->softDeletes();
             $table->boolean('active')->default(true);
             $table->timestamps();
