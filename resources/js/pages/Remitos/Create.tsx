@@ -10,14 +10,14 @@ import { useState, useEffect } from 'react';
 
 interface Supplier {
     id: number;
-    razonsocial: string;
+    business_name: string;
 }
 
 interface Articulo {
     id: number;
-    codarticulo: string;
-    articulo: string;
-    precio: number;
+    sku: string;
+    name: string;
+    price: number;
 }
 
 interface Props {
@@ -26,21 +26,21 @@ interface Props {
 
 interface DetalleForm {
     articulo_id: number | null;
-    cantidad: number;
-    preciounitario: number;
+    quantity: number;
+    unit_price: number;
 }
 
 export default function Create({ suppliers }: Props) {
     const { data, setData, post, processing, errors } = useForm({
-        ptoventa: 1,
-        numremito: '',
-        fecha: new Date().toISOString().split('T')[0],
+        pos_number: 1,
+        order_number: '',
+        date: new Date().toISOString().split('T')[0],
         supplier_id: '',
         detalles: [] as DetalleForm[],
     });
 
     const [detalles, setDetalles] = useState<DetalleForm[]>([
-        { articulo_id: null, cantidad: 1, preciounitario: 0 }
+        { articulo_id: null, quantity: 1, unit_price: 0 }
     ]);
     const [articulos, setArticulos] = useState<Articulo[]>([]);
     const [loadingArticulos, setLoadingArticulos] = useState(false);
@@ -70,7 +70,7 @@ export default function Create({ suppliers }: Props) {
     }, [data.supplier_id]);
 
     const agregarDetalle = () => {
-        setDetalles([...detalles, { articulo_id: null, cantidad: 1, preciounitario: 0 }]);
+        setDetalles([...detalles, { articulo_id: null, quantity: 1, unit_price: 0 }]);
     };
 
     const eliminarDetalle = (index: number) => {
@@ -86,7 +86,7 @@ export default function Create({ suppliers }: Props) {
         if (campo === 'articulo_id') {
             const articulo = articulos.find(a => a.id === valor);
             if (articulo) {
-                nuevosDetalles[index].preciounitario = articulo.precio;
+                nuevosDetalles[index].unit_price = articulo.price;
             }
         }
         
@@ -96,7 +96,7 @@ export default function Create({ suppliers }: Props) {
 
     const calcularTotal = () => {
         return detalles.reduce((total, detalle) => {
-            return total + (detalle.cantidad * detalle.preciounitario);
+            return total + (detalle.quantity * detalle.unit_price);
         }, 0);
     };
 
@@ -127,41 +127,41 @@ export default function Create({ suppliers }: Props) {
                         <CardContent className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                                 <div>
-                                    <Label htmlFor="ptoventa">Punto de Venta</Label>
+                                    <Label htmlFor="pos_number">Punto de Venta</Label>
                                     <Input
-                                        id="ptoventa"
+                                        id="pos_number"
                                         type="number"
-                                        value={data.ptoventa}
-                                        onChange={(e) => setData('ptoventa', parseInt(e.target.value) || 1)}
-                                        error={errors.ptoventa}
+                                        value={data.pos_number}
+                                        onChange={(e) => setData('pos_number', parseInt(e.target.value) || 1)}
+                                        error={errors.pos_number}
                                     />
                                 </div>
                                 <div>
-                                    <Label htmlFor="numremito">Número de Remito</Label>
+                                    <Label htmlFor="order_number">Número de Remito</Label>
                                     <Input
-                                        id="numremito"
+                                        id="order_number"
                                         type="number"
-                                        value={data.numremito}
-                                        onChange={(e) => setData('numremito', e.target.value)}
-                                        error={errors.numremito}
+                                        value={data.order_number}
+                                        onChange={(e) => setData('order_number', e.target.value)}
+                                        error={errors.order_number}
                                     />
                                 </div>
                                 <div>
-                                    <Label htmlFor="fecha">Fecha</Label>
+                                    <Label htmlFor="date">Fecha</Label>
                                     <Input
-                                        id="fecha"
+                                        id="date"
                                         type="date"
-                                        value={data.fecha}
-                                        onChange={(e) => setData('fecha', e.target.value)}
-                                        error={errors.fecha}
+                                        value={data.date}
+                                        onChange={(e) => setData('date', e.target.value)}
+                                        error={errors.date}
                                     />
                                 </div>
                                 <div>
                                     <Label htmlFor="supplier_id">Proveedor</Label>
                                     <Select value={data.supplier_id} onValueChange={(value) => {
                                         setData('supplier_id', value);
-                                        setDetalles([{ articulo_id: null, cantidad: 1, preciounitario: 0 }]);
-                                        setData('detalles', [{ articulo_id: null, cantidad: 1, preciounitario: 0 }]);
+                                        setDetalles([{ articulo_id: null, quantity: 1, unit_price: 0 }]);
+                                        setData('detalles', [{ articulo_id: null, quantity: 1, unit_price: 0 }]);
                                     }}>
                                         <SelectTrigger>
                                             <SelectValue placeholder="Seleccionar proveedor" />
@@ -169,7 +169,7 @@ export default function Create({ suppliers }: Props) {
                                         <SelectContent>
                                             {suppliers.map((supplier) => (
                                                 <SelectItem key={supplier.id} value={supplier.id.toString()}>
-                                                    {supplier.razonsocial}
+                                                    {supplier.business_name}
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>
@@ -211,7 +211,7 @@ export default function Create({ suppliers }: Props) {
                                                 <SelectContent>
                                                     {articulos.map((articulo) => (
                                                         <SelectItem key={articulo.id} value={articulo.id.toString()}>
-                                                            {articulo.codarticulo} - {articulo.articulo}
+                                                            {articulo.sku} - {articulo.name}
                                                         </SelectItem>
                                                     ))}
                                                 </SelectContent>
@@ -222,8 +222,8 @@ export default function Create({ suppliers }: Props) {
                                             <Input
                                                 type="number"
                                                 min="1"
-                                                value={detalle.cantidad}
-                                                onChange={(e) => actualizarDetalle(index, 'cantidad', parseInt(e.target.value) || 1)}
+                                                value={detalle.quantity}
+                                                onChange={(e) => actualizarDetalle(index, 'quantity', parseInt(e.target.value) || 1)}
                                             />
                                         </div>
                                         <div>
@@ -232,8 +232,8 @@ export default function Create({ suppliers }: Props) {
                                                 type="number"
                                                 step="0.01"
                                                 min="0"
-                                                value={detalle.preciounitario}
-                                                onChange={(e) => actualizarDetalle(index, 'preciounitario', parseFloat(e.target.value) || 0)}
+                                                value={detalle.unit_price}
+                                                onChange={(e) => actualizarDetalle(index, 'unit_price', parseFloat(e.target.value) || 0)}
                                             />
                                         </div>
                                         <div className="flex items-end">

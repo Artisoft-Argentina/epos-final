@@ -7,24 +7,17 @@ import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialo
 
 interface Supplier {
     id: number;
-    razonsocial: string;
-}
-
-interface Detalle {
-    id: number;
-    cantidad: number;
-    preciounitario: number;
-    subtotal: number;
+    business_name: string;
 }
 
 interface Remito {
     id: number;
-    ptoventa: number;
-    numremito: number;
-    fecha: string;
+    pos_number: number;
+    order_number: number;
+    date: string;
     total: number;
     supplier: Supplier;
-    detalles: Detalle[];
+    products: { id: number }[];
 }
 
 interface Props {
@@ -69,11 +62,11 @@ export default function Index({ remitos }: Props) {
                                     <div className="flex justify-between items-start">
                                         <div>
                                             <h3 className="font-semibold">
-                                                Remito {remito.ptoventa.toString().padStart(4, '0')}-{remito.numremito.toString().padStart(8, '0')}
+                                                Remito {remito.pos_number.toString().padStart(4, '0')}-{remito.order_number.toString().padStart(8, '0')}
                                             </h3>
-                                            <p className="text-sm text-gray-600">{remito.supplier.razonsocial}</p>
-                                            <p className="text-sm text-gray-500">{formatDate(remito.fecha)}</p>
-                                            <p className="text-sm text-gray-500">{remito.detalles.length} artículos</p>
+                                            <p className="text-sm text-gray-600">{remito.supplier?.business_name}</p>
+                                            <p className="text-sm text-gray-500">{formatDate(remito.date)}</p>
+                                            <p className="text-sm text-gray-500">{remito.products?.length ?? 0} artículos</p>
                                         </div>
                                         <div className="text-right">
                                             <p className="font-bold text-lg">{formatCurrency(remito.total)}</p>

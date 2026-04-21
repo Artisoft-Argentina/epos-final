@@ -38,8 +38,8 @@ class RemitoController extends Controller
             'supplier_id'                   => 'required|exists:suppliers,id',
             'detalles'                      => 'required|array|min:1',
             'detalles.*.articulo_id'        => 'required|exists:products,id',
-            'detalles.*.cantidad'           => 'required|integer|min:1',
-            'detalles.*.preciounitario'     => 'required|numeric|min:0',
+            'detalles.*.quantity'           => 'required|integer|min:1',
+            'detalles.*.unit_price'         => 'required|numeric|min:0',
         ]);
 
         $order = Order::create([
@@ -57,17 +57,17 @@ class RemitoController extends Controller
         $subtotal = 0;
         foreach ($request->detalles as $detalle) {
             $product      = Product::find($detalle['articulo_id']);
-            $itemSubtotal = $detalle['cantidad'] * $detalle['preciounitario'];
+            $itemSubtotal = $detalle['quantity'] * $detalle['unit_price'];
 
             $order->products()->create([
                 'supplier_code' => $product->supplier_code,
                 'sku'           => $product->sku,
                 'name'          => $product->name,
                 'unit'          => $product->unit,
-                'quantity'      => $detalle['cantidad'],
+                'quantity'      => $detalle['quantity'],
                 'discount'      => 0,
                 'tax_rate'      => $product->tax_rate,
-                'unit_price'    => $detalle['preciounitario'],
+                'unit_price'    => $detalle['unit_price'],
                 'subtotal'      => $itemSubtotal,
                 'product_id'    => $detalle['articulo_id'],
             ]);
