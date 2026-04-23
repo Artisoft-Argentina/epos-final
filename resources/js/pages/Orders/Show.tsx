@@ -1,7 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Package } from 'lucide-react';
+import { ArrowLeft, Package, SquarePen } from 'lucide-react';
 
 interface Supplier {
     id: number;
@@ -30,6 +30,7 @@ interface Order {
     date: string;
     subtotal: number;
     total: number;
+    notes: string | null;
     converted_to_inventory: boolean;
     supplier: Supplier;
     products: OrderProduct[];
@@ -68,6 +69,12 @@ export default function Show({ order }: Props) {
                         {order.converted_to_inventory && (
                             <p className="text-green-600 font-semibold">✓ Convertido a inventario</p>
                         )}
+                    </div>
+                    <div className="ml-auto">
+                        <Link href={route('orders.edit', order.id)} className="inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent">
+                            <SquarePen className="h-4 w-4" />
+                            Editar
+                        </Link>
                     </div>
                 </div>
                 
@@ -141,6 +148,17 @@ export default function Show({ order }: Props) {
                                 </div>
                             </CardContent>
                         </Card>
+
+                        {order.notes && (
+                            <Card className="mt-6">
+                                <CardHeader>
+                                    <CardTitle>Observaciones</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <p className="text-sm">{order.notes}</p>
+                                </CardContent>
+                            </Card>
+                        )}
                     </div>
                 </div>
             </div>

@@ -10,116 +10,144 @@ import { useState, useEffect } from 'react';
 
 interface Supplier {
     id: number;
-    razonsocial: string;
+    business_name: string;
 }
 
-interface Articulo {
+interface Product {
     id: number;
-    codarticulo: string;
-    articulo: string;
-    precio: number;
+    sku: string;
+    name: string;
+    price: number;
 }
 
-interface DetalleCompra {
+interface OrderProduct {
     id: number;
-    articulo_id: number;
-    cantidad: number;
-    precio_unitario: number;
-    articulo: Articulo;
+    product_id: number;
+    quantity: number;
+    unit_price: number;
+    product: Product;
 }
 
-interface Compra {
+interface Order {
     id: number;
-    numero_remito: string;
-    fecha: string;
+    pos_number: number;
+    order_number: number;
+    date: string;
     supplier_id: number;
-    observaciones: string;
-    detalles: DetalleCompra[];
+    notes: string | null;
+    converted_to_inventory: boolean;
+    products: OrderProduct[];
 }
 
 interface Props {
-    compra: Compra;
+    order: Order;
     suppliers: Supplier[];
-    articulos: Articulo[];
 }
 
 interface DetalleForm {
     articulo_id: number | null;
-    cantidad: number;
-    precio_unitario: number;
+    quantity: number;
+    unit_price: number;
 }
 
-export default function Edit({ compra, suppliers, articulos }: Props) {
+export default function Edit({ order, suppliers }: Props) {
     const { data, setData, put, processing, errors } = useForm({
-        numero_remito: compra.numero_remito,
-        fecha: compra.fecha,
-        supplier_id: compra.supplier_id.toString(),
-        observaciones: compra.observaciones || '',
+        pos_number: order.pos_number,
+        order_number: order.order_number.toString(),
+        date: order.date,
+        supplier_id: order.supplier_id.toString(),
+        notes: order.notes || '',
         detalles: [] as DetalleForm[],
     });
 
     const [detalles, setDetalles] = useState<DetalleForm[]>([]);
+    const [articulos, setArticulos] = useState<Product[]>([]);
+    const [loadingArticulos, setLoadingArticulos] = useState(false);
 
+    // Cargar artículos del proveedor
+    const cargarArticulos = async (supplierId: string) => {
+        if (!supplierId) {
+            setArticulos([]);
+            return;
+        }
+
+        setLoadingArticulos(true);
+        try {
+            const response = await fetch(route('orders.products', supplierId));
+            const data = await response.json();
+            setArticulos(data);
+        } catch (error) {
+            console.error('Error cargando artículos:', error);
+        } finally {
+            setLoadingArticulos(false);
+        }
+    };
+
+    // Inicializar detalles desde la orden existente
     useEffect(() => {
-        const detallesIniciales = compra.detalles.map(detalle => ({
-            articulo_id: detalle.articulo_id,
-            cantidad: detalle.cantidad,
-            precio_unitario: detalle.precio_unitario,
+        const detallesIniciales = order.products.map(p => ({
+            articulo_id: p.product_id,
+            quantity: p.quantity,
+            unit_price: Number(p.unit_price),
         }));
         setDetalles(detallesIniciales);
         setData('detalles', detallesIniciales);
     }, []);
 
+    useEffect(() => {
+        if (data.supplier_id) {
+            cargarArticulos(data.supplier_id);
+        }
+    }, [data.supplier_id]);
+
     const agregarDetalle = () => {
-        const nuevosDetalles = [...detalles, { articulo_id: null, cantidad: 1, precio_unitario: 0 }];
-        setDetalles(nuevosDetalles);
-        setData('detalles', nuevosDetalles);
+        const nuevos = [...detalles, { articulo_id: null, quantity: 1, unit_price: 0 }];
+        setDetalles(nuevos);
+        setData('detalles', nuevos);
     };
 
     const eliminarDetalle = (index: number) => {
-        const nuevosDetalles = detalles.filter((_, i) => i !== index);
-        setDetalles(nuevosDetalles);
-        setData('detalles', nuevosDetalles);
+        const nuevos = detalles.filter((_, i) => i !== index);
+        setDetalles(nuevos);
+        setData('detalles', nuevos);
     };
 
     const actualizarDetalle = (index: number, campo: keyof DetalleForm, valor: any) => {
-        const nuevosDetalles = [...detalles];
-        nuevosDetalles[index] = { ...nuevosDetalles[index], [campo]: valor };
-        
+        const nuevos = [...detalles];
+        nuevos[index] = { ...nuevos[index], [campo]: valor };
+
         if (campo === 'articulo_id') {
             const articulo = articulos.find(a => a.id === valor);
             if (articulo) {
-                nuevosDetalles[index].precio_unitario = articulo.precio;
+                nuevos[index].unit_price = articulo.price;
             }
         }
-        
-        setDetalles(nuevosDetalles);
-        setData('detalles', nuevosDetalles);
+
+        setDetalles(nuevos);
+        setData('detalles', nuevos);
     };
 
     const calcularTotal = () => {
-        return detalles.reduce((total, detalle) => {
-            return total + (detalle.cantidad * detalle.precio_unitario);
-        }, 0);
+        return detalles.reduce((total, d) => total + (d.quantity * d.unit_price), 0);
     };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        put(route('compras.update', compra.id));
+        put(route('orders.update', order.id));
     };
+
+    const numeroCompleto = `${order.pos_number.toString().padStart(4, '0')}-${order.order_number.toString().padStart(8, '0')}`;
 
     return (
         <AppLayout>
-            <Head title={`Editar Compra - Orden #${compra.numero_remito}`} />
-            
+            <Head title={`Editar Orden ${numeroCompleto}`} />
+
             <div className="p-6">
                 <div className="flex items-center gap-4 mb-6">
-                    <Link href={route('compras.show', compra.id)}>
-                        <Button variant="outline" size="sm">
-                            <ArrowLeft className="h-4 w-4" />
-                        </Button>
+                    <Link href={route('orders.show', order.id)} className="inline-flex items-center justify-center rounded-md border border-input bg-background p-2 text-sm hover:bg-accent">
+                        <ArrowLeft className="h-4 w-4" />
                     </Link>
-                    <h1 className="text-2xl font-bold">Editar Compra - Orden #{compra.numero_remito}</h1>
+                    <h1 className="text-2xl font-bold">Editar Orden {numeroCompleto}</h1>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
@@ -128,42 +156,67 @@ export default function Edit({ compra, suppliers, articulos }: Props) {
                             <CardTitle>Información General</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                                 <div>
-                                    <Label htmlFor="numero_remito">Nro. de Orden</Label>
+                                    <Label htmlFor="pos_number">Punto de Venta</Label>
                                     <Input
-                                        id="numero_remito"
-                                        value={data.numero_remito}
-                                        onChange={(e) => setData('numero_remito', e.target.value)}
-                                        error={errors.numero_remito}
+                                        id="pos_number"
+                                        type="number"
+                                        value={data.pos_number}
+                                        onChange={(e) => setData('pos_number', parseInt(e.target.value) || 1)}
+                                        error={errors.pos_number}
                                     />
                                 </div>
                                 <div>
-                                    <Label htmlFor="fecha">Fecha</Label>
+                                    <Label htmlFor="order_number">Nro. de Orden</Label>
                                     <Input
-                                        id="fecha"
+                                        id="order_number"
+                                        type="number"
+                                        value={data.order_number}
+                                        onChange={(e) => setData('order_number', e.target.value)}
+                                        error={errors.order_number}
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="date">Fecha</Label>
+                                    <Input
+                                        id="date"
                                         type="date"
-                                        value={data.fecha}
-                                        onChange={(e) => setData('fecha', e.target.value)}
-                                        error={errors.fecha}
+                                        value={data.date}
+                                        onChange={(e) => setData('date', e.target.value)}
+                                        error={errors.date}
                                     />
                                 </div>
                                 <div>
                                     <Label htmlFor="supplier_id">Proveedor</Label>
-                                    <Select value={data.supplier_id} onValueChange={(value) => setData('supplier_id', value)}>
+                                    <Select value={data.supplier_id} onValueChange={(value) => {
+                                        setData('supplier_id', value);
+                                        setDetalles([{ articulo_id: null, quantity: 1, unit_price: 0 }]);
+                                        setData('detalles', [{ articulo_id: null, quantity: 1, unit_price: 0 }]);
+                                    }}>
                                         <SelectTrigger>
                                             <SelectValue placeholder="Seleccionar proveedor" />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {suppliers.map((supplier) => (
                                                 <SelectItem key={supplier.id} value={supplier.id.toString()}>
-                                                    {supplier.razonsocial}
+                                                    {supplier.business_name}
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>
                                     {errors.supplier_id && <p className="text-sm text-red-600 mt-1">{errors.supplier_id}</p>}
                                 </div>
+                            </div>
+                            <div>
+                                <Label htmlFor="notes">Observaciones</Label>
+                                <Input
+                                    id="notes"
+                                    value={data.notes}
+                                    onChange={(e) => setData('notes', e.target.value)}
+                                    placeholder="Observaciones opcionales"
+                                    error={errors.notes}
+                                />
                             </div>
                         </CardContent>
                     </Card>
@@ -184,17 +237,22 @@ export default function Edit({ compra, suppliers, articulos }: Props) {
                                     <div key={index} className="grid grid-cols-1 md:grid-cols-5 gap-4 p-4 border rounded-lg">
                                         <div className="md:col-span-2">
                                             <Label>Artículo</Label>
-                                            <Select 
-                                                value={detalle.articulo_id?.toString() || ''} 
+                                            <Select
+                                                value={detalle.articulo_id?.toString() || ''}
                                                 onValueChange={(value) => actualizarDetalle(index, 'articulo_id', parseInt(value))}
+                                                disabled={!data.supplier_id || loadingArticulos}
                                             >
                                                 <SelectTrigger>
-                                                    <SelectValue placeholder="Seleccionar artículo" />
+                                                    <SelectValue placeholder={
+                                                        !data.supplier_id ? "Seleccione un proveedor primero" :
+                                                        loadingArticulos ? "Cargando artículos..." :
+                                                        "Seleccionar artículo"
+                                                    } />
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     {articulos.map((articulo) => (
                                                         <SelectItem key={articulo.id} value={articulo.id.toString()}>
-                                                            {articulo.codarticulo} - {articulo.articulo}
+                                                            {articulo.sku} - {articulo.name}
                                                         </SelectItem>
                                                     ))}
                                                 </SelectContent>
@@ -205,8 +263,8 @@ export default function Edit({ compra, suppliers, articulos }: Props) {
                                             <Input
                                                 type="number"
                                                 min="1"
-                                                value={detalle.cantidad}
-                                                onChange={(e) => actualizarDetalle(index, 'cantidad', parseInt(e.target.value) || 1)}
+                                                value={detalle.quantity}
+                                                onChange={(e) => actualizarDetalle(index, 'quantity', parseInt(e.target.value) || 1)}
                                             />
                                         </div>
                                         <div>
@@ -215,8 +273,8 @@ export default function Edit({ compra, suppliers, articulos }: Props) {
                                                 type="number"
                                                 step="0.01"
                                                 min="0"
-                                                value={detalle.precio_unitario}
-                                                onChange={(e) => actualizarDetalle(index, 'precio_unitario', parseFloat(e.target.value) || 0)}
+                                                value={detalle.unit_price}
+                                                onChange={(e) => actualizarDetalle(index, 'unit_price', parseFloat(e.target.value) || 0)}
                                             />
                                         </div>
                                         <div className="flex items-end">
@@ -233,7 +291,7 @@ export default function Edit({ compra, suppliers, articulos }: Props) {
                                     </div>
                                 ))}
                             </div>
-                            
+
                             <div className="mt-4 p-4 bg-gray-50 rounded-lg">
                                 <div className="flex justify-between items-center">
                                     <span className="font-semibold">Total:</span>
@@ -246,11 +304,11 @@ export default function Edit({ compra, suppliers, articulos }: Props) {
                     </Card>
 
                     <div className="flex justify-end gap-4">
-                        <Link href={route('compras.show', compra.id)}>
+                        <Link href={route('orders.show', order.id)}>
                             <Button variant="outline">Cancelar</Button>
                         </Link>
                         <Button type="submit" disabled={processing}>
-                            Actualizar Compra
+                            Actualizar Orden
                         </Button>
                     </div>
                 </form>

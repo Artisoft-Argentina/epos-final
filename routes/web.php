@@ -57,7 +57,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('orders/products/{supplier}', [\App\Http\Controllers\OrderController::class, 'getProductsBySupplier'])->name('orders.products');
         Route::resource('orders', \App\Http\Controllers\OrderController::class);
         Route::post('orders/{order}/convert-inventory', [\App\Http\Controllers\OrderController::class, 'convertToInventory'])->name('orders.convert-inventory');
-        Route::resource('compras', \App\Http\Controllers\CompraController::class);
         Route::resource('inventarios', \App\Http\Controllers\InventarioController::class);
         Route::get('articulos/{articulo}/movimientos', [\App\Http\Controllers\MovimientoController::class, 'index'])->name('movimientos.index');
         Route::resource('listas-precios', \App\Http\Controllers\ListaPrecioController::class);

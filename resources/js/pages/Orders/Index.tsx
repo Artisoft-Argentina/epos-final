@@ -2,7 +2,7 @@ import { Head, Link } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Eye} from 'lucide-react';
+import { Plus, Eye, SquarePen } from 'lucide-react';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
 
 interface Supplier {
@@ -74,6 +74,11 @@ export default function Index({ orders }: Props) {
                                                 <Link href={route('orders.show', order.id)}>
                                                     <Button variant="outline" size="sm">
                                                         <Eye className="h-4 w-4" />
+                                                    </Button>
+                                                </Link>
+                                                <Link href={route('orders.edit', order.id)}>
+                                                    <Button variant="outline" size="sm">
+                                                        <SquarePen className="h-4 w-4" />
                                                     </Button>
                                                 </Link>
                                                 <DeleteConfirmationDialog

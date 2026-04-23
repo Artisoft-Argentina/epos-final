@@ -18,6 +18,7 @@ class Order extends Model
         'subtotal',
         'total',
         'supplier_receipt_number',
+        'notes',
         'converted_to_inventory',
         'supplier_id',
         'user_id',

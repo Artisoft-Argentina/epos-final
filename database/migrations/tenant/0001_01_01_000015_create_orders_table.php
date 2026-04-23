@@ -20,6 +20,7 @@ return new class extends Migration
             $table->decimal('subtotal', 12, 2);
             $table->decimal('total', 12, 2);
             $table->string('supplier_receipt_number')->nullable();          // ✚ nuevo
+            $table->text('notes')->nullable();                                // observaciones (fusionado desde purchases)
             $table->boolean('converted_to_inventory')->default(false);     // convertido_inventario → converted_to_inventory
             $table->foreignId('supplier_id')->constrained('suppliers');
             $table->foreignId('user_id')->constrained('users');

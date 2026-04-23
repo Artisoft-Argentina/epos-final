@@ -36,6 +36,7 @@ export default function Create({ suppliers }: Props) {
         order_number: '',
         date: new Date().toISOString().split('T')[0],
         supplier_id: '',
+        notes: '',
         detalles: [] as DetalleForm[],
     });
 
@@ -174,6 +175,16 @@ export default function Create({ suppliers }: Props) {
                                     </Select>
                                     {errors.supplier_id && <p className="text-sm text-red-600 mt-1">{errors.supplier_id}</p>}
                                 </div>
+                            </div>
+                            <div>
+                                <Label htmlFor="notes">Observaciones</Label>
+                                <Input
+                                    id="notes"
+                                    value={data.notes}
+                                    onChange={(e) => setData('notes', e.target.value)}
+                                    placeholder="Observaciones opcionales"
+                                    error={errors.notes}
+                                />
                             </div>
                         </CardContent>
                     </Card>
