@@ -9,8 +9,8 @@ interface Domain {
 
 interface Tenant {
     id: string;
-    razonsocial: string;
-    cuit: string;
+    business_name: string;
+    tax_id: string;
     plan: string;
     status: string;
     created_at: string;
@@ -42,7 +42,7 @@ export default function TenantsIndex({ tenants }: Props) {
     };
 
     const handleDelete = (tenant: Tenant) => {
-        if (confirm(`¿Eliminar la empresa "${tenant.razonsocial}" y toda su base de datos? Esta acción es irreversible.`)) {
+        if (confirm(`¿Eliminar la empresa "${tenant.business_name}" y toda su base de datos? Esta acción es irreversible.`)) {
             router.delete(route('central.tenants.destroy', tenant.id));
         }
     };
@@ -81,9 +81,9 @@ export default function TenantsIndex({ tenants }: Props) {
                             return (
                                 <tr key={tenant.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                                     <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">
-                                        {tenant.razonsocial}
+                                        {tenant.business_name}
                                     </td>
-                                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{tenant.cuit}</td>
+                                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{tenant.tax_id}</td>
                                     <td className="px-4 py-3">
                                         {tenant.url && (
                                             <a

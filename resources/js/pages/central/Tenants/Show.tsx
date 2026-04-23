@@ -9,8 +9,8 @@ interface Domain {
 
 interface Tenant {
     id: string;
-    razonsocial: string;
-    cuit: string;
+    business_name: string;
+    tax_id: string;
     plan: string;
     status: string;
     created_at: string;
@@ -20,9 +20,9 @@ interface Tenant {
 
 interface Stats {
     users: number;
-    clientes: number;
-    facturas: number;
-    articulos: number;
+    customers: number;
+    sales: number;
+    products: number;
 }
 
 interface Props {
@@ -48,8 +48,8 @@ export default function ShowTenant({ tenant, stats }: Props) {
     };
 
     return (
-        <CentralLayout title={tenant.razonsocial}>
-            <Head title={`${tenant.razonsocial} — Panel Central`} />
+        <CentralLayout title={tenant.business_name}>
+            <Head title={`${tenant.business_name} — Panel Central`} />
 
             <div className="mb-6 flex items-center gap-4">
                 <Link href={route('central.tenants.index')} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
@@ -90,8 +90,8 @@ export default function ShowTenant({ tenant, stats }: Props) {
                     <div className="rounded-xl border bg-white p-6 shadow-sm dark:bg-gray-900">
                         <h2 className="mb-4 font-semibold text-gray-900 dark:text-white">Información de la empresa</h2>
                         <dl className="space-y-3 text-sm">
-                            <DataRow label="Razón Social" value={tenant.razonsocial} />
-                            <DataRow label="CUIT" value={tenant.cuit} />
+                            <DataRow label="Razón Social" value={tenant.business_name} />
+                            <DataRow label="CUIT" value={tenant.tax_id} />
                             <DataRow label="Plan" value={planLabel[tenant.plan] ?? tenant.plan} />
                             <DataRow
                                 label="Estado"
@@ -124,9 +124,9 @@ export default function ShowTenant({ tenant, stats }: Props) {
                 <div className="space-y-3">
                     {[
                         { label: 'Usuarios', value: stats.users },
-                        { label: 'Clientes', value: stats.clientes },
-                        { label: 'Facturas', value: stats.facturas },
-                        { label: 'Artículos', value: stats.articulos },
+                        { label: 'Clientes', value: stats.customers },
+                        { label: 'Ventas', value: stats.sales },
+                        { label: 'Productos', value: stats.products },
                     ].map((s) => (
                         <div key={s.label} className="rounded-xl border bg-white p-4 shadow-sm dark:bg-gray-900">
                             <p className="text-xs text-gray-500 dark:text-gray-400">{s.label}</p>
