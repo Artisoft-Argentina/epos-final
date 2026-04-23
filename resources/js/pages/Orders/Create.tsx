@@ -53,7 +53,7 @@ export default function Create({ suppliers }: Props) {
         
         setLoadingArticulos(true);
         try {
-            const response = await fetch(route('remitos.articulos', supplierId));
+            const response = await fetch(route('orders.products', supplierId));
             const data = await response.json();
             setArticulos(data);
         } catch (error) {
@@ -102,21 +102,19 @@ export default function Create({ suppliers }: Props) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(route('remitos.store'));
+        post(route('orders.store'));
     };
 
     return (
         <AppLayout>
-            <Head title="Nuevo Remito" />
+            <Head title="Nueva Orden de Compra" />
             
             <div className="p-6">
                 <div className="flex items-center gap-4 mb-6">
-                    <Link href={route('remitos.index')}>
-                        <Button variant="outline" size="sm">
-                            <ArrowLeft className="h-4 w-4" />
-                        </Button>
+                    <Link href={route('orders.index')} className="inline-flex items-center justify-center rounded-md border border-input bg-background p-2 text-sm hover:bg-accent">
+                        <ArrowLeft className="h-4 w-4" />
                     </Link>
-                    <h1 className="text-2xl font-bold">Nuevo Remito</h1>
+                    <h1 className="text-2xl font-bold">Nueva Orden de Compra</h1>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
@@ -137,7 +135,7 @@ export default function Create({ suppliers }: Props) {
                                     />
                                 </div>
                                 <div>
-                                    <Label htmlFor="order_number">Número de Remito</Label>
+                                    <Label htmlFor="order_number">Nro. de Orden</Label>
                                     <Input
                                         id="order_number"
                                         type="number"
@@ -263,11 +261,11 @@ export default function Create({ suppliers }: Props) {
                     </Card>
 
                     <div className="flex justify-end gap-4">
-                        <Link href={route('remitos.index')}>
+                        <Link href={route('orders.index')}>
                             <Button variant="outline">Cancelar</Button>
                         </Link>
                         <Button type="submit" disabled={processing}>
-                            Guardar Remito
+                            Guardar Orden
                         </Button>
                     </div>
                 </form>

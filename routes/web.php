@@ -54,9 +54,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('codigos/imprimir-etiquetas', [\App\Http\Controllers\CodigoController::class, 'imprimirEtiquetas'])->name('codigos.imprimir-etiquetas');
         
         Route::resource('suppliers', \App\Http\Controllers\SupplierController::class);
-        Route::get('remitos/articulos/{supplier}', [\App\Http\Controllers\RemitoController::class, 'getArticulosBySupplier'])->name('remitos.articulos');
-        Route::resource('remitos', \App\Http\Controllers\RemitoController::class);
-        Route::post('remitos/{remito}/convertir-inventario', [\App\Http\Controllers\RemitoController::class, 'convertirAInventario'])->name('remitos.convertir-inventario');
+        Route::get('orders/products/{supplier}', [\App\Http\Controllers\OrderController::class, 'getProductsBySupplier'])->name('orders.products');
+        Route::resource('orders', \App\Http\Controllers\OrderController::class);
+        Route::post('orders/{order}/convert-inventory', [\App\Http\Controllers\OrderController::class, 'convertToInventory'])->name('orders.convert-inventory');
         Route::resource('compras', \App\Http\Controllers\CompraController::class);
         Route::resource('inventarios', \App\Http\Controllers\InventarioController::class);
         Route::get('articulos/{articulo}/movimientos', [\App\Http\Controllers\MovimientoController::class, 'index'])->name('movimientos.index');

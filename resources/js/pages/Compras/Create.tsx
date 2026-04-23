@@ -102,7 +102,7 @@ export default function Create({ suppliers, articulos }: Props) {
                         <CardContent className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
-                                    <Label htmlFor="numero_remito">Número de Remito</Label>
+                                    <Label htmlFor="numero_remito">Nro. de Orden</Label>
                                     <Input
                                         id="numero_remito"
                                         value={data.numero_remito}

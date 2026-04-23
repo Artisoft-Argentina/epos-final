@@ -53,7 +53,7 @@ export default function Show({ compra }: Props) {
 
     return (
         <AppLayout>
-            <Head title={`Compra - Remito #${compra.numero_remito}`} />
+            <Head title={`Compra - Orden #${compra.numero_remito}`} />
             
             <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
@@ -64,7 +64,7 @@ export default function Show({ compra }: Props) {
                             </Button>
                         </Link>
                         <div>
-                            <h1 className="text-2xl font-bold">Remito #{compra.numero_remito}</h1>
+                            <h1 className="text-2xl font-bold">Orden #{compra.numero_remito}</h1>
                             <p className="text-gray-600">{formatDate(compra.fecha)}</p>
                         </div>
                     </div>

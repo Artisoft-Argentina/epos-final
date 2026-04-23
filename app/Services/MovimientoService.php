@@ -18,7 +18,7 @@ class MovimientoService
      * @param  Inventario   $inventario  El inventario afectado
      * @param  string       $tipo        Una de las constantes Movimiento::TIPO_*
      * @param  int          $cantidad    Cantidad absoluta (siempre positiva)
-     * @param  Model|null   $referencia  Documento origen (Remito, Factura, Entrega, etc.)
+     * @param  Model|null   $referencia  Documento origen (Order, Sale, Delivery, etc.)
      * @param  int|null     $userId      Usuario responsable; usa auth()->id() si null
      * @param  string|null  $motivo      Texto libre para ajustes manuales
      */

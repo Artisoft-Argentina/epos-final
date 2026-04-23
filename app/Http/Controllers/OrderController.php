@@ -11,20 +11,20 @@ use App\Services\MovimientoService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
-class RemitoController extends Controller
+class OrderController extends Controller
 {
     public function __construct(private MovimientoService $movimientoService) {}
 
     public function index()
     {
-        return Inertia::render('Remitos/Index', [
-            'remitos' => Order::with(['supplier', 'products'])->orderBy('date', 'desc')->get(),
+        return Inertia::render('Orders/Index', [
+            'orders' => Order::with(['supplier', 'products'])->orderBy('date', 'desc')->get(),
         ]);
     }
 
     public function create()
     {
-        return Inertia::render('Remitos/Create', [
+        return Inertia::render('Orders/Create', [
             'suppliers' => Supplier::all(),
         ]);
     }
@@ -77,37 +77,37 @@ class RemitoController extends Controller
 
         $order->update(['subtotal' => $subtotal, 'total' => $subtotal]);
 
-        return redirect()->route('remitos.index')->with('success', 'Orden creada exitosamente');
+        return redirect()->route('orders.index')->with('success', 'Orden creada exitosamente');
     }
 
-    public function show(Order $remito)
+    public function show(Order $order)
     {
-        return Inertia::render('Remitos/Show', [
-            'remito' => $remito->load(['supplier', 'products.product']),
+        return Inertia::render('Orders/Show', [
+            'order' => $order->load(['supplier', 'products.product']),
         ]);
     }
 
-    public function destroy(Order $remito)
+    public function destroy(Order $order)
     {
-        $remito->delete();
+        $order->delete();
 
-        return redirect()->route('remitos.index')->with('success', 'Orden eliminada exitosamente');
+        return redirect()->route('orders.index')->with('success', 'Orden eliminada exitosamente');
     }
 
-    public function getArticulosBySupplier($supplierId)
+    public function getProductsBySupplier($supplierId)
     {
         return response()->json(
             Product::where('supplier_id', $supplierId)->with(['category', 'brand'])->get()
         );
     }
 
-    public function convertirAInventario(Order $remito)
+    public function convertToInventory(Order $order)
     {
-        if ($remito->converted_to_inventory) {
+        if ($order->converted_to_inventory) {
             return redirect()->back()->with('error', 'Esta orden ya fue convertida a inventario');
         }
 
-        foreach ($remito->products as $detail) {
+        foreach ($order->products as $detail) {
             $stock = Stock::where('product_id', $detail->product_id)->first();
 
             if ($stock) {
@@ -116,17 +116,17 @@ class RemitoController extends Controller
                 $stock = Stock::create([
                     'product_id'  => $detail->product_id,
                     'quantity'    => $detail->quantity,
-                    'supplier_id' => $remito->supplier_id,
+                    'supplier_id' => $order->supplier_id,
                 ]);
             }
 
             $this->movimientoService->registrar(
                 $stock, StockMovement::TYPE_PURCHASE_ENTRY,
-                $detail->quantity, $remito
+                $detail->quantity, $order
             );
         }
 
-        $remito->update(['converted_to_inventory' => true]);
+        $order->update(['converted_to_inventory' => true]);
 
         return redirect()->back()->with('success', 'Orden convertida a inventario exitosamente');
     }

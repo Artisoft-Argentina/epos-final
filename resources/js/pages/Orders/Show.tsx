@@ -1,46 +1,45 @@
 import { Head, Link } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Package } from 'lucide-react';
 
 interface Supplier {
     id: number;
-    razonsocial: string;
-    cuit: string;
+    business_name: string;
+    tax_id: string;
 }
 
-interface Articulo {
+interface Product {
     id: number;
-    codarticulo: string;
-    articulo: string;
+    sku: string;
+    name: string;
 }
 
-interface Detalle {
+interface OrderProduct {
     id: number;
-    cantidad: number;
-    preciounitario: number;
+    quantity: number;
+    unit_price: number;
     subtotal: number;
-    articulo: Articulo;
+    product: Product;
 }
 
-interface Remito {
+interface Order {
     id: number;
-    ptoventa: number;
-    numremito: number;
-    fecha: string;
+    pos_number: number;
+    order_number: number;
+    date: string;
     subtotal: number;
     total: number;
-    convertido_inventario: boolean;
+    converted_to_inventory: boolean;
     supplier: Supplier;
-    detalles: Detalle[];
+    products: OrderProduct[];
 }
 
 interface Props {
-    remito: Remito;
+    order: Order;
 }
 
-export default function Show({ remito }: Props) {
+export default function Show({ order }: Props) {
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('es-AR', {
             style: 'currency',
@@ -52,35 +51,31 @@ export default function Show({ remito }: Props) {
         return new Date(date).toLocaleDateString('es-AR');
     };
 
-    const numeroCompleto = `${remito.ptoventa.toString().padStart(4, '0')}-${remito.numremito.toString().padStart(8, '0')}`;
+    const numeroCompleto = `${order.pos_number.toString().padStart(4, '0')}-${order.order_number.toString().padStart(8, '0')}`;
 
     return (
         <AppLayout>
-            <Head title={`Remito ${numeroCompleto}`} />
+            <Head title={`Orden ${numeroCompleto}`} />
             
             <div className="p-6">
                 <div className="flex items-center gap-4 mb-6">
-                    <Link href={route('remitos.index')}>
-                        <Button variant="outline" size="sm">
-                            <ArrowLeft className="h-4 w-4" />
-                        </Button>
+                    <Link href={route('orders.index')} className="inline-flex items-center justify-center rounded-md border border-input bg-background p-2 text-sm hover:bg-accent">
+                        <ArrowLeft className="h-4 w-4" />
                     </Link>
                     <div>
-                        <h1 className="text-2xl font-bold">Remito {numeroCompleto}</h1>
-                        <p className="text-gray-600">{formatDate(remito.fecha)}</p>
-                        {remito.convertido_inventario && (
+                        <h1 className="text-2xl font-bold">Orden {numeroCompleto}</h1>
+                        <p className="text-gray-600">{formatDate(order.date)}</p>
+                        {order.converted_to_inventory && (
                             <p className="text-green-600 font-semibold">✓ Convertido a inventario</p>
                         )}
                     </div>
                 </div>
                 
-                {!remito.convertido_inventario && (
+                {!order.converted_to_inventory && (
                     <div className="mb-6">
-                        <Link href={route('remitos.convertir-inventario', remito.id)} method="post" as="button">
-                            <Button className="bg-green-600 hover:bg-green-700">
-                                <Package className="h-4 w-4 mr-2" />
-                                Convertir a Inventario
-                            </Button>
+                        <Link href={route('orders.convert-inventory', order.id)} method="post" as="button" className="inline-flex items-center justify-center gap-2 rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700">
+                            <Package className="h-4 w-4" />
+                            Convertir a Inventario
                         </Link>
                     </div>
                 )}
@@ -93,18 +88,18 @@ export default function Show({ remito }: Props) {
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-4">
-                                    {remito.detalles.map((detalle) => (
-                                        <div key={detalle.id} className="border rounded-lg p-4">
+                                    {order.products.map((item) => (
+                                        <div key={item.id} className="border rounded-lg p-4">
                                             <div className="flex justify-between items-start">
                                                 <div>
-                                                    <h3 className="font-semibold">{detalle.articulo.articulo}</h3>
-                                                    <p className="text-sm text-gray-600">Código: {detalle.articulo.codarticulo}</p>
+                                                    <h3 className="font-semibold">{item.product.name}</h3>
+                                                    <p className="text-sm text-gray-600">Código: {item.product.sku}</p>
                                                     <p className="text-sm text-gray-600">
-                                                        Cantidad: {detalle.cantidad} × {formatCurrency(detalle.preciounitario)}
+                                                        Cantidad: {item.quantity} × {formatCurrency(item.unit_price)}
                                                     </p>
                                                 </div>
                                                 <div className="text-right">
-                                                    <p className="font-bold">{formatCurrency(detalle.subtotal)}</p>
+                                                    <p className="font-bold">{formatCurrency(item.subtotal)}</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -122,8 +117,8 @@ export default function Show({ remito }: Props) {
                             <CardContent>
                                 <div className="space-y-2">
                                     <div>
-                                        <p className="font-semibold">{remito.supplier.razonsocial}</p>
-                                        <p className="text-sm text-gray-600">CUIT: {remito.supplier.cuit}</p>
+                                        <p className="font-semibold">{order.supplier.business_name}</p>
+                                        <p className="text-sm text-gray-600">CUIT: {order.supplier.tax_id}</p>
                                     </div>
                                 </div>
                             </CardContent>
@@ -137,11 +132,11 @@ export default function Show({ remito }: Props) {
                                 <div className="space-y-2">
                                     <div className="flex justify-between">
                                         <span>Subtotal:</span>
-                                        <span>{formatCurrency(remito.subtotal)}</span>
+                                        <span>{formatCurrency(order.subtotal)}</span>
                                     </div>
                                     <div className="flex justify-between font-bold text-lg border-t pt-2">
                                         <span>Total:</span>
-                                        <span>{formatCurrency(remito.total)}</span>
+                                        <span>{formatCurrency(order.total)}</span>
                                     </div>
                                 </div>
                             </CardContent>

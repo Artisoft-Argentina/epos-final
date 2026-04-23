@@ -110,7 +110,7 @@ export default function Edit({ compra, suppliers, articulos }: Props) {
 
     return (
         <AppLayout>
-            <Head title={`Editar Compra - Remito #${compra.numero_remito}`} />
+            <Head title={`Editar Compra - Orden #${compra.numero_remito}`} />
             
             <div className="p-6">
                 <div className="flex items-center gap-4 mb-6">
@@ -119,7 +119,7 @@ export default function Edit({ compra, suppliers, articulos }: Props) {
                             <ArrowLeft className="h-4 w-4" />
                         </Button>
                     </Link>
-                    <h1 className="text-2xl font-bold">Editar Compra - Remito #{compra.numero_remito}</h1>
+                    <h1 className="text-2xl font-bold">Editar Compra - Orden #{compra.numero_remito}</h1>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
@@ -130,7 +130,7 @@ export default function Edit({ compra, suppliers, articulos }: Props) {
                         <CardContent className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
-                                    <Label htmlFor="numero_remito">Número de Remito</Label>
+                                    <Label htmlFor="numero_remito">Nro. de Orden</Label>
                                     <Input
                                         id="numero_remito"
                                         value={data.numero_remito}

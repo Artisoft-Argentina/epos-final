@@ -83,8 +83,8 @@ const mainNavItems: NavItem[] = [
                 href: '/suppliers',
             },
             {
-                title: 'Remitos',
-                href: '/remitos',
+                title: 'Órdenes de Compra',
+                href: '/orders',
             },
         ],
     },

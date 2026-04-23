@@ -68,7 +68,7 @@ export default function Index({ compras }: Props) {
                                 <div key={compra.id} className="border rounded-lg p-4">
                                     <div className="flex justify-between items-start">
                                         <div>
-                                            <h3 className="font-semibold">Remito #{compra.numero_remito}</h3>
+                                            <h3 className="font-semibold">Orden #{compra.numero_remito}</h3>
                                             <p className="text-sm text-gray-600">{compra.supplier.razonsocial}</p>
                                             <p className="text-sm text-gray-500">{formatDate(compra.fecha)}</p>
                                             <p className="text-sm text-gray-500">{compra.detalles.length} artículos</p>

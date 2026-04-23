@@ -99,7 +99,7 @@ class TenantController extends Controller
                 'puntoventa'   => 1,
                 'afip_ambiente' => 'homologacion',
                 'numfactura'   => 0,
-                'numremito'    => 0,
+                'numremito'    => 0,  // TODO: migrar a next_order_number con modelo Setting
                 'numpresupuesto' => 0,
                 'numpago'      => 0,
                 'numrecibo'    => 0,

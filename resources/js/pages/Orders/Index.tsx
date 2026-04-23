@@ -10,7 +10,7 @@ interface Supplier {
     business_name: string;
 }
 
-interface Remito {
+interface Order {
     id: number;
     pos_number: number;
     order_number: number;
@@ -21,10 +21,10 @@ interface Remito {
 }
 
 interface Props {
-    remitos: Remito[];
+    orders: Order[];
 }
 
-export default function Index({ remitos }: Props) {
+export default function Index({ orders }: Props) {
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('es-AR', {
             style: 'currency',
@@ -38,48 +38,48 @@ export default function Index({ remitos }: Props) {
 
     return (
         <AppLayout>
-            <Head title="Remitos" />
+            <Head title="Órdenes de Compra" />
 
             <div className="p-6">
                 <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-2xl font-bold">Remitos</h1>
-                    <Link href={route('remitos.create')}>
+                    <h1 className="text-2xl font-bold">Órdenes de Compra</h1>
+                    <Link href={route('orders.create')}>
                         <Button>
                             <Plus className="h-4 w-4 mr-2" />
-                            Nuevo Remito
+                            Nueva Orden
                         </Button>
                     </Link>
                 </div>
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Lista de Remitos</CardTitle>
+                        <CardTitle>Lista de Órdenes</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-4">
-                            {remitos.map((remito) => (
-                                <div key={remito.id} className="border rounded-lg p-4">
+                            {orders.map((order) => (
+                                <div key={order.id} className="border rounded-lg p-4">
                                     <div className="flex justify-between items-start">
                                         <div>
                                             <h3 className="font-semibold">
-                                                Remito {remito.pos_number.toString().padStart(4, '0')}-{remito.order_number.toString().padStart(8, '0')}
+                                                Orden {order.pos_number.toString().padStart(4, '0')}-{order.order_number.toString().padStart(8, '0')}
                                             </h3>
-                                            <p className="text-sm text-gray-600">{remito.supplier?.business_name}</p>
-                                            <p className="text-sm text-gray-500">{formatDate(remito.date)}</p>
-                                            <p className="text-sm text-gray-500">{remito.products?.length ?? 0} artículos</p>
+                                            <p className="text-sm text-gray-600">{order.supplier?.business_name}</p>
+                                            <p className="text-sm text-gray-500">{formatDate(order.date)}</p>
+                                            <p className="text-sm text-gray-500">{order.products?.length ?? 0} artículos</p>
                                         </div>
                                         <div className="text-right">
-                                            <p className="font-bold text-lg">{formatCurrency(remito.total)}</p>
+                                            <p className="font-bold text-lg">{formatCurrency(order.total)}</p>
                                             <div className="flex gap-2 mt-2">
-                                                <Link href={route('remitos.show', remito.id)}>
+                                                <Link href={route('orders.show', order.id)}>
                                                     <Button variant="outline" size="sm">
                                                         <Eye className="h-4 w-4" />
                                                     </Button>
                                                 </Link>
                                                 <DeleteConfirmationDialog
-                                                    url={route('remitos.destroy', remito.id)}
-                                                    title="Eliminar Remito"
-                                                    description="¿Estás seguro de que deseas eliminar este remito? Esta acción no se puede deshacer."
+                                                    url={route('orders.destroy', order.id)}
+                                                    title="Eliminar Orden"
+                                                    description="¿Estás seguro de que deseas eliminar esta orden? Esta acción no se puede deshacer."
                                                 />
                                             </div>
                                         </div>
@@ -88,9 +88,9 @@ export default function Index({ remitos }: Props) {
                             ))}
                         </div>
 
-                        {remitos.length === 0 && (
+                        {orders.length === 0 && (
                             <div className="text-center py-8 text-gray-500">
-                                No hay remitos registrados.
+                                No hay órdenes registradas.
                             </div>
                         )}
                     </CardContent>
