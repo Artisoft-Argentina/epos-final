@@ -17,7 +17,7 @@ class InventarioController extends Controller
     public function index()
     {
         return Inertia::render('Inventarios/Index', [
-            'inventarios' => Stock::with(['product', 'supplier'])->get(),
+            'inventarios' => Stock::with(['product'])->get(),
         ]);
     }
 

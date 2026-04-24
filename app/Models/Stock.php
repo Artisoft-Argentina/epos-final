@@ -12,26 +12,17 @@ class Stock extends Model
 
     protected $fillable = [
         'quantity',
-        'batch',
-        'expiration_date',
         'product_id',
-        'supplier_id',
         'active',
     ];
 
     protected $casts = [
-        'expiration_date' => 'date',
-        'active'          => 'boolean',
+        'active' => 'boolean',
     ];
 
     public function product()
     {
         return $this->belongsTo(Product::class);
-    }
-
-    public function supplier()
-    {
-        return $this->belongsTo(Supplier::class);
     }
 
     public function movements(): HasMany

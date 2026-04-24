@@ -16,7 +16,6 @@ class MovimientoController extends Controller
     {
         $stock = Stock::where('product_id', $articulo->id)->first();
 
-        $movements = collect();
         $calculatedQuantity = 0;
 
         if ($stock) {
@@ -26,6 +25,8 @@ class MovimientoController extends Controller
                 ->paginate(20);
 
             $calculatedQuantity = $stock->calculatedQuantity();
+        } else {
+            $movements = StockMovement::whereNull('id')->paginate(20);
         }
 
         return Inertia::render('Inventarios/Movimientos', [

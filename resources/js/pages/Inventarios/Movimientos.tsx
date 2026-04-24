@@ -1,6 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, TrendingDown, TrendingUp, RefreshCw, AlertCircle } from 'lucide-react';
@@ -8,15 +7,15 @@ import { Pagination } from '@/components/pagination';
 
 interface Articulo {
     id: number;
-    codarticulo: string;
-    articulo: string;
-    categoria?: { categoria: string };
-    marca?: { marca: string };
+    sku: string;
+    name: string;
+    category?: { name: string };
+    brand?: { name: string };
 }
 
 interface Inventario {
     id: number;
-    cantidad: number;
+    quantity: number;
 }
 
 interface User {
@@ -32,15 +31,15 @@ interface Referenciable {
 
 interface Movimiento {
     id: number;
-    tipo: string;
-    cantidad: number;
-    motivo: string | null;
-    fecha: string;
+    type: string;
+    quantity: number;
+    reason: string | null;
+    date: string;
     created_at: string;
     user: User | null;
-    referenciable_type: string | null;
-    referenciable_id: number | null;
-    referenciable: Referenciable | null;
+    referenceable_type: string | null;
+    referenceable_id: number | null;
+    referenceable: Referenciable | null;
 }
 
 interface PaginatedMovimientos {
@@ -58,13 +57,13 @@ interface Props {
     tipos: Record<string, string>;
 }
 
-const TIPOS_ENTRADA = ['entrada_compra', 'entrada_asistente', 'entrada_ajuste', 'devolucion'];
-const TIPOS_SALIDA  = ['salida_entrega', 'salida_venta_pos', 'salida_ajuste'];
+const TIPOS_ENTRADA = ['purchase_entry', 'assistant_entry', 'adjustment_entry', 'return'];
+const TIPOS_SALIDA  = ['delivery_exit', 'pos_sale_exit', 'adjustment_exit'];
 
 function TipoBadge({ tipo, tipos }: { tipo: string; tipos: Record<string, string> }) {
     const esEntrada = TIPOS_ENTRADA.includes(tipo);
     const esSalida  = TIPOS_SALIDA.includes(tipo);
-    const esDevolucion = tipo === 'devolucion';
+    const esDevolucion = tipo === 'return';
 
     let variant: 'default' | 'destructive' | 'secondary' | 'outline' = 'secondary';
     let colorClass = '';
@@ -101,20 +100,20 @@ function CantidadCell({ tipo, cantidad }: { tipo: string; cantidad: number }) {
 }
 
 function referenciaLabel(movimiento: Movimiento): string {
-    if (!movimiento.referenciable_type) return '—';
+    if (!movimiento.referenceable_type) return '—';
 
-    const parts = movimiento.referenciable_type.split('\\');
+    const parts = movimiento.referenceable_type.split('\\');
     const model = parts[parts.length - 1];
-    return `${model} #${movimiento.referenciable_id}`;
+    return `${model} #${movimiento.referenceable_id}`;
 }
 
 export default function Movimientos({ articulo, inventario, movimientos, stockCalculado, tipos }: Props) {
-    const stockActual = inventario?.cantidad ?? 0;
+    const stockActual = inventario?.quantity ?? 0;
     const inconsistente = inventario && movimientos.data.length > 0 && stockActual !== stockCalculado;
 
     return (
         <AppLayout>
-            <Head title={`Movimientos — ${articulo.articulo}`} />
+            <Head title={`Movimientos — ${articulo.name}`} />
 
             <div className="p-6 space-y-6">
                 {/* Cabecera */}
@@ -130,7 +129,7 @@ export default function Movimientos({ articulo, inventario, movimientos, stockCa
                             Movimientos de stock
                         </h1>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                            {articulo.codarticulo} — {articulo.articulo}
+                            {articulo.sku} — {articulo.name}
                         </p>
                     </div>
                 </div>
@@ -213,10 +212,10 @@ export default function Movimientos({ articulo, inventario, movimientos, stockCa
                                                     })}
                                                 </td>
                                                 <td className="px-4 py-3">
-                                                    <TipoBadge tipo={mov.tipo} tipos={tipos} />
+                                                    <TipoBadge tipo={mov.type} tipos={tipos} />
                                                 </td>
                                                 <td className="px-4 py-3 text-right">
-                                                    <CantidadCell tipo={mov.tipo} cantidad={mov.cantidad} />
+                                                    <CantidadCell tipo={mov.type} cantidad={mov.quantity} />
                                                 </td>
                                                 <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
                                                     {mov.user?.name ?? '—'}
@@ -225,7 +224,7 @@ export default function Movimientos({ articulo, inventario, movimientos, stockCa
                                                     {referenciaLabel(mov)}
                                                 </td>
                                                 <td className="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">
-                                                    {mov.motivo ?? '—'}
+                                                    {mov.reason ?? '—'}
                                                 </td>
                                             </tr>
                                         ))}
