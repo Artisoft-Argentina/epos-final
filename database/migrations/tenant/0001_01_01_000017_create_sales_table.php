@@ -15,7 +15,7 @@ return new class extends Migration
             $table->string('voucher_letter');                               // letracomprobante → voucher_letter
             $table->unsignedInteger('invoice_number');                           // numfactura → invoice_number
             $table->string('tax_id', 13);                                   // cuit → tax_id
-            $table->string('date');                                         // fecha → date
+            $table->date('date');                                         // fecha → date
             $table->decimal('discount', 12, 2);                            // bonificacion → discount
             $table->decimal('surcharge', 12, 2);                           // recargo → surcharge
             $table->decimal('additional_discount', 12, 2)->default(0);    // descuento → additional_discount

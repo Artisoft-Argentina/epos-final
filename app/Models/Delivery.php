@@ -26,7 +26,7 @@ class Delivery extends Model
 
     protected $casts = [
         'delivery_date'        => 'date',
-        'actual_delivery_date' => 'datetime',
+        'actual_delivery_date' => 'date',
         'active'               => 'boolean',
     ];
 
@@ -54,7 +54,7 @@ class Delivery extends Model
     {
         $this->update([
             'status'               => self::STATUS_DELIVERED,
-            'actual_delivery_date' => now(),
+            'actual_delivery_date' => today(),
         ]);
     }
 
