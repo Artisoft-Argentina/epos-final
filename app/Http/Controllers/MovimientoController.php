@@ -29,12 +29,16 @@ class MovimientoController extends Controller
             $movements = StockMovement::whereNull('id')->paginate(20);
         }
 
+        $from = request('from', 'articulos'); // 'articulos' | 'inventarios'
+
         return Inertia::render('Inventarios/Movimientos', [
             'articulo'       => $articulo->load(['category', 'brand']),
             'inventario'     => $stock,
             'movimientos'    => $movements,
             'stockCalculado' => $calculatedQuantity,
             'tipos'          => StockMovement::TYPES,
+            'backUrl'        => $from === 'inventarios' ? route('inventarios.index') : route('articulos.index'),
+            'backLabel'      => $from === 'inventarios' ? 'Inventarios' : 'Artículos',
         ]);
     }
 }

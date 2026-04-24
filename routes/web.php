@@ -59,6 +59,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('orders/{order}/convert-inventory', [\App\Http\Controllers\OrderController::class, 'convertToInventory'])->name('orders.convert-inventory');
         Route::post('inventarios/reconcile-all', [\App\Http\Controllers\InventarioController::class, 'reconcileAll'])->name('inventarios.reconcile-all');
         Route::post('inventarios/{inventario}/reconcile', [\App\Http\Controllers\InventarioController::class, 'reconcile'])->name('inventarios.reconcile');
+        Route::post('inventarios/{inventario}/adjust', [\App\Http\Controllers\InventarioController::class, 'adjust'])->name('inventarios.adjust');
         Route::resource('inventarios', \App\Http\Controllers\InventarioController::class);
         Route::get('articulos/{articulo}/movimientos', [\App\Http\Controllers\MovimientoController::class, 'index'])->name('movimientos.index');
         Route::resource('listas-precios', \App\Http\Controllers\ListaPrecioController::class);

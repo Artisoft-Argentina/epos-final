@@ -100,6 +100,33 @@ class InventarioController extends Controller
         return redirect()->route('inventarios.index')->with('success', 'Inventario eliminado exitosamente');
     }
 
+    public function adjust(Request $request, Stock $inventario)
+    {
+        $request->validate([
+            'quantity' => 'required|integer|not_in:0',
+            'reason'   => 'required|string|max:255',
+        ]);
+
+        $quantity = (int) $request->quantity;
+
+        if ($quantity > 0) {
+            $this->movimientoService->registrar(
+                $inventario, StockMovement::TYPE_ADJUSTMENT_ENTRY,
+                $quantity, null, null, $request->reason
+            );
+        } else {
+            if ($inventario->quantity < abs($quantity)) {
+                return back()->with('error', 'Stock insuficiente para realizar el ajuste.');
+            }
+            $this->movimientoService->registrar(
+                $inventario, StockMovement::TYPE_ADJUSTMENT_EXIT,
+                abs($quantity), null, null, $request->reason
+            );
+        }
+
+        return back()->with('success', "Ajuste aplicado a '{$inventario->product->name}' exitosamente.");
+    }
+
     public function reconcile(Stock $inventario)
     {
         $diff = $inventario->reconciliationDiff();

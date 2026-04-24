@@ -55,6 +55,8 @@ interface Props {
     movimientos: PaginatedMovimientos;
     stockCalculado: number;
     tipos: Record<string, string>;
+    backUrl: string;
+    backLabel: string;
 }
 
 const TIPOS_ENTRADA = ['purchase_entry', 'assistant_entry', 'adjustment_entry', 'return', 'reconciliation_entry'];
@@ -107,7 +109,7 @@ function referenciaLabel(movimiento: Movimiento): string {
     return `${model} #${movimiento.referenceable_id}`;
 }
 
-export default function Movimientos({ articulo, inventario, movimientos, stockCalculado, tipos }: Props) {
+export default function Movimientos({ articulo, inventario, movimientos, stockCalculado, tipos, backUrl, backLabel }: Props) {
     const stockActual = inventario?.quantity ?? 0;
     const inconsistente = inventario && movimientos.data.length > 0 && stockActual !== stockCalculado;
 
@@ -118,10 +120,10 @@ export default function Movimientos({ articulo, inventario, movimientos, stockCa
             <div className="p-6 space-y-6">
                 {/* Cabecera */}
                 <div className="flex items-center gap-4">
-                    <Link href={route('articulos.index')}>
+                    <Link href={backUrl}>
                         <Button variant="outline" size="sm">
                             <ArrowLeft className="w-4 h-4 mr-1" />
-                            Artículos
+                            {backLabel}
                         </Button>
                     </Link>
                     <div>
