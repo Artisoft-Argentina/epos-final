@@ -52,8 +52,8 @@ class ClienteController extends Controller
             'phone' => 'required|string|max:20',
             'email' => 'nullable|email',
             'zip_code' => 'required|string|max:10',
-            'city' => 'required|string|max:100',
-            'state' => 'required|string|max:100',
+            'city_id'  => 'nullable|exists:cities,id',
+            'state_id' => 'nullable|exists:states,id',
             'tax_status' => 'nullable|string|max:50',
         ]);
 
@@ -80,8 +80,8 @@ class ClienteController extends Controller
             'phone' => 'required|string|max:20',
             'email' => 'nullable|email',
             'zip_code' => 'nullable|string|max:10',
-            'city' => 'required|string|max:100',
-            'state' => 'required|string|max:100',
+            'city_id'  => 'nullable|exists:cities,id',
+            'state_id' => 'nullable|exists:states,id',
             'tax_status' => 'nullable|string|max:50',
         ]);
 

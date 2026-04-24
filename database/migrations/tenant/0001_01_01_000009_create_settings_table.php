@@ -16,8 +16,8 @@ return new class extends Migration
             $table->string('phone')->nullable();                          // telefono → phone
             $table->string('email')->nullable();
             $table->string('zip_code', 10)->nullable();                      // codigopostal → zip_code
-            $table->string('city')->nullable();                           // localidad → city
-            $table->string('state')->nullable();                          // provincia → state
+            $table->foreignId('city_id')->nullable()->constrained('cities')->nullOnDelete();
+            $table->foreignId('state_id')->nullable()->constrained('states')->nullOnDelete();
             $table->string('tax_status')->nullable();                     // condicioniva → tax_status
             $table->string('gross_income_tax')->nullable();               // iibb → gross_income_tax
             $table->string('activity_start_date')->nullable();            // inicioactividades → activity_start_date

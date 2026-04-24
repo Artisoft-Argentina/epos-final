@@ -16,8 +16,8 @@ class Customer extends Model
         'phone',
         'email',
         'zip_code',
-        'city',
-        'state',
+        'city_id',
+        'state_id',
         'tax_status',
         'credit',
         'active',
@@ -32,6 +32,16 @@ class Customer extends Model
     public function getCuitAttribute(): ?string
     {
         return $this->tax_id ? (string) $this->tax_id : null;
+    }
+
+    public function city()
+    {
+        return $this->belongsTo(City::class);
+    }
+
+    public function state()
+    {
+        return $this->belongsTo(State::class);
     }
 
     public function sales()

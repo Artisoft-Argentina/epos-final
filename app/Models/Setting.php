@@ -16,8 +16,8 @@ class Setting extends Model
         'phone',
         'email',
         'zip_code',
-        'city',
-        'state',
+        'city_id',
+        'state_id',
         'tax_status',
         'gross_income_tax',
         'activity_start_date',
@@ -49,4 +49,14 @@ class Setting extends Model
         'next_receipt_number'  => 'integer',
         'active'               => 'boolean',
     ];
+
+    public function city()
+    {
+        return $this->belongsTo(City::class);
+    }
+
+    public function state()
+    {
+        return $this->belongsTo(State::class);
+    }
 }
