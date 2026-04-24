@@ -172,11 +172,11 @@ class OrderController extends Controller
             $stock = Stock::where('product_id', $detail->product_id)->first();
 
             if ($stock) {
-                $stock->increment('quantity', $detail->quantity);
+                // quantity se actualiza via MovimientoService
             } else {
                 $stock = Stock::create([
                     'product_id'  => $detail->product_id,
-                    'quantity'    => $detail->quantity,
+                    'quantity'    => 0,
                     'supplier_id' => $order->supplier_id,
                 ]);
             }

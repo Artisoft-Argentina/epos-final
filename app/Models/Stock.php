@@ -30,10 +30,38 @@ class Stock extends Model
         return $this->hasMany(StockMovement::class);
     }
 
+    // Tipos de movimiento que representan transacciones de negocio reales
+    // Los movimientos de conciliación se excluyen para evitar loops
+    private const BUSINESS_ENTRY_TYPES = [
+        StockMovement::TYPE_PURCHASE_ENTRY,
+        StockMovement::TYPE_ASSISTANT_ENTRY,
+        StockMovement::TYPE_ADJUSTMENT_ENTRY,
+        StockMovement::TYPE_RETURN,
+    ];
+
+    private const BUSINESS_EXIT_TYPES = [
+        StockMovement::TYPE_DELIVERY_EXIT,
+        StockMovement::TYPE_POS_SALE_EXIT,
+        StockMovement::TYPE_ADJUSTMENT_EXIT,
+    ];
+
     public function calculatedQuantity(): int
     {
-        $entries = $this->movements()->whereIn('type', StockMovement::ENTRY_TYPES)->sum('quantity');
-        $exits   = $this->movements()->whereIn('type', StockMovement::EXIT_TYPES)->sum('quantity');
+        $entries = $this->movements()->whereIn('type', self::BUSINESS_ENTRY_TYPES)->sum('quantity');
+        $exits   = $this->movements()->whereIn('type', self::BUSINESS_EXIT_TYPES)->sum('quantity');
         return (int) ($entries - $exits);
+    }
+
+    // Diferencia entre quantity calculada (movimientos de negocio) y la materializada
+    // Positivo: falta stock en la columna (hay más en movimientos)
+    // Negativo: sobra stock en la columna (hay menos en movimientos)
+    public function reconciliationDiff(): int
+    {
+        return $this->calculatedQuantity() - $this->quantity;
+    }
+
+    public function needsReconciliation(): bool
+    {
+        return $this->reconciliationDiff() !== 0;
     }
 }

@@ -34,7 +34,7 @@ class MovimientoService
             throw new \InvalidArgumentException("Tipo de movimiento inválido: {$tipo}");
         }
 
-        return StockMovement::create([
+        $movement = StockMovement::create([
             'stock_id'           => $inventario->id,
             'user_id'            => $userId ?? auth()->id(),
             'type'               => $tipo,
@@ -44,5 +44,14 @@ class MovimientoService
             'reason'             => $motivo,
             'date'               => now()->toDateString(),
         ]);
+
+        // Actualizar quantity materializada en stocks
+        if (in_array($tipo, StockMovement::ENTRY_TYPES)) {
+            $inventario->increment('quantity', abs($cantidad));
+        } elseif (in_array($tipo, StockMovement::EXIT_TYPES)) {
+            $inventario->decrement('quantity', abs($cantidad));
+        }
+
+        return $movement;
     }
 }

@@ -57,8 +57,8 @@ interface Props {
     tipos: Record<string, string>;
 }
 
-const TIPOS_ENTRADA = ['purchase_entry', 'assistant_entry', 'adjustment_entry', 'return'];
-const TIPOS_SALIDA  = ['delivery_exit', 'pos_sale_exit', 'adjustment_exit'];
+const TIPOS_ENTRADA = ['purchase_entry', 'assistant_entry', 'adjustment_entry', 'return', 'reconciliation_entry'];
+const TIPOS_SALIDA  = ['delivery_exit', 'pos_sale_exit', 'adjustment_exit', 'reconciliation_exit'];
 
 function TipoBadge({ tipo, tipos }: { tipo: string; tipos: Record<string, string> }) {
     const esEntrada = TIPOS_ENTRADA.includes(tipo);

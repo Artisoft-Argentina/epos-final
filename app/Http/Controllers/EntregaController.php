@@ -50,7 +50,7 @@ class EntregaController extends Controller
                     if ($stock->quantity < $entregaData['cantidad']) {
                         throw new \Exception('Stock insuficiente para el producto ID: ' . $entregaData['articulo_id']);
                     }
-                    $stock->decrement('quantity', $entregaData['cantidad']);
+                    // quantity se actualiza via MovimientoService
                 }
 
                 $delivery = Delivery::create([
@@ -88,7 +88,7 @@ class EntregaController extends Controller
                 if ($stock->quantity < $entrega->quantity) {
                     throw new \Exception('Stock insuficiente para completar la entrega');
                 }
-                $stock->decrement('quantity', $entrega->quantity);
+                // quantity se actualiza via MovimientoService
 
                 $this->movimientoService->registrar(
                     $stock, StockMovement::TYPE_DELIVERY_EXIT,
@@ -119,8 +119,7 @@ class EntregaController extends Controller
             if ($entrega->isDelivered()) {
                 $stock = Stock::where('product_id', $entrega->product_id)->first();
                 if ($stock) {
-                    $stock->increment('quantity', $entrega->quantity);
-
+                    // quantity se actualiza via MovimientoService
                     $this->movimientoService->registrar(
                         $stock, StockMovement::TYPE_RETURN,
                         $entrega->quantity, $entrega, null,

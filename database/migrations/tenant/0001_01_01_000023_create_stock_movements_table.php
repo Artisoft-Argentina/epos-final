@@ -11,13 +11,15 @@ return new class extends Migration
         Schema::create('stock_movements', function (Blueprint $table) {
             $table->id();
             $table->enum('type', [
-                'purchase_entry',    // entrada_compra
-                'assistant_entry',   // entrada_asistente
-                'adjustment_entry',  // entrada_ajuste
-                'delivery_exit',     // salida_entrega
-                'pos_sale_exit',     // salida_venta_pos
-                'adjustment_exit',   // salida_ajuste
-                'return',            // devolucion
+                'purchase_entry',      // entrada_compra
+                'assistant_entry',     // entrada_asistente
+                'adjustment_entry',    // entrada_ajuste
+                'delivery_exit',       // salida_entrega
+                'pos_sale_exit',       // salida_venta_pos
+                'adjustment_exit',     // salida_ajuste
+                'return',              // devolucion
+                'reconciliation_entry', // conciliacion positiva
+                'reconciliation_exit',  // conciliacion negativa
             ]);
             $table->unsignedInteger('quantity');                                // cantidad → quantity
             $table->date('date');                                     // fecha → date

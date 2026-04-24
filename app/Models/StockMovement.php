@@ -17,16 +17,20 @@ class StockMovement extends Model
     const TYPE_DELIVERY_EXIT    = 'delivery_exit';
     const TYPE_POS_SALE_EXIT    = 'pos_sale_exit';
     const TYPE_ADJUSTMENT_EXIT  = 'adjustment_exit';
-    const TYPE_RETURN           = 'return';
+    const TYPE_RETURN                = 'return';
+    const TYPE_RECONCILIATION_ENTRY  = 'reconciliation_entry';
+    const TYPE_RECONCILIATION_EXIT   = 'reconciliation_exit';
 
     const TYPES = [
-        self::TYPE_PURCHASE_ENTRY   => 'Ingreso por orden de compra',
-        self::TYPE_ASSISTANT_ENTRY  => 'Ingreso por asistente IA',
-        self::TYPE_ADJUSTMENT_ENTRY => 'Ajuste manual positivo',
-        self::TYPE_DELIVERY_EXIT    => 'Egreso por entrega',
-        self::TYPE_POS_SALE_EXIT    => 'Egreso por venta POS directa',
-        self::TYPE_ADJUSTMENT_EXIT  => 'Ajuste manual negativo',
-        self::TYPE_RETURN           => 'Devolución / reversión',
+        self::TYPE_PURCHASE_ENTRY          => 'Ingreso por orden de compra',
+        self::TYPE_ASSISTANT_ENTRY         => 'Ingreso por asistente IA',
+        self::TYPE_ADJUSTMENT_ENTRY        => 'Ajuste manual positivo',
+        self::TYPE_DELIVERY_EXIT           => 'Egreso por entrega',
+        self::TYPE_POS_SALE_EXIT           => 'Egreso por venta POS directa',
+        self::TYPE_ADJUSTMENT_EXIT         => 'Ajuste manual negativo',
+        self::TYPE_RETURN                  => 'Devolución / reversión',
+        self::TYPE_RECONCILIATION_ENTRY    => 'Conciliación positiva',
+        self::TYPE_RECONCILIATION_EXIT     => 'Conciliación negativa',
     ];
 
     const ENTRY_TYPES = [
@@ -34,12 +38,14 @@ class StockMovement extends Model
         self::TYPE_ASSISTANT_ENTRY,
         self::TYPE_ADJUSTMENT_ENTRY,
         self::TYPE_RETURN,
+        self::TYPE_RECONCILIATION_ENTRY,
     ];
 
     const EXIT_TYPES = [
         self::TYPE_DELIVERY_EXIT,
         self::TYPE_POS_SALE_EXIT,
         self::TYPE_ADJUSTMENT_EXIT,
+        self::TYPE_RECONCILIATION_EXIT,
     ];
 
     protected $fillable = [
