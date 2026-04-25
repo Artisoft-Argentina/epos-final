@@ -29,7 +29,7 @@ return new class extends Migration
             $table->date('due_date')->nullable();                           // fechavto → due_date
             $table->string('barcode_string')->nullable();                   // codbarra → barcode_string
             $table->string('payment_code')->nullable();                     // compago → payment_code
-            $table->enum('sale_type', ['pos', 'ecommerce'])->default('pos');
+            $table->string('sale_type')->default('pos'); // valores: pos, ecommerce
             $table->boolean('afip_authorized')->default(false);            // autorizada_afip → afip_authorized
             $table->foreignId('customer_id')->constrained('customers');
             $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();

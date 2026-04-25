@@ -1,11 +1,11 @@
 #!/bin/sh
 set -e
 
-echo "==> Esperando que MySQL esté disponible en ${DB_HOST:-mysql}:${DB_PORT:-3306}..."
-until nc -z "${DB_HOST:-mysql}" "${DB_PORT:-3306}"; do
+echo "==> Esperando que PostgreSQL esté disponible en ${DB_HOST:-postgres}:${DB_PORT:-5432}..."
+until pg_isready -h "${DB_HOST:-postgres}" -p "${DB_PORT:-5432}" -U "${DB_USERNAME:-epos_user}" -q; do
     sleep 1
 done
-echo "==> MySQL disponible."
+echo "==> PostgreSQL disponible."
 
 # Crear directorios de storage necesarios si no existen
 # NOTA: ./storage está bind-mounted desde el host (ver docker-compose.yml)
@@ -33,6 +33,10 @@ fi
 # y se pierde cada vez que el contenedor es recreado. También maneja symlinks rotos.
 echo "==> Creando symlink de storage..."
 php artisan storage:link --force
+
+# Limpiar solo el config cache antes de migrar (no el cache de BD que aún no existe)
+echo "==> Limpiando cache de configuración..."
+php artisan config:clear
 
 # Migraciones de la base de datos central
 if [ "${RUN_MIGRATIONS:-false}" = "true" ]; then

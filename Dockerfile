@@ -15,7 +15,7 @@ FROM php:8.4-fpm-alpine
 RUN apk add --no-cache \
     nginx \
     supervisor \
-    mysql-client \
+    postgresql-client \
     zip \
     unzip \
     libpng-dev \
@@ -24,14 +24,15 @@ RUN apk add --no-cache \
     libzip-dev \
     icu-dev \
     oniguruma-dev \
+    libpq-dev \
     nodejs \
     npm
 
 # Instalar extensiones PHP
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) \
-        pdo_mysql \
-        mysqli \
+        pdo_pgsql \
+        pgsql \
         gd \
         zip \
         intl \

@@ -43,7 +43,7 @@ class DashboardController extends Controller
 
         $ventasPorDia = Sale::whereDate('date', '>=', $fechaInicio)
             ->whereDate('date', '<=', $fechaFin)
-            ->select(DB::raw('DATE(date) as dia'), DB::raw('SUM(total) as total_dia'))
+            ->select(DB::raw('date::date as dia'), DB::raw('SUM(total) as total_dia'))
             ->groupBy('dia')
             ->orderBy('dia')
             ->get();
@@ -98,7 +98,7 @@ class DashboardController extends Controller
 
         $ventasPorDia = Sale::whereDate('date', '>=', $fechaInicio)
             ->whereDate('date', '<=', $fechaFin)
-            ->select(DB::raw('DATE(date) as dia'), DB::raw('SUM(total) as total_dia'))
+            ->select(DB::raw('date::date as dia'), DB::raw('SUM(total) as total_dia'))
             ->groupBy('dia')
             ->orderBy('dia')
             ->get();
