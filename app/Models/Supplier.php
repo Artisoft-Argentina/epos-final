@@ -10,10 +10,23 @@ class Supplier extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'razonsocial',
-        'cuit',
-        'direccion',
-        'telefono',
+        'business_name',
+        'tax_id',
+        'address',
+        'phone',
         'email',
+        'active',
     ];
+
+    protected $casts = ['active' => 'boolean', 'tax_id' => 'string'];
+
+    public function products()
+    {
+        return $this->hasMany(Product::class);
+    }
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
 }

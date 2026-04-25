@@ -19,8 +19,8 @@ class DashboardProductosSheet implements FromArray, WithTitle, WithHeadings
     {
         return collect($this->productos)->map(function ($producto) {
             return [
-                $producto->articulo,
-                $producto->total_vendido
+                $producto->name,
+                $producto->total_vendido,
             ];
         })->toArray();
     }

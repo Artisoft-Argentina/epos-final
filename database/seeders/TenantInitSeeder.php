@@ -2,18 +2,15 @@
 
 namespace Database\Seeders;
 
-use App\Models\Provincia;
+use App\Models\State;
 use Illuminate\Database\Seeder;
 
 class TenantInitSeeder extends Seeder
 {
     public function run(): void
     {
-        // Solo ejecutar si la tabla está vacía para evitar duplicados
-        if (Provincia::count() === 0) {
-            $this->call(ProvinciaSeeder::class);
+        if (State::count() === 0) {
+            $this->call(StatesSeeder::class);
         }
-
-        $this->call(ProvinciasAfipSeeder::class);
     }
 }

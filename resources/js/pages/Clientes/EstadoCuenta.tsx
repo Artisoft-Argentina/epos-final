@@ -7,24 +7,24 @@ import { ArrowLeft, DollarSign, CreditCard, AlertCircle, Download, FileSpreadshe
 
 interface Cliente {
     id: number;
-    razonsocial: string;
-    documentounico: string;
+    business_name: string;
+    tax_id: string;
 }
 
-interface Pago {
+interface Payment {
     id: number;
-    monto: number;
-    metodo_pago: string;
-    fecha_pago: string;
+    amount: number;
+    payment_method: string;
+    payment_date: string;
 }
 
-interface Factura {
+interface Sale {
     id: number;
-    numfactura: number;
-    fecha: string;
+    invoice_number: number;
+    date: string;
     total: number;
-    pagada: string;
-    pagos: Pago[];
+    payment_status: string;
+    payments: Payment[];
 }
 
 interface Resumen {
@@ -35,7 +35,7 @@ interface Resumen {
 
 interface Props {
     cliente: Cliente;
-    facturas: Factura[];
+    facturas: Sale[];
     resumen: Resumen;
 }
 
@@ -53,7 +53,7 @@ export default function EstadoCuenta({ cliente, facturas, resumen }: Props) {
 
     return (
         <AppLayout>
-            <Head title={`Estado de Cuenta - ${cliente.razonsocial}`} />
+            <Head title={`Estado de Cuenta - ${cliente.business_name}`} />
             
             <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
@@ -65,7 +65,7 @@ export default function EstadoCuenta({ cliente, facturas, resumen }: Props) {
                         </Link>
                         <div>
                             <h1 className="text-2xl font-bold">Estado de Cuenta</h1>
-                            <p className="text-gray-600">{cliente.razonsocial} - {cliente.documentounico}</p>
+                            <p className="text-gray-600">{cliente.business_name} - {cliente.tax_id}</p>
                         </div>
                     </div>
                     <div className="flex gap-2">
@@ -132,37 +132,35 @@ export default function EstadoCuenta({ cliente, facturas, resumen }: Props) {
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-4">
-                            {facturas.map((factura) => {
-                                const totalPagado = factura.pagos.reduce((sum, pago) => sum + pago.monto, 0);
-                                const saldoPendiente = factura.total - totalPagado;
-                                
+                            {facturas.map((sale) => {
+                                const totalPagado = sale.payments.reduce((sum, p) => sum + p.amount, 0);
+                                const saldoPendiente = sale.total - totalPagado;
                                 return (
-                                    <div key={factura.id} className="border rounded-lg p-4">
+                                    <div key={sale.id} className="border rounded-lg p-4">
                                         <div className="flex justify-between items-start mb-2">
                                             <div>
-                                                <Link href={route('ventas.show', factura.id)}>
+                                                <Link href={route('ventas.show', sale.id)}>
                                                     <h3 className="font-semibold text-blue-600 hover:text-blue-800 cursor-pointer">
-                                                        Factura #{factura.numfactura}
+                                                        Factura #{sale.invoice_number}
                                                     </h3>
                                                 </Link>
-                                                <p className="text-sm text-gray-600">{formatDate(factura.fecha)}</p>
+                                                <p className="text-sm text-gray-600">{formatDate(sale.date)}</p>
                                             </div>
                                             <div className="text-right">
-                                                <p className="font-bold">{formatCurrency(factura.total)}</p>
+                                                <p className="font-bold">{formatCurrency(sale.total)}</p>
                                                 <Badge variant={saldoPendiente > 0 ? "destructive" : "default"}>
                                                     {saldoPendiente > 0 ? 'Pendiente' : 'Pagada'}
                                                 </Badge>
                                             </div>
                                         </div>
-                                        
-                                        {factura.pagos.length > 0 && (
+                                        {sale.payments.length > 0 && (
                                             <div className="mt-3 pt-3 border-t">
                                                 <p className="text-sm font-medium mb-2">Pagos:</p>
                                                 <div className="space-y-1">
-                                                    {factura.pagos.map((pago) => (
-                                                        <div key={pago.id} className="flex justify-between text-sm">
-                                                            <span>{formatDate(pago.fecha_pago)} - {pago.metodo_pago}</span>
-                                                            <span className="text-green-600">{formatCurrency(pago.monto)}</span>
+                                                    {sale.payments.map((payment) => (
+                                                        <div key={payment.id} className="flex justify-between text-sm">
+                                                            <span>{formatDate(payment.payment_date)} - {payment.payment_method}</span>
+                                                            <span className="text-green-600">{formatCurrency(payment.amount)}</span>
                                                         </div>
                                                     ))}
                                                 </div>

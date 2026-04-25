@@ -8,8 +8,8 @@ import { FormEventHandler } from 'react';
 
 export default function CreateTenant() {
     const { data, setData, post, processing, errors } = useForm({
-        razonsocial: '',
-        cuit: '',
+        business_name: '',
+        tax_id: '',
         slug: '',
         plan: 'basic' as 'basic' | 'pro' | 'enterprise',
         admin_name: '',
@@ -34,24 +34,24 @@ export default function CreateTenant() {
                     <h2 className="mb-4 font-semibold text-gray-900 dark:text-white">Datos de la empresa</h2>
                     <div className="space-y-4">
                         <div>
-                            <Label htmlFor="razonsocial">Razón Social *</Label>
+                            <Label htmlFor="business_name">Razón Social *</Label>
                             <Input
-                                id="razonsocial"
-                                value={data.razonsocial}
-                                onChange={(e) => setData('razonsocial', e.target.value)}
+                                id="business_name"
+                                value={data.business_name}
+                                onChange={(e) => setData('business_name', e.target.value)}
                                 placeholder="Empresa SA"
                             />
-                            <InputError message={errors.razonsocial} />
+                            <InputError message={errors.business_name} />
                         </div>
                         <div>
-                            <Label htmlFor="cuit">CUIT *</Label>
+                            <Label htmlFor="tax_id">CUIT *</Label>
                             <Input
-                                id="cuit"
-                                value={data.cuit}
-                                onChange={(e) => setData('cuit', e.target.value)}
+                                id="tax_id"
+                                value={data.tax_id}
+                                onChange={(e) => setData('tax_id', e.target.value)}
                                 placeholder="20123456789"
                             />
-                            <InputError message={errors.cuit} />
+                            <InputError message={errors.tax_id} />
                         </div>
                         <div>
                             <Label htmlFor="slug">Subdominio *</Label>

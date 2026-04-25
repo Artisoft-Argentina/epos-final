@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Cliente;
-use App\Models\Factura;
+use App\Models\Customer;
+use App\Models\Sale;
 use App\Exports\DashboardExport;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -15,136 +15,104 @@ class DashboardController extends Controller
 {
     public function index(Request $request)
     {
-        // Fechas por defecto
         $fechaInicio = $request->get('fecha_inicio', Carbon::now()->startOfMonth()->format('Y-m-d'));
-        $fechaFin = $request->get('fecha_fin', Carbon::now()->endOfMonth()->format('Y-m-d'));
+        $fechaFin    = $request->get('fecha_fin', Carbon::now()->endOfMonth()->format('Y-m-d'));
 
-        // Convertir a rangos completos de fecha
-        $fechaInicioCompleta = Carbon::parse($fechaInicio)->startOfDay();
-        $fechaFinCompleta = Carbon::parse($fechaFin)->endOfDay();
+        $totalVentas    = Sale::whereDate('date', '>=', $fechaInicio)->whereDate('date', '<=', $fechaFin)->sum('total');
+        $clientesNuevos = Customer::whereDate('created_at', '>=', $fechaInicio)->whereDate('created_at', '<=', $fechaFin)->count();
+        $ventasDelMes   = $totalVentas;
 
-        // Total de ventas acumulado
-        $totalVentas = Factura::whereDate('fecha', '>=', $fechaInicio)
-            ->whereDate('fecha', '<=', $fechaFin)
-            ->sum('total');
-        // Clientes nuevos en el período
-        $clientesNuevos = Cliente::whereDate('created_at', '>=', $fechaInicio)
-            ->whereDate('created_at', '<=', $fechaFin)
-            ->count();
-
-        // Importe total de ventas del período filtrado
-        $ventasDelMes = Factura::whereDate('fecha', '>=', $fechaInicio)
-            ->whereDate('fecha', '<=', $fechaFin)
-            ->sum('total');
-
-        // Saldo de ventas impagas (total facturas - pagos realizados)
-        $facturasImpagas = Factura::whereDate('fecha', '>=', $fechaInicio)
-            ->whereDate('fecha', '<=', $fechaFin)
-            ->where('pagada', 'NO')
-            ->with('pagos')
+        $facturasImpagas = Sale::whereDate('date', '>=', $fechaInicio)
+            ->whereDate('date', '<=', $fechaFin)
+            ->where('payment_status', 'NO')
+            ->with('payments')
             ->get();
-        
-        $saldoImpagas = $facturasImpagas->sum(function($factura) {
-            $totalPagado = $factura->pagos->sum('monto');
-            return $factura->total - $totalPagado;
-        });
 
-        // Ranking de productos más vendidos
-        $productosVendidos = DB::table('articulo_factura')
-            ->join('articulos', 'articulo_factura.articulo_id', '=', 'articulos.id')
-            ->join('facturas', 'articulo_factura.factura_id', '=', 'facturas.id')
-            ->whereDate('facturas.fecha', '>=', $fechaInicio)
-            ->whereDate('facturas.fecha', '<=', $fechaFin)
-            ->select('articulos.articulo', DB::raw('SUM(articulo_factura.cantidad) as total_vendido'))
-            ->groupBy('articulos.id', 'articulos.articulo')
+        $saldoImpagas = $facturasImpagas->sum(fn($s) => $s->total - $s->payments->sum('amount'));
+
+        $productosVendidos = DB::table('sale_products')
+            ->join('products', 'sale_products.product_id', '=', 'products.id')
+            ->join('sales', 'sale_products.sale_id', '=', 'sales.id')
+            ->whereDate('sales.date', '>=', $fechaInicio)
+            ->whereDate('sales.date', '<=', $fechaFin)
+            ->select('products.name', DB::raw('SUM(sale_products.quantity) as total_vendido'))
+            ->groupBy('products.id', 'products.name')
             ->orderBy('total_vendido', 'desc')
             ->limit(5)
             ->get();
 
-        // Gráfico de ventas por día
-        $ventasPorDia = Factura::whereDate('fecha', '>=', $fechaInicio)
-            ->whereDate('fecha', '<=', $fechaFin)
-            ->select(DB::raw('DATE(fecha) as dia'), DB::raw('SUM(total) as total_dia'))
+        $ventasPorDia = Sale::whereDate('date', '>=', $fechaInicio)
+            ->whereDate('date', '<=', $fechaFin)
+            ->select(DB::raw('DATE(date) as dia'), DB::raw('SUM(total) as total_dia'))
             ->groupBy('dia')
             ->orderBy('dia')
             ->get();
 
-        // Ventas por vendedor
-        $ventasPorVendedor = Factura::join('users', 'facturas.user_id', '=', 'users.id')
-            ->whereDate('facturas.fecha', '>=', $fechaInicio)
-            ->whereDate('facturas.fecha', '<=', $fechaFin)
-            ->select('users.name', DB::raw('COUNT(*) as total_ventas'), DB::raw('SUM(facturas.total) as monto_total'))
+        $ventasPorVendedor = Sale::join('users', 'sales.user_id', '=', 'users.id')
+            ->whereDate('sales.date', '>=', $fechaInicio)
+            ->whereDate('sales.date', '<=', $fechaFin)
+            ->select('users.name', DB::raw('COUNT(*) as total_ventas'), DB::raw('SUM(sales.total) as monto_total'))
             ->groupBy('users.id', 'users.name')
             ->orderBy('monto_total', 'desc')
             ->get();
 
         return Inertia::render('dashboard', [
-            'totalVentas' => $totalVentas,
-            'clientesNuevos' => $clientesNuevos,
-            'ventasDelMes' => $ventasDelMes,
-            'saldoImpagas' => $saldoImpagas,
-            'productosVendidos' => $productosVendidos,
-            'ventasPorDia' => $ventasPorDia,
-            'ventasPorVendedor' => $ventasPorVendedor,
-            'fechaInicio' => $fechaInicio,
-            'fechaFin' => $fechaFin,
+            'totalVentas'        => $totalVentas,
+            'clientesNuevos'     => $clientesNuevos,
+            'ventasDelMes'       => $ventasDelMes,
+            'saldoImpagas'       => $saldoImpagas,
+            'productosVendidos'  => $productosVendidos,
+            'ventasPorDia'       => $ventasPorDia,
+            'ventasPorVendedor'  => $ventasPorVendedor,
+            'fechaInicio'        => $fechaInicio,
+            'fechaFin'           => $fechaFin,
         ]);
     }
 
     public function exportExcel(Request $request)
     {
         $fechaInicio = $request->get('fecha_inicio', Carbon::now()->startOfMonth()->format('Y-m-d'));
-        $fechaFin = $request->get('fecha_fin', Carbon::now()->endOfMonth()->format('Y-m-d'));
+        $fechaFin    = $request->get('fecha_fin', Carbon::now()->endOfMonth()->format('Y-m-d'));
 
-        $totalVentas = Factura::whereDate('fecha', '>=', $fechaInicio)->whereDate('fecha', '<=', $fechaFin)->sum('total');
-        $clientesNuevos = Cliente::whereDate('created_at', '>=', $fechaInicio)->whereDate('created_at', '<=', $fechaFin)->count();
-        $ventasDelMes = Factura::whereDate('fecha', '>=', $fechaInicio)->whereDate('fecha', '<=', $fechaFin)->sum('total');
-        $facturasImpagas = Factura::whereDate('fecha', '>=', $fechaInicio)
-            ->whereDate('fecha', '<=', $fechaFin)
-            ->where('pagada', 'NO')
-            ->with('pagos')
+        $totalVentas    = Sale::whereDate('date', '>=', $fechaInicio)->whereDate('date', '<=', $fechaFin)->sum('total');
+        $clientesNuevos = Customer::whereDate('created_at', '>=', $fechaInicio)->whereDate('created_at', '<=', $fechaFin)->count();
+
+        $facturasImpagas = Sale::whereDate('date', '>=', $fechaInicio)
+            ->whereDate('date', '<=', $fechaFin)
+            ->where('payment_status', 'NO')
+            ->with('payments')
             ->get();
-        
-        $saldoImpagas = $facturasImpagas->sum(function($factura) {
-            $totalPagado = $factura->pagos->sum('monto');
-            return $factura->total - $totalPagado;
-        });
 
-        $productosVendidos = DB::table('articulo_factura')
-            ->join('articulos', 'articulo_factura.articulo_id', '=', 'articulos.id')
-            ->join('facturas', 'articulo_factura.factura_id', '=', 'facturas.id')
-            ->whereDate('facturas.fecha', '>=', $fechaInicio)
-            ->whereDate('facturas.fecha', '<=', $fechaFin)
-            ->select('articulos.articulo', DB::raw('SUM(articulo_factura.cantidad) as total_vendido'))
-            ->groupBy('articulos.id', 'articulos.articulo')
+        $saldoImpagas = $facturasImpagas->sum(fn($s) => $s->total - $s->payments->sum('amount'));
+
+        $productosVendidos = DB::table('sale_products')
+            ->join('products', 'sale_products.product_id', '=', 'products.id')
+            ->join('sales', 'sale_products.sale_id', '=', 'sales.id')
+            ->whereDate('sales.date', '>=', $fechaInicio)
+            ->whereDate('sales.date', '<=', $fechaFin)
+            ->select('products.name', DB::raw('SUM(sale_products.quantity) as total_vendido'))
+            ->groupBy('products.id', 'products.name')
             ->orderBy('total_vendido', 'desc')
             ->limit(5)
             ->get();
 
-        $ventasPorDia = Factura::whereDate('fecha', '>=', $fechaInicio)
-            ->whereDate('fecha', '<=', $fechaFin)
-            ->select(DB::raw('DATE(fecha) as dia'), DB::raw('SUM(total) as total_dia'))
+        $ventasPorDia = Sale::whereDate('date', '>=', $fechaInicio)
+            ->whereDate('date', '<=', $fechaFin)
+            ->select(DB::raw('DATE(date) as dia'), DB::raw('SUM(total) as total_dia'))
             ->groupBy('dia')
             ->orderBy('dia')
             ->get();
 
-        $ventasPorVendedor = Factura::join('users', 'facturas.user_id', '=', 'users.id')
-            ->whereDate('facturas.fecha', '>=', $fechaInicio)
-            ->whereDate('facturas.fecha', '<=', $fechaFin)
-            ->select('users.name', DB::raw('COUNT(*) as total_ventas'), DB::raw('SUM(facturas.total) as monto_total'))
+        $ventasPorVendedor = Sale::join('users', 'sales.user_id', '=', 'users.id')
+            ->whereDate('sales.date', '>=', $fechaInicio)
+            ->whereDate('sales.date', '<=', $fechaFin)
+            ->select('users.name', DB::raw('COUNT(*) as total_ventas'), DB::raw('SUM(sales.total) as monto_total'))
             ->groupBy('users.id', 'users.name')
             ->orderBy('monto_total', 'desc')
             ->get();
 
-        $data = [
-            'totalVentas' => $totalVentas,
-            'clientesNuevos' => $clientesNuevos,
-            'ventasDelMes' => $ventasDelMes,
-            'saldoImpagas' => $saldoImpagas,
-            'productosVendidos' => $productosVendidos,
-            'ventasPorDia' => $ventasPorDia,
-            'ventasPorVendedor' => $ventasPorVendedor,
-        ];
+        $data = compact('totalVentas', 'clientesNuevos', 'saldoImpagas', 'productosVendidos', 'ventasPorDia', 'ventasPorVendedor');
+        $data['ventasDelMes'] = $totalVentas;
 
         return Excel::download(new DashboardExport($data), 'reporte-dashboard-' . $fechaInicio . '-' . $fechaFin . '.xlsx');
     }

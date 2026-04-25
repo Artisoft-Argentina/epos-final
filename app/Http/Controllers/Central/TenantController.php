@@ -49,8 +49,8 @@ class TenantController extends Controller
         $subdomain     = $request->slug . '.' . $centralDomain;
 
         $request->validate([
-            'razonsocial'    => 'required|string|max:255',
-            'cuit'           => 'required|string|max:20',
+            'business_name'  => 'required|string|max:255',
+            'tax_id'         => 'required|string|max:20',
             'slug'           => ['required', 'string', 'max:63', 'regex:/^[a-z0-9\-]+$/', function ($attr, $value, $fail) use ($subdomain) {
                 if (\Illuminate\Support\Facades\DB::table('domains')->where('domain', $subdomain)->exists()) {
                     $fail('Este subdominio ya está en uso.');
@@ -64,10 +64,10 @@ class TenantController extends Controller
 
         // 1. Crear el tenant (dispara TenantCreated → CreateDatabase + MigrateDatabase)
         $tenant = Tenant::create([
-            'razonsocial' => $request->razonsocial,
-            'cuit'        => preg_replace('/\D/', '', $request->cuit),
-            'plan'        => $request->plan,
-            'status'      => 'active',
+            'business_name' => $request->business_name,
+            'tax_id'        => preg_replace('/\D/', '', $request->tax_id),
+            'plan'          => $request->plan,
+            'status'        => 'active',
         ]);
 
         // 2. Asignar subdominio
@@ -78,12 +78,12 @@ class TenantController extends Controller
 
         try {
             $superadminRole = \App\Models\Role::firstOrCreate(['role' => 'superadmin'], ['permission' => '*', 'description' => 'Super Administrador']);
-            $adminRole      = \App\Models\Role::firstOrCreate(['role' => 'admin'],      ['permission' => '*', 'description' => 'Administrador']);
+            \App\Models\Role::firstOrCreate(['role' => 'admin'],      ['permission' => '*', 'description' => 'Administrador']);
             \App\Models\Role::firstOrCreate(['role' => 'vendedor'], ['permission' => '',  'description' => 'Vendedor']);
             \App\Models\Role::firstOrCreate(['role' => 'cliente'],  ['permission' => '',  'description' => 'Cliente']);
 
             // Datos comunes a todos los tenants
-            (new \Database\Seeders\ProvinciaSeeder())->run();
+            (new \Database\Seeders\StatesSeeder())->run();
 
             \App\Models\User::create([
                 'name'     => $request->admin_name,
@@ -93,23 +93,23 @@ class TenantController extends Controller
             ]);
 
             // Pre-poblar configuración de la empresa con los datos del alta
-            \App\Models\InitialSetting::create([
-                'razonsocial'  => $request->razonsocial,
-                'cuit'         => preg_replace('/\D/', '', $request->cuit),
-                'puntoventa'   => 1,
-                'afip_ambiente' => 'homologacion',
-                'numfactura'   => 0,
-                'numremito'    => 0,
-                'numpresupuesto' => 0,
-                'numpago'      => 0,
-                'numrecibo'    => 0,
+            \App\Models\Setting::create([
+                'business_name'       => $request->business_name,
+                'tax_id'              => preg_replace('/\D/', '', $request->tax_id),
+                'pos_number'          => 1,
+                'afip_environment'    => 'homologacion',
+                'next_invoice_number' => 0,
+                'next_order_number'   => 0,
+                'next_quote_number'   => 0,
+                'next_payment_number' => 0,
+                'next_receipt_number' => 0,
             ]);
         } finally {
             tenancy()->end();
         }
 
         return redirect()->route('central.tenants.index')
-            ->with('success', "Empresa '{$tenant->razonsocial}' creada correctamente. URL: {$this->tenantUrl($subdomain)}");
+            ->with('success', "Empresa '{$tenant->business_name}' creada correctamente. URL: {$this->tenantUrl($subdomain)}");
     }
 
     public function show(Tenant $tenant): Response
@@ -124,10 +124,10 @@ class TenantController extends Controller
         tenancy()->initialize($tenant);
         try {
             $stats = [
-                'users'    => \App\Models\User::count(),
-                'clientes' => \App\Models\Cliente::count(),
-                'facturas' => \DB::table('facturas')->count(),
-                'articulos' => \DB::table('articulos')->count(),
+                'users'     => \App\Models\User::count(),
+                'customers' => \App\Models\Customer::count(),
+                'sales'     => \DB::table('sales')->count(),
+                'products'  => \DB::table('products')->count(),
             ];
         } finally {
             tenancy()->end();
@@ -151,23 +151,23 @@ class TenantController extends Controller
     public function update(Request $request, Tenant $tenant): RedirectResponse
     {
         $request->validate([
-            'razonsocial' => 'required|string|max:255',
-            'cuit'        => 'required|string|max:20',
-            'plan'        => 'required|in:basic,pro,enterprise',
+            'business_name' => 'required|string|max:255',
+            'tax_id'        => 'required|string|max:20',
+            'plan'          => 'required|in:basic,pro,enterprise',
         ]);
 
         $tenant->update([
-            'razonsocial' => $request->razonsocial,
-            'cuit'        => preg_replace('/\D/', '', $request->cuit),
-            'plan'        => $request->plan,
+            'business_name' => $request->business_name,
+            'tax_id'        => preg_replace('/\D/', '', $request->tax_id),
+            'plan'          => $request->plan,
         ]);
 
-        // Sincronizar cambios a inicialsettings del tenant
+        // Sincronizar cambios a settings del tenant
         tenancy()->initialize($tenant);
         try {
-            \App\Models\InitialSetting::query()->update([
-                'razonsocial' => $request->razonsocial,
-                'cuit'        => preg_replace('/\D/', '', $request->cuit),
+            \App\Models\Setting::query()->update([
+                'business_name' => $request->business_name,
+                'tax_id'        => preg_replace('/\D/', '', $request->tax_id),
             ]);
         } finally {
             tenancy()->end();
@@ -189,13 +189,13 @@ class TenantController extends Controller
     {
         $tenant->update(['status' => 'active']);
 
-        return back()->with('success', "Empresa '{$tenant->razonsocial}' activada.");
+        return back()->with('success', "Empresa '{$tenant->business_name}' activada.");
     }
 
     public function deactivate(Tenant $tenant): RedirectResponse
     {
         $tenant->update(['status' => 'inactive']);
 
-        return back()->with('success', "Empresa '{$tenant->razonsocial}' desactivada.");
+        return back()->with('success', "Empresa '{$tenant->business_name}' desactivada.");
     }
 }

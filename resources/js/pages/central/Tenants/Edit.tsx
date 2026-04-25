@@ -10,15 +10,15 @@ import { FormEventHandler } from 'react';
 
 interface Tenant {
     id: string;
-    razonsocial: string;
-    cuit: string;
+    business_name: string;
+    tax_id: string;
     plan: string;
 }
 
 export default function EditTenant({ tenant }: { tenant: Tenant }) {
     const { data, setData, put, processing, errors } = useForm({
-        razonsocial: tenant.razonsocial,
-        cuit: tenant.cuit,
+        business_name: tenant.business_name,
+        tax_id: tenant.tax_id,
         plan: tenant.plan as 'basic' | 'pro' | 'enterprise',
     });
 
@@ -40,14 +40,14 @@ export default function EditTenant({ tenant }: { tenant: Tenant }) {
 
             <form onSubmit={submit} className="mx-auto max-w-lg space-y-4 rounded-xl border bg-white p-6 shadow-sm dark:bg-gray-900">
                 <div>
-                    <Label htmlFor="razonsocial">Razón Social</Label>
-                    <Input id="razonsocial" value={data.razonsocial} onChange={(e) => setData('razonsocial', e.target.value)} />
-                    <InputError message={errors.razonsocial} />
+                    <Label htmlFor="business_name">Razón Social</Label>
+                    <Input id="business_name" value={data.business_name} onChange={(e) => setData('business_name', e.target.value)} />
+                    <InputError message={errors.business_name} />
                 </div>
                 <div>
-                    <Label htmlFor="cuit">CUIT</Label>
-                    <Input id="cuit" value={data.cuit} onChange={(e) => setData('cuit', e.target.value)} />
-                    <InputError message={errors.cuit} />
+                    <Label htmlFor="tax_id">CUIT</Label>
+                    <Input id="tax_id" value={data.tax_id} onChange={(e) => setData('tax_id', e.target.value)} />
+                    <InputError message={errors.tax_id} />
                 </div>
                 <div>
                     <Label htmlFor="plan">Plan</Label>

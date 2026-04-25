@@ -10,7 +10,7 @@ import { useEffect } from 'react';
 
 interface Categoria {
     id: number;
-    categoria: string;
+    name: string;
 }
 
 interface Props {
@@ -62,7 +62,7 @@ export default function Index({ categorias }: Props) {
                             {categorias.data.map((categoria) => (
                                 <tr key={categoria.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{categoria.categoria}</div>
+                                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{categoria.name}</div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <div className="flex justify-end gap-2">
@@ -74,7 +74,7 @@ export default function Index({ categorias }: Props) {
                                             <DeleteConfirmationDialog 
                                                 url={route('categorias.destroy', categoria.id)}
                                                 title="Eliminar categoría"
-                                                description={`¿Está seguro que desea eliminar la categoría ${categoria.categoria}? Esta acción no se puede deshacer.`}
+                                                description={`¿Está seguro que desea eliminar la categoría ${categoria.name}? Esta acción no se puede deshacer.`}
                                             />
                                         </div>
                                     </td>
@@ -89,7 +89,7 @@ export default function Index({ categorias }: Props) {
                     {categorias.data.map((categoria) => (
                         <Card key={categoria.id}>
                             <CardHeader>
-                                <CardTitle className="text-lg">{categoria.categoria}</CardTitle>
+                                <CardTitle className="text-lg">{categoria.name}</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <div className="flex gap-2">
@@ -102,7 +102,7 @@ export default function Index({ categorias }: Props) {
                                     <DeleteConfirmationDialog 
                                         url={route('categorias.destroy', categoria.id)}
                                         title="Eliminar categoría"
-                                        description={`¿Está seguro que desea eliminar la categoría ${categoria.categoria}? Esta acción no se puede deshacer.`}
+                                        description={`¿Está seguro que desea eliminar la categoría ${categoria.name}? Esta acción no se puede deshacer.`}
                                     />
                                 </div>
                             </CardContent>

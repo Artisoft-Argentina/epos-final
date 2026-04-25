@@ -2,7 +2,7 @@
 
 namespace App\Services\Functions;
 
-use App\Models\Articulo;
+use App\Models\Product;
 
 class SearchProductFunction
 {
@@ -10,13 +10,13 @@ class SearchProductFunction
     {
         $query = $params['query'] ?? '';
 
-        $productos = Articulo::where('articulo', 'like', "%{$query}%")
-            ->orWhere('codarticulo', 'like', "%{$query}%")
-            ->with(['inventario', 'listasPrecios'])
+        $products = Product::where('name', 'like', "%{$query}%")
+            ->orWhere('sku', 'like', "%{$query}%")
+            ->with(['stock', 'priceLists'])
             ->limit(5)
             ->get();
 
-        if ($productos->isEmpty()) {
+        if ($products->isEmpty()) {
             return [
                 'success' => false,
                 'message' => "No se encontraron productos con '{$query}'",
@@ -25,12 +25,12 @@ class SearchProductFunction
 
         return [
             'success' => true,
-            'productos' => $productos->map(fn ($p) => [
-                'id' => $p->id,
-                'nombre' => $p->articulo,
-                'codigo' => $p->codigo,
-                'precio' => $p->precioVenta,
-                'stock' => $p->inventario->stock ?? 0,
+            'productos' => $products->map(fn ($p) => [
+                'id'     => $p->id,
+                'nombre' => $p->name,
+                'codigo' => $p->sku,
+                'precio' => $p->sale_price,
+                'stock'  => $p->stock?->quantity ?? 0,
             ])->toArray(),
         ];
     }

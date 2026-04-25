@@ -143,7 +143,7 @@ export default function AsistenteComprasIndex() {
                 <div className="mb-6">
                     <h1 className="text-3xl font-bold">Asistente de Compras</h1>
                     <p className="text-muted-foreground mt-2">
-                        Sube un PDF o toma una foto de la factura/remito para procesarlo automáticamente con IA
+                        Sube un PDF o toma una foto de la factura/orden de compra para procesarlo automáticamente con IA
                     </p>
                     <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                         <div className="flex items-start gap-3">
@@ -151,7 +151,7 @@ export default function AsistenteComprasIndex() {
                             <div className="text-sm text-blue-800">
                                 <p className="font-medium mb-1">✨ Procesamiento inteligente con IA</p>
                                 <ul className="space-y-1 text-blue-700">
-                                    <li>• Extrae automáticamente datos de facturas y remitos</li>
+                                    <li>• Extrae automáticamente datos de facturas y órdenes de compra</li>
                                     <li>• Reconoce texto en imágenes usando OCR</li>
                                     <li>• Busca y actualiza productos en tu inventario</li>
                                     <li>• Soporta PDF y fotos (JPG, PNG, etc.)</li>

@@ -7,10 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function Create() {
     const { data, setData, post, processing, errors } = useForm({
-        razonsocial: '',
-        cuit: '',
-        direccion: '',
-        telefono: '',
+        business_name: '',
+        tax_id: '',
+        address: '',
+        phone: '',
         email: '',
     });
 
@@ -31,39 +31,39 @@ export default function Create() {
                     <form onSubmit={submit} className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="md:col-span-2">
-                                <Label htmlFor="razonsocial">Razón Social *</Label>
+                                <Label htmlFor="business_name">Razón Social *</Label>
                                 <Input
-                                    id="razonsocial"
-                                    value={data.razonsocial}
-                                    onChange={(e) => setData('razonsocial', e.target.value)}
-                                    error={errors.razonsocial}
+                                    id="business_name"
+                                    value={data.business_name}
+                                    onChange={(e) => setData('business_name', e.target.value)}
+                                    error={errors.business_name}
                                 />
                             </div>
                             <div>
-                                <Label htmlFor="cuit">CUIT *</Label>
+                                <Label htmlFor="tax_id">CUIT *</Label>
                                 <Input
-                                    id="cuit"
-                                    value={data.cuit}
-                                    onChange={(e) => setData('cuit', e.target.value)}
-                                    error={errors.cuit}
+                                    id="tax_id"
+                                    value={data.tax_id}
+                                    onChange={(e) => setData('tax_id', e.target.value)}
+                                    error={errors.tax_id}
                                 />
                             </div>
                             <div>
-                                <Label htmlFor="telefono">Teléfono *</Label>
+                                <Label htmlFor="phone">Teléfono *</Label>
                                 <Input
-                                    id="telefono"
-                                    value={data.telefono}
-                                    onChange={(e) => setData('telefono', e.target.value)}
-                                    error={errors.telefono}
+                                    id="phone"
+                                    value={data.phone}
+                                    onChange={(e) => setData('phone', e.target.value)}
+                                    error={errors.phone}
                                 />
                             </div>
                             <div className="md:col-span-2">
-                                <Label htmlFor="direccion">Dirección *</Label>
+                                <Label htmlFor="address">Dirección *</Label>
                                 <Input
-                                    id="direccion"
-                                    value={data.direccion}
-                                    onChange={(e) => setData('direccion', e.target.value)}
-                                    error={errors.direccion}
+                                    id="address"
+                                    value={data.address}
+                                    onChange={(e) => setData('address', e.target.value)}
+                                    error={errors.address}
                                 />
                             </div>
                             <div className="md:col-span-2">

@@ -2,9 +2,9 @@
 
 namespace App\Services\Functions;
 
-use App\Models\Factura;
-use App\Models\Cliente;
-use App\Models\Articulo;
+use App\Models\Sale;
+use App\Models\Customer;
+use App\Models\Product;
 use Illuminate\Support\Facades\DB;
 
 class CreateSaleFunction
@@ -22,81 +22,72 @@ class CreateSaleFunction
                 ];
             }
 
-            $cliente = Cliente::find($clienteId);
-            if (!$cliente) {
-                return [
-                    'success' => false,
-                    'message' => "Cliente con ID {$clienteId} no encontrado",
-                ];
+            $customer = Customer::find($clienteId);
+            if (!$customer) {
+                return ['success' => false, 'message' => "Cliente con ID {$clienteId} no encontrado"];
             }
 
             DB::beginTransaction();
 
-            // Calcular totales
-            $subtotal = 0;
-            $articulosData = [];
+            $subtotal    = 0;
+            $productsData = [];
 
             foreach ($items as $item) {
-                $articulo = Articulo::with('inventario')->find($item['articulo_id']);
-                if (!$articulo) {
+                $product = Product::with('stock')->find($item['articulo_id']);
+                if (!$product) {
                     DB::rollBack();
-                    return [
-                        'success' => false,
-                        'message' => "Producto con ID {$item['articulo_id']} no encontrado",
-                    ];
+                    return ['success' => false, 'message' => "Producto con ID {$item['articulo_id']} no encontrado"];
                 }
 
-                $cantidad = $item['cantidad'] ?? 1;
-                $precio = $item['precio'] ?? $articulo->precioVenta;
-                $itemTotal = $cantidad * $precio;
-                $subtotal += $itemTotal;
+                $quantity     = $item['cantidad'] ?? 1;
+                $price        = $item['precio'] ?? $product->sale_price;
+                $itemTotal    = $quantity * $price;
+                $subtotal    += $itemTotal;
 
-                $articulosData[$articulo->id] = [
-                    'cantidad' => $cantidad,
-                    'preciounitario' => $precio,
-                    'subtotal' => $itemTotal,
-                    'articulo' => $articulo->articulo,
-                    'codarticulo' => $articulo->codarticulo ?? '',
-                    'medida' => $articulo->inventario->medida ?? 'UN',
-                    'alicuota' => 21,
-                    'bonificacion' => 0,
+                $productsData[$product->id] = [
+                    'quantity'      => $quantity,
+                    'unit_price'    => $price,
+                    'subtotal'      => $itemTotal,
+                    'name'          => $product->name,
+                    'sku'           => $product->sku ?? '',
+                    'unit'          => $product->unit ?? 'UN',
+                    'tax_rate'      => 21,
+                    'discount'      => 0,
                 ];
             }
 
-            // Crear factura
-            $numFactura = Factura::where('letracomprobante', 'B')->max('numfactura') ?? 0;
-            $numFactura++;
-            
-            $factura = Factura::create([
-                'cliente_id' => $clienteId,
-                'user_id' => $userId,
-                'cuit' => $cliente->documentounico,
-                'fecha' => now()->format('Y-m-d'),
-                'letracomprobante' => 'B',
-                'codcomprobante' => 6,
-                'ptoventa' => 1,
-                'numfactura' => $numFactura,
-                'bonificacion' => 0,
-                'recargo' => 0,
-                'descuento' => 0,
-                'subtotal' => $subtotal,
-                'total' => $subtotal,
-                'pagada' => '0',
-                'condicionventa' => 'contado',
+            $invoiceNumber = Sale::where('voucher_letter', 'B')->max('invoice_number') ?? 0;
+            $invoiceNumber++;
+
+            $sale = Sale::create([
+                'customer_id'    => $clienteId,
+                'user_id'        => $userId,
+                'tax_id'         => $customer->tax_id,
+                'date'           => now()->format('Y-m-d'),
+                'voucher_letter' => 'B',
+                'voucher_code'   => 6,
+                'pos_number'     => 1,
+                'invoice_number' => $invoiceNumber,
+                'discount'       => 0,
+                'surcharge'      => 0,
+                'additional_discount' => 0,
+                'subtotal'       => $subtotal,
+                'total'          => $subtotal,
+                'payment_status' => 'NO',
+                'sale_condition' => 'contado',
             ]);
 
-            // Asociar artículos
-            $factura->articulos()->attach($articulosData);
+            $sale->products()->attach($productsData);
 
             DB::commit();
 
             return [
-                'success' => true,
-                'factura_id' => $factura->id,
-                'numero' => $numFactura,
-                'cliente' => $cliente->razonsocial,
-                'total' => $factura->total,
-                'message' => "Factura B #{$numFactura} creada exitosamente para {$cliente->razonsocial}. Total: \${$factura->total}",
+                'success'    => true,
+                'factura_id' => $sale->id,
+                'numero'     => $invoiceNumber,
+                'cliente'    => $customer->business_name,
+                'total'      => $sale->total,
+                'message'    => "Factura B #{$invoiceNumber} creada exitosamente para {$customer->business_name}. Total: \${$sale->total}",
             ];
 
         } catch (\Exception $e) {

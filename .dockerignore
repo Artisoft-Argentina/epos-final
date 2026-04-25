@@ -19,3 +19,4 @@ vendor/
 .phpunit.result.cache
 .pest/
 .claude/
+public/storage

@@ -81,6 +81,13 @@ fresh:
 	$(COMPOSE) up -d
 	$(COMPOSE) exec app php artisan migrate:fresh --seed --force
 
+prod-fresh:
+	@echo "⚠️  Esto borrará TODOS los datos. Escribe 'si' para confirmar:"
+	@read CONFIRM; [ "$$CONFIRM" = "si" ] || (echo "Cancelado." && exit 1)
+	$(COMPOSE_PROD) down -v
+	$(COMPOSE_PROD) up -d --force-recreate
+	$(COMPOSE_PROD) exec app php artisan migrate:fresh --seed --force
+
 artisan:
 	$(COMPOSE) exec app php artisan $(cmd)
 
