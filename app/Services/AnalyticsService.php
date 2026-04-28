@@ -31,8 +31,8 @@ class AnalyticsService
     {
         $query = DB::table('sales')
             ->select(
-                DB::raw('YEAR(date) as year'),
-                DB::raw('MONTH(date) as month'),
+                DB::raw('EXTRACT(YEAR FROM date)::integer as year'),
+                DB::raw('EXTRACT(MONTH FROM date)::integer as month'),
                 DB::raw('SUM(total) as revenue')
             )
             ->where('afip_authorized', true)
@@ -54,8 +54,8 @@ class AnalyticsService
     {
         $query = DB::table('sales')
             ->select(
-                DB::raw('YEAR(date) as year'),
-                DB::raw('MONTH(date) as month'),
+                DB::raw('EXTRACT(YEAR FROM date)::integer as year'),
+                DB::raw('EXTRACT(MONTH FROM date)::integer as month'),
                 DB::raw('SUM(total) as revenue')
             )
             ->where('afip_authorized', true)

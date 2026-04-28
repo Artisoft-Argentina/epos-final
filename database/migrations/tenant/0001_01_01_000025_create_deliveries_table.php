@@ -15,7 +15,7 @@ return new class extends Migration
             $table->unsignedInteger('quantity');                                                    // cantidad → quantity
             $table->date('delivery_date');                                                  // fecha_entrega → delivery_date
             $table->text('notes')->nullable();                                              // observaciones → notes
-            $table->enum('status', ['pending', 'delivered', 'cancelled'])->default('pending'); // valores en inglés
+            $table->string('status')->default('pending'); // valores: pending, delivered, cancelled
             $table->date('actual_delivery_date')->nullable();                          // fecha_entrega_real → actual_delivery_date
             $table->softDeletes();
             $table->boolean('active')->default(true);

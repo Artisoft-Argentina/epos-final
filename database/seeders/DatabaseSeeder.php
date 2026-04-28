@@ -21,8 +21,8 @@ class DatabaseSeeder extends Seeder
         $existing = Tenant::find('principal');
         try {
             // Limpiar BD del tenant con cualquier prefijo que pudiera existir
-            DB::statement("DROP DATABASE IF EXISTS `{$tenantDb}`");
-            DB::statement("DROP DATABASE IF EXISTS `tenant_principal`");
+            DB::statement("DROP DATABASE IF EXISTS \"{$tenantDb}\"");
+            DB::statement("DROP DATABASE IF EXISTS \"tenant_principal\"");
             if ($existing) {
                 $existing->domains()->delete();
                 $existing->delete();
