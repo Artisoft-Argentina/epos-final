@@ -1,6 +1,18 @@
 #!/bin/sh
 set -e
 
+# Instalar dependencias PHP si el vendor no está presente
+if [ ! -f vendor/autoload.php ]; then
+    echo "==> Instalando dependencias PHP (composer install)..."
+    composer install --no-interaction --prefer-dist --optimize-autoloader
+fi
+
+# Instalar dependencias JS si node_modules no está presente
+if [ ! -d node_modules ]; then
+    echo "==> Instalando dependencias JS (npm ci)..."
+    npm ci && npm run build
+fi
+
 echo "==> Esperando que PostgreSQL esté disponible en ${DB_HOST:-postgres}:${DB_PORT:-5432}..."
 until pg_isready -h "${DB_HOST:-postgres}" -p "${DB_PORT:-5432}" -U "${DB_USERNAME:-epos_user}" -q; do
     sleep 1
