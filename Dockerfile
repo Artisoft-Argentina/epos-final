@@ -81,7 +81,7 @@ RUN if [ -f public/hot ]; then rm -f public/hot; fi || true
 COPY docker/nginx.conf /etc/nginx/nginx.conf
 COPY docker/php.ini /usr/local/etc/php/conf.d/custom.ini
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-COPY docker/entrypoint.sh /entrypoint.sh
+COPY docker/entrypoint.dev.sh /entrypoint.sh
 
 RUN chmod +x /entrypoint.sh
 

@@ -21,9 +21,28 @@
 #   make backup       Hacer backup de MySQL
 # ============================================================
 
+dev-up:
+	$(COMPOSE) up -d
+	@echo ""
+	@echo "✓ EPOS dev corriendo en http://epos.lvh.me:$(APP_PORT)"
+	@echo "  Vite dev server:         http://epos.lvh.me:5173"
+	@echo "  PostgreSQL disponible en: localhost:$(DB_EXTERNAL_PORT)"
+	@echo "  Redis disponible en:      localhost:$(REDIS_EXTERNAL_PORT)"
+
+dev-down:
+	$(COMPOSE) down
+
+dev-logs:
+	$(COMPOSE) logs -f app
+
+dev-shell:
+	$(COMPOSE) exec app sh
+
+dev-rebuild: dev-down build-fresh dev-up
+
 .PHONY: up down build build-fresh logs shell migrate tenant-migrate fresh \
         rebuild rebuild-fresh prod-up prod-down prod-deploy migrate-prod backup \
-        artisan tinker queue-work
+        artisan tinker queue-work dev-up dev-down dev-logs dev-shell dev-rebuild postgres-shell
 
 -include .env
 export
@@ -61,8 +80,8 @@ logs:
 shell:
 	$(COMPOSE) exec app sh
 
-mysql-shell:
-	$(COMPOSE) exec mysql mysql -uepos_user -pepos_password epos_central
+postgres-shell:
+	$(COMPOSE) exec postgres psql -U epos_user -d epos_central
 
 migrate:
 	$(COMPOSE) exec app php artisan migrate --force
@@ -138,7 +157,5 @@ tenant-migrate-prod:
 backup:
 	@DATE=$$(date +%Y%m%d_%H%M%S); \
 	mkdir -p ./backups; \
-	$(COMPOSE_PROD) exec mysql sh -c \
-		"mysqldump -uroot -p$$MYSQL_ROOT_PASSWORD --all-databases 2>/dev/null" \
-		> ./backups/backup_$$DATE.sql; \
+	$(COMPOSE_PROD) exec postgres pg_dump -U epos_user epos_central > ./backups/backup_$$DATE.sql; \
 	echo "✓ Backup guardado en ./backups/backup_$$DATE.sql"
