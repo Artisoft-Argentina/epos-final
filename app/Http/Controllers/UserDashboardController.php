@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Factura;
+use App\Models\Customer;
+use App\Models\Sale;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -10,77 +11,71 @@ class UserDashboardController extends Controller
 {
     public function index(Request $request)
     {
-        $user = $request->user();
+        $user     = $request->user();
+        $customer = Customer::where('email', $user->email)->first();
 
-        // Buscar cliente vinculado al usuario por email
-        $cliente = \App\Models\Cliente::where('email', $user->email)->first();
-
-        if (!$cliente) {
+        if (!$customer) {
             return Inertia::render('user-dashboard', [
                 'facturas' => [],
-                'resumen' => [
-                    'total_compras' => 0,
-                    'total_pagado' => 0,
-                    'saldo_pendiente' => 0,
-                    'entregas_pendientes' => 0,
-                    'total_facturas' => 0,
+                'resumen'  => [
+                    'total_compras'      => 0,
+                    'total_pagado'       => 0,
+                    'saldo_pendiente'    => 0,
+                    'entregas_pendientes'=> 0,
+                    'total_facturas'     => 0,
                 ],
                 'mensaje' => 'No hay un cliente vinculado a tu cuenta. Contacta al administrador.',
             ]);
         }
 
-        // Obtener facturas del cliente
-        $facturas = Factura::with(['articulos', 'pagos', 'entregas'])
-            ->where('cliente_id', $cliente->id)
-            ->orderBy('fecha', 'desc')
+        $sales = Sale::with(['products', 'payments', 'deliveries'])
+            ->where('customer_id', $customer->id)
+            ->orderBy('date', 'desc')
             ->get();
 
-        // Calcular totales
-        $totalCompras = $facturas->sum('total');
-        $totalPagado = $facturas->sum(fn($f) => $f->pagos->sum('monto'));
-        $saldoPendiente = $totalCompras - $totalPagado;
+        $totalCompras    = $sales->sum('total');
+        $totalPagado     = $sales->sum(fn($s) => $s->payments->sum('amount'));
+        $saldoPendiente  = $totalCompras - $totalPagado;
 
-        // Entregas pendientes
-        $entregasPendientes = $facturas->flatMap(fn($f) => $f->entregas)
-            ->where('estado', 'pendiente')
+        $entregasPendientes = $sales->flatMap(fn($s) => $s->deliveries)
+            ->where('status', 'pending')
             ->count();
 
         return Inertia::render('user-dashboard', [
-            'facturas' => $facturas->map(fn($factura) => [
-                'id' => $factura->id,
-                'numero' => $factura->numfactura,
-                'fecha' => $factura->fecha,
-                'total' => (float) $factura->total,
-                'pagada' => $factura->pagada,
-                'total_pagado' => (float) $factura->pagos->sum('monto'),
-                'saldo_pendiente' => (float) ($factura->total - $factura->pagos->sum('monto')),
-                'articulos' => $factura->articulos->map(fn($art) => [
-                    'nombre' => $art->articulo,
-                    'cantidad' => (int) $art->pivot->cantidad,
-                    'precio' => (float) $art->pivot->preciounitario,
-                    'subtotal' => (float) $art->pivot->subtotal,
+            'facturas' => $sales->map(fn($sale) => [
+                'id'              => $sale->id,
+                'numero'          => $sale->invoice_number,
+                'fecha'           => $sale->date,
+                'total'           => (float) $sale->total,
+                'pagada'          => $sale->payment_status,
+                'total_pagado'    => (float) $sale->payments->sum('amount'),
+                'saldo_pendiente' => (float) ($sale->total - $sale->payments->sum('amount')),
+                'articulos'       => $sale->products->map(fn($p) => [
+                    'nombre'   => $p->name,
+                    'cantidad' => (int) $p->pivot->quantity,
+                    'precio'   => (float) $p->pivot->unit_price,
+                    'subtotal' => (float) $p->pivot->subtotal,
                 ]),
-                'pagos' => $factura->pagos->map(fn($pago) => [
-                    'fecha' => $pago->fecha_pago,
-                    'monto' => (float) $pago->monto,
-                    'metodo' => $pago->metodo_pago,
+                'pagos'    => $sale->payments->map(fn($p) => [
+                    'fecha'  => $p->payment_date,
+                    'monto'  => (float) $p->amount,
+                    'metodo' => $p->payment_method,
                 ]),
-                'entregas' => $factura->entregas->map(fn($entrega) => [
-                    'fecha' => $entrega->fecha_entrega,
-                    'estado' => $entrega->estado,
-                    'direccion' => $entrega->direccion_entrega,
+                'entregas' => $sale->deliveries->map(fn($d) => [
+                    'fecha'  => $d->delivery_date,
+                    'estado' => $d->status,
                 ]),
             ]),
             'resumen' => [
-                'total_compras' => (float) $totalCompras,
-                'total_pagado' => (float) $totalPagado,
-                'saldo_pendiente' => (float) $saldoPendiente,
+                'total_compras'       => (float) $totalCompras,
+                'total_pagado'        => (float) $totalPagado,
+                'saldo_pendiente'     => (float) $saldoPendiente,
                 'entregas_pendientes' => $entregasPendientes,
-                'total_facturas' => $facturas->count(),
+                'total_facturas'      => $sales->count(),
             ],
             'cliente' => [
-                'nombre' => $cliente->razonsocial,
-                'email' => $cliente->email,
+                'nombre' => $customer->business_name,
+                'email'  => $customer->email,
             ],
         ]);
     }

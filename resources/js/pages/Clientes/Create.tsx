@@ -1,4 +1,4 @@
-import { Head, useForm, router } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,66 +8,49 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
-interface Provincia {
-    id: number;
-    nombre: string;
-}
-
-interface Localidad {
-    id: number;
-    nombre: string;
-    provincia_id: number;
-}
+interface State { id: number; name: string; afip_id?: number; }
+interface City { id: number; name: string; state_id: number; }
 
 interface Props {
-    provincias: Provincia[];
-    localidades: Localidad[];
+    provincias: State[];
+    localidades: City[];
 }
 
 export default function Create({ provincias, localidades }: Props) {
     const { data, setData, post, processing, errors } = useForm({
-        razonsocial: '',
-        documentounico: '',
-        direccion: '',
-        telefono: '',
+        business_name: '',
+        tax_id: '',
+        address: '',
+        phone: '',
         email: '',
-        codigopostal: '',
-        localidad: '',
-        provincia: '',
-        condicioniva: ''
+        zip_code: '',
+        city: '',
+        state: '',
+        tax_status: '',
     });
 
-    const [selectedProvinciaId, setSelectedProvinciaId] = useState<string>('');
-    const [filteredLocalidades, setFilteredLocalidades] = useState<Localidad[]>([]);
-
+    const [selectedStateId, setSelectedStateId] = useState<string>('');
+    const [filteredCities, setFilteredCities] = useState<City[]>([]);
     const [consultandoAfip, setConsultandoAfip] = useState(false);
 
     useEffect(() => {
-        if (selectedProvinciaId) {
-            const filtered = localidades.filter(loc => loc.provincia_id.toString() === selectedProvinciaId);
-            setFilteredLocalidades(filtered);
+        if (selectedStateId) {
+            setFilteredCities(localidades.filter(c => c.state_id.toString() === selectedStateId));
         } else {
-            setFilteredLocalidades([]);
+            setFilteredCities([]);
         }
-        setData('localidad', '');
-    }, [selectedProvinciaId]);
+        setData('city', '');
+    }, [selectedStateId]);
 
-    const handleProvinciaChange = (value: string) => {
-        setSelectedProvinciaId(value);
-        const provincia = provincias.find(p => p.id.toString() === value);
-        setData('provincia', provincia?.nombre || '');
+    const handleStateChange = (value: string) => {
+        setSelectedStateId(value);
+        const state = provincias.find(p => p.id.toString() === value);
+        setData('state', state?.name || '');
     };
 
-
-
     const consultarAfip = async () => {
-        if (!data.documentounico) {
-            toast.error('Ingrese un CUIT o DNI');
-            return;
-        }
-        
+        if (!data.tax_id) { toast.error('Ingrese un CUIT o DNI'); return; }
         setConsultandoAfip(true);
-        
         try {
             const response = await fetch(route('afip.consultar-cuit'), {
                 method: 'POST',
@@ -76,163 +59,108 @@ export default function Create({ provincias, localidades }: Props) {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
                     'Accept': 'application/json',
                 },
-                body: JSON.stringify({ cuit: data.documentounico })
+                body: JSON.stringify({ cuit: data.tax_id }),
             });
-            
             const result = await response.json();
-            
             if (result) {
                 setData({
                     ...data,
-                    razonsocial: result.razonsocial || data.razonsocial,
-                    direccion: result.direccion || data.direccion,
-                    localidad: result.localidad || data.localidad,
-                    codigopostal: result.codigopostal || data.codigopostal,
-                    condicioniva: result.condicioniva || data.condicioniva,
-                    provincia: result.provincia || data.provincia,
+                    business_name: result.razonsocial || data.business_name,
+                    address: result.direccion || data.address,
+                    city: result.localidad || data.city,
+                    zip_code: result.codigopostal || data.zip_code,
+                    tax_status: result.condicioniva || data.tax_status,
+                    state: result.provincia || data.state,
                 });
-
                 if (result.provincia_id_afip !== null) {
-                    const provinciaAfip = provincias.find((p) => p.id_afip === result.provincia_id_afip);
-                    if (provinciaAfip) {
-                        setSelectedProvinciaId(provinciaAfip.id.toString());
-                    }
+                    const stateAfip = provincias.find(p => (p as any).afip_id === result.provincia_id_afip);
+                    if (stateAfip) setSelectedStateId(stateAfip.id.toString());
                 }
-
                 toast.success('Datos cargados desde AFIP');
             } else {
                 toast.error(result.error || 'No se pudieron obtener datos de AFIP');
             }
-        } catch (error) {
-            console.error('Error:', error);
+        } catch {
             toast.error('Error consultando AFIP');
         } finally {
             setConsultandoAfip(false);
         }
     };
 
-    const submit = (e: React.FormEvent) => {
-        e.preventDefault();
-        post(route('clientes.store'));
-    };
+    const submit = (e: React.FormEvent) => { e.preventDefault(); post(route('clientes.store')); };
 
     return (
         <AppLayout>
             <Head title="Crear Cliente" />
-            
             <Card className="max-w-2xl">
-                <CardHeader>
-                    <CardTitle>Crear Nuevo Cliente</CardTitle>
-                </CardHeader>
+                <CardHeader><CardTitle>Crear Nuevo Cliente</CardTitle></CardHeader>
                 <CardContent>
                     <form onSubmit={submit} className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <Label htmlFor="razonsocial">Razón Social *</Label>
-                                <Input
-                                    id="razonsocial"
-                                    value={data.razonsocial}
-                                    onChange={(e) => setData('razonsocial', e.target.value)}
-                                    error={errors.razonsocial}
-                                />
+                                <Label htmlFor="business_name">Razón Social *</Label>
+                                <Input id="business_name" value={data.business_name} onChange={(e) => setData('business_name', e.target.value)} error={errors.business_name} />
                             </div>
                             <div>
-                                <Label htmlFor="documentounico">CUIT / DNI *</Label>
+                                <Label htmlFor="tax_id">CUIT / DNI *</Label>
                                 <div className="flex gap-2">
                                     <Input
-                                        id="documentounico"
+                                        id="tax_id"
                                         placeholder="20123456789 o 12345678"
-                                        value={data.documentounico}
-                                        onChange={(e) => {
-                                            const value = e.target.value.replace(/\D/g, '').slice(0, 11);
-                                            setData('documentounico', value);
-                                        }}
-                                        error={errors.documentounico}
+                                        value={data.tax_id}
+                                        onChange={(e) => setData('tax_id', e.target.value.replace(/\D/g, '').slice(0, 11))}
+                                        error={errors.tax_id}
                                         maxLength={11}
                                     />
-                                    <Button 
-                                        type="button" 
-                                        variant="outline" 
-                                        onClick={consultarAfip}
-                                        disabled={!data.documentounico || consultandoAfip}
-                                    >
+                                    <Button type="button" variant="outline" onClick={consultarAfip} disabled={!data.tax_id || consultandoAfip}>
                                         {consultandoAfip ? 'Consultando...' : 'AFIP'}
                                     </Button>
                                 </div>
                             </div>
                             <div>
-                                <Label htmlFor="direccion">Dirección *</Label>
-                                <Input
-                                    id="direccion"
-                                    value={data.direccion}
-                                    onChange={(e) => setData('direccion', e.target.value)}
-                                    error={errors.direccion}
-                                />
+                                <Label htmlFor="address">Dirección *</Label>
+                                <Input id="address" value={data.address} onChange={(e) => setData('address', e.target.value)} error={errors.address} />
                             </div>
                             <div>
-                                <Label htmlFor="telefono">Teléfono *</Label>
-                                <Input
-                                    id="telefono"
-                                    value={data.telefono}
-                                    onChange={(e) => setData('telefono', e.target.value)}
-                                    error={errors.telefono}
-                                />
+                                <Label htmlFor="phone">Teléfono *</Label>
+                                <Input id="phone" value={data.phone} onChange={(e) => setData('phone', e.target.value)} error={errors.phone} />
                             </div>
                             <div>
                                 <Label htmlFor="email">Email</Label>
-                                <Input
-                                    id="email"
-                                    type="email"
-                                    value={data.email}
-                                    onChange={(e) => setData('email', e.target.value)}
-                                    error={errors.email}
-                                />
+                                <Input id="email" type="email" value={data.email} onChange={(e) => setData('email', e.target.value)} error={errors.email} />
                             </div>
                             <div>
-                                <Label htmlFor="codigopostal">Código Postal</Label>
-                                <Input
-                                    id="codigopostal"
-                                    value={data.codigopostal}
-                                    onChange={(e) => setData('codigopostal', e.target.value)}
-                                    error={errors.codigopostal}
-                                />
+                                <Label htmlFor="zip_code">Código Postal</Label>
+                                <Input id="zip_code" value={data.zip_code} onChange={(e) => setData('zip_code', e.target.value)} error={errors.zip_code} />
                             </div>
                             <div>
-                                <Label htmlFor="provincia">Provincia *</Label>
-                                <Select value={selectedProvinciaId} onValueChange={handleProvinciaChange}>
-                                    <SelectTrigger className={errors.provincia ? 'border-red-500' : ''}>
+                                <Label htmlFor="state">Provincia *</Label>
+                                <Select value={selectedStateId} onValueChange={handleStateChange}>
+                                    <SelectTrigger className={errors.state ? 'border-red-500' : ''}>
                                         <SelectValue placeholder="Seleccionar provincia" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {provincias.map((provincia) => (
-                                            <SelectItem key={provincia.id} value={provincia.id.toString()}>
-                                                {provincia.nombre}
-                                            </SelectItem>
-                                        ))}
+                                        {provincias.map((s) => <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
-                                {errors.provincia && <p className="text-sm text-red-600 mt-1">{errors.provincia}</p>}
+                                {errors.state && <p className="text-sm text-red-600 mt-1">{errors.state}</p>}
                             </div>
                             <div>
-                                <Label htmlFor="localidad">Localidad *</Label>
-                                <Select value={data.localidad} onValueChange={(value) => setData('localidad', value)} disabled={!selectedProvinciaId}>
-                                    <SelectTrigger className={errors.localidad ? 'border-red-500' : ''}>
+                                <Label htmlFor="city">Localidad *</Label>
+                                <Select value={data.city} onValueChange={(value) => setData('city', value)} disabled={!selectedStateId}>
+                                    <SelectTrigger className={errors.city ? 'border-red-500' : ''}>
                                         <SelectValue placeholder="Seleccionar localidad" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {filteredLocalidades.map((localidad) => (
-                                            <SelectItem key={localidad.id} value={localidad.nombre}>
-                                                {localidad.nombre}
-                                            </SelectItem>
-                                        ))}
+                                        {filteredCities.map((c) => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
-                                {errors.localidad && <p className="text-sm text-red-600 mt-1">{errors.localidad}</p>}
+                                {errors.city && <p className="text-sm text-red-600 mt-1">{errors.city}</p>}
                             </div>
                             <div className="md:col-span-2">
-                                <Label htmlFor="condicioniva">Condición IVA</Label>
-                                <Select value={data.condicioniva} onValueChange={(value) => setData('condicioniva', value)}>
-                                    <SelectTrigger className={errors.condicioniva ? 'border-red-500' : ''}>
+                                <Label htmlFor="tax_status">Condición IVA</Label>
+                                <Select value={data.tax_status} onValueChange={(value) => setData('tax_status', value)}>
+                                    <SelectTrigger className={errors.tax_status ? 'border-red-500' : ''}>
                                         <SelectValue placeholder="Seleccionar condición IVA" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -242,17 +170,11 @@ export default function Create({ provincias, localidades }: Props) {
                                         <SelectItem value="Consumidor Final">Consumidor Final</SelectItem>
                                     </SelectContent>
                                 </Select>
-                                {errors.condicioniva && <p className="text-sm text-red-600 mt-1">{errors.condicioniva}</p>}
                             </div>
                         </div>
-
                         <div className="flex gap-2">
-                            <Button type="submit" disabled={processing}>
-                                Crear
-                            </Button>
-                            <Button type="button" variant="outline" onClick={() => window.history.back()}>
-                                Cancelar
-                            </Button>
+                            <Button type="submit" disabled={processing}>Crear</Button>
+                            <Button type="button" variant="outline" onClick={() => window.history.back()}>Cancelar</Button>
                         </div>
                     </form>
                 </CardContent>

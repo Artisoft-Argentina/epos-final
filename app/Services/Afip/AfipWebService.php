@@ -34,19 +34,16 @@ class AfipWebService
     public function __construct()
     {
         // Intentar obtener configuración desde InitialSetting (BD) o config
-        $empresa = \App\Models\InitialSetting::first();
+        $empresa = \App\Models\Setting::first();
 
-        // CUIT: sanitizar eliminando caracteres no numéricos
-        $rawCuit = $empresa?->cuit ?: config('afip.cuit');
+        $rawCuit = $empresa?->tax_id ?: config('afip.cuit');
         $this->cuit = preg_replace('/\D/', '', (string) $rawCuit);
 
-        // Certificados per-tenant
         $afipDir = $this->getAfipDir();
         $this->certPath = "{$afipDir}/cert.pem";
         $this->keyPath  = "{$afipDir}/key.pem";
 
-        // Ambiente: desde BD si existe, sino desde config
-        $ambiente = $empresa?->afip_ambiente ?? config('afip.environment', 'homologacion');
+        $ambiente = $empresa?->afip_environment ?? config('afip.environment', 'homologacion');
         $this->production = $ambiente === 'production';
 
         // Invalidar token si cambió el CUIT o ambiente

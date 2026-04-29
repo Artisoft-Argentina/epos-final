@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use App\Models\Articulo;
-use App\Models\Inventario;
+use App\Models\Product;
+use App\Models\Stock;
 use App\Services\AI\GroqService;
 use Illuminate\Support\Facades\Log;
 use Smalot\PdfParser\Parser;
@@ -142,27 +142,22 @@ class PdfProcessorService
             
             $articulo = null;
             
-            // Buscar por código de proveedor (prioridad)
             if (isset($item['codigo']) && !empty($item['codigo'])) {
-                $articulo = Articulo::where('codprov', $item['codigo'])->first();
+                $product = Product::where('supplier_code', $item['codigo'])->first();
             }
-            
-            // Si no se encuentra, buscar por código interno
-            if (!$articulo && isset($item['codigo']) && !empty($item['codigo'])) {
-                $articulo = Articulo::where('codarticulo', $item['codigo'])->first();
+            if (!$product && isset($item['codigo']) && !empty($item['codigo'])) {
+                $product = Product::where('sku', $item['codigo'])->first();
             }
-            
-            // Si no se encuentra, buscar por descripción
-            if (!$articulo && isset($item['descripcion']) && !empty($item['descripcion'])) {
-                $articulo = Articulo::where('articulo', 'LIKE', '%' . $item['descripcion'] . '%')->first();
+            if (!$product && isset($item['descripcion']) && !empty($item['descripcion'])) {
+                $product = Product::where('name', 'LIKE', '%' . $item['descripcion'] . '%')->first();
             }
 
-            if ($articulo) {
-                $enrichedItem['encontrado'] = true;
-                $enrichedItem['articulo_id'] = $articulo->id;
-                $enrichedItem['articulo_nombre'] = $articulo->articulo;
-                $enrichedItem['codarticulo'] = $articulo->codarticulo;
-                $enrichedItem['codprov'] = $articulo->codprov;
+            if ($product) {
+                $enrichedItem['encontrado']     = true;
+                $enrichedItem['articulo_id']    = $product->id;
+                $enrichedItem['articulo_nombre']= $product->name;
+                $enrichedItem['codarticulo']    = $product->sku;
+                $enrichedItem['codprov']        = $product->supplier_code;
             }
             
             $enrichedItems[] = $enrichedItem;
@@ -189,62 +184,33 @@ class PdfProcessorService
 
             $articulo = null;
             
-            // Buscar por código de proveedor (prioridad)
             if (isset($item['codigo']) && !empty($item['codigo'])) {
-                $articulo = Articulo::where('codprov', $item['codigo'])->first();
-                
-                if ($articulo) {
-                    Log::info("Artículo encontrado por codprov", [
-                        'codprov' => $item['codigo'],
-                        'articulo' => $articulo->articulo,
-                        'codarticulo' => $articulo->codarticulo
-                    ]);
-                }
+                $product = Product::where('supplier_code', $item['codigo'])->first();
+                if ($product) Log::info("Artículo encontrado por supplier_code", ['supplier_code' => $item['codigo'], 'name' => $product->name]);
             }
-            
-            // Si no se encuentra, buscar por código interno
-            if (!$articulo && isset($item['codigo']) && !empty($item['codigo'])) {
-                $articulo = Articulo::where('codarticulo', $item['codigo'])->first();
-                
-                if ($articulo) {
-                    Log::info("Artículo encontrado por codarticulo", [
-                        'codarticulo' => $item['codigo'],
-                        'articulo' => $articulo->articulo
-                    ]);
-                }
+            if (!$product && isset($item['codigo']) && !empty($item['codigo'])) {
+                $product = Product::where('sku', $item['codigo'])->first();
+                if ($product) Log::info("Artículo encontrado por sku", ['sku' => $item['codigo'], 'name' => $product->name]);
             }
-            
-            // Si no se encuentra, buscar por descripción
-            if (!$articulo && isset($item['descripcion']) && !empty($item['descripcion'])) {
-                $articulo = Articulo::where('articulo', 'LIKE', '%' . $item['descripcion'] . '%')
-                    ->first();
-                    
-                if ($articulo) {
-                    Log::info("Artículo encontrado por descripción", [
-                        'descripcion' => $item['descripcion'],
-                        'articulo' => $articulo->articulo
-                    ]);
-                }
+            if (!$product && isset($item['descripcion']) && !empty($item['descripcion'])) {
+                $product = Product::where('name', 'LIKE', '%' . $item['descripcion'] . '%')->first();
+                if ($product) Log::info("Artículo encontrado por descripción", ['descripcion' => $item['descripcion'], 'name' => $product->name]);
             }
 
-            if ($articulo) {
-                $inventario = Inventario::firstOrCreate(
-                    ['articulo_id' => $articulo->id],
-                    ['cantidad' => 0]
+            if ($product) {
+                $stock = Stock::firstOrCreate(
+                    ['product_id' => $product->id],
+                    ['quantity' => 0]
                 );
+                $stock->quantity += $item['cantidad'];
+                $stock->save();
 
-                $inventario->cantidad += $item['cantidad'];
-                $inventario->save();
-                
-                $enrichedItem['encontrado'] = true;
-                $enrichedItem['articulo_id'] = $articulo->id;
-                $enrichedItem['articulo_nombre'] = $articulo->articulo;
-                $enrichedItem['codarticulo'] = $articulo->codarticulo;
+                $enrichedItem['encontrado']     = true;
+                $enrichedItem['articulo_id']    = $product->id;
+                $enrichedItem['articulo_nombre']= $product->name;
+                $enrichedItem['codarticulo']    = $product->sku;
             } else {
-                Log::warning("Artículo no encontrado", [
-                    'codigo' => $item['codigo'] ?? null,
-                    'descripcion' => $item['descripcion'] ?? null
-                ]);
+                Log::warning("Artículo no encontrado", ['codigo' => $item['codigo'] ?? null, 'descripcion' => $item['descripcion'] ?? null]);
             }
             
             $enrichedItems[] = $enrichedItem;

@@ -15,7 +15,7 @@ FROM php:8.4-fpm-alpine
 RUN apk add --no-cache \
     nginx \
     supervisor \
-    mysql-client \
+    postgresql-client \
     zip \
     unzip \
     libpng-dev \
@@ -24,14 +24,15 @@ RUN apk add --no-cache \
     libzip-dev \
     icu-dev \
     oniguruma-dev \
+    libpq-dev \
     nodejs \
     npm
 
 # Instalar extensiones PHP
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) \
-        pdo_mysql \
-        mysqli \
+        pdo_pgsql \
+        pgsql \
         gd \
         zip \
         intl \
@@ -80,7 +81,7 @@ RUN if [ -f public/hot ]; then rm -f public/hot; fi || true
 COPY docker/nginx.conf /etc/nginx/nginx.conf
 COPY docker/php.ini /usr/local/etc/php/conf.d/custom.ini
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-COPY docker/entrypoint.sh /entrypoint.sh
+COPY docker/entrypoint.dev.sh /entrypoint.sh
 
 RUN chmod +x /entrypoint.sh
 

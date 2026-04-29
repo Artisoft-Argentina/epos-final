@@ -6,19 +6,19 @@ import { ArrowLeft, RefreshCw } from 'lucide-react';
 
 interface Articulo {
     id: number;
-    codarticulo: string;
-    articulo: string;
-    categoria: string | null;
-    marca: string | null;
-    precio_base: number;
-    precio_calculado: number;
-    precio_actual: number | null;
+    sku: string;
+    name: string;
+    category: string | null;
+    brand: string | null;
+    price_base: number;
+    price_calculated: number;
+    price_current: number | null;
 }
 
 interface ListaPrecio {
     id: number;
-    nombre: string;
-    porcentaje: number;
+    name: string;
+    percentage: number;
 }
 
 interface Props {
@@ -49,7 +49,7 @@ export default function Show({ lista, articulos }: Props) {
 
     return (
         <AppLayout>
-            <Head title={`Lista de Precios - ${lista.nombre}`} />
+            <Head title={`Lista de Precios - ${lista.name}`} />
             
             <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
@@ -63,10 +63,8 @@ export default function Show({ lista, articulos }: Props) {
                             Volver
                         </Button>
                         <div>
-                            <h1 className="text-3xl font-bold">{lista.nombre}</h1>
-                            <p className="text-muted-foreground">
-                                Porcentaje: {lista.porcentaje}%
-                            </p>
+                            <h1 className="text-3xl font-bold">{lista.name}</h1>
+                            <p className="text-muted-foreground">Porcentaje: {lista.percentage}%</p>
                         </div>
                     </div>
                     <div className="flex gap-2">
@@ -97,26 +95,21 @@ export default function Show({ lista, articulos }: Props) {
                             </thead>
                             <tbody>
                                 {articulos.map((articulo) => {
-                                    const esNuevo = !articulo.precio_actual;
-                                    const cambio = articulo.precio_actual 
-                                        ? articulo.precio_calculado - articulo.precio_actual
+                                    const esNuevo = !articulo.price_current;
+                                    const cambio = articulo.price_current
+                                        ? articulo.price_calculated - articulo.price_current
                                         : 0;
-                                    
+
                                     return (
                                         <tr key={articulo.id} className="border-b hover:bg-muted/50">
-                                            <td className="p-2">{articulo.codarticulo}</td>
-                                            <td className="p-2">{articulo.articulo}</td>
-                                            <td className="p-2">{articulo.categoria || '-'}</td>
-                                            <td className="p-2">{articulo.marca || '-'}</td>
-                                            <td className="p-2 text-right">${articulo.precio_base.toFixed(2)}</td>
-                                            <td className="p-2 text-right font-semibold">
-                                                ${articulo.precio_calculado.toFixed(2)}
-                                            </td>
+                                            <td className="p-2">{articulo.sku}</td>
+                                            <td className="p-2">{articulo.name}</td>
+                                            <td className="p-2">{articulo.category || '-'}</td>
+                                            <td className="p-2">{articulo.brand || '-'}</td>
+                                            <td className="p-2 text-right">${articulo.price_base.toFixed(2)}</td>
+                                            <td className="p-2 text-right font-semibold">${articulo.price_calculated.toFixed(2)}</td>
                                             <td className="p-2 text-right">
-                                                {articulo.precio_actual 
-                                                    ? `$${articulo.precio_actual.toFixed(2)}`
-                                                    : '-'
-                                                }
+                                                {articulo.price_current ? `$${articulo.price_current.toFixed(2)}` : '-'}
                                             </td>
                                             <td className="p-2 text-right">
                                                 {esNuevo ? (

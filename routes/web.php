@@ -54,10 +54,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('codigos/imprimir-etiquetas', [\App\Http\Controllers\CodigoController::class, 'imprimirEtiquetas'])->name('codigos.imprimir-etiquetas');
         
         Route::resource('suppliers', \App\Http\Controllers\SupplierController::class);
-        Route::resource('remitos', \App\Http\Controllers\RemitoController::class);
-        Route::get('remitos/articulos/{supplier}', [\App\Http\Controllers\RemitoController::class, 'getArticulosBySupplier'])->name('remitos.articulos');
-        Route::post('remitos/{remito}/convertir-inventario', [\App\Http\Controllers\RemitoController::class, 'convertirAInventario'])->name('remitos.convertir-inventario');
-        Route::resource('compras', \App\Http\Controllers\CompraController::class);
+        Route::get('orders/products/{supplier}', [\App\Http\Controllers\OrderController::class, 'getProductsBySupplier'])->name('orders.products');
+        Route::resource('orders', \App\Http\Controllers\OrderController::class);
+        Route::post('orders/{order}/convert-inventory', [\App\Http\Controllers\OrderController::class, 'convertToInventory'])->name('orders.convert-inventory');
+        Route::post('inventarios/reconcile-all', [\App\Http\Controllers\InventarioController::class, 'reconcileAll'])->name('inventarios.reconcile-all');
+        Route::post('inventarios/{inventario}/reconcile', [\App\Http\Controllers\InventarioController::class, 'reconcile'])->name('inventarios.reconcile');
+        Route::post('inventarios/{inventario}/adjust', [\App\Http\Controllers\InventarioController::class, 'adjust'])->name('inventarios.adjust');
         Route::resource('inventarios', \App\Http\Controllers\InventarioController::class);
         Route::get('articulos/{articulo}/movimientos', [\App\Http\Controllers\MovimientoController::class, 'index'])->name('movimientos.index');
         Route::resource('listas-precios', \App\Http\Controllers\ListaPrecioController::class);

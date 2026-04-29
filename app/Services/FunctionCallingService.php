@@ -146,23 +146,21 @@ class FunctionCallingService
 
     private function getTotalClientes(): array
     {
-        $total = DB::table('clientes')->count();
-        return ['total' => $total];
+        return ['total' => DB::table('customers')->count()];
     }
 
     private function getTotalProductos(): array
     {
-        $total = DB::table('articulos')->count();
-        return ['total' => $total];
+        return ['total' => DB::table('products')->count()];
     }
 
     private function getTopClientes(int $limit): array
     {
-        $clientes = DB::table('facturas')
-            ->join('clientes', 'facturas.cliente_id', '=', 'clientes.id')
-            ->select('clientes.razonsocial', DB::raw('SUM(facturas.total) as total_comprado'))
-            ->where('facturas.autorizada_afip', true)
-            ->groupBy('facturas.cliente_id', 'clientes.razonsocial')
+        $clientes = DB::table('sales')
+            ->join('customers', 'sales.customer_id', '=', 'customers.id')
+            ->select('customers.business_name as razonsocial', DB::raw('SUM(sales.total) as total_comprado'))
+            ->where('sales.afip_authorized', true)
+            ->groupBy('sales.customer_id', 'customers.business_name')
             ->orderByDesc('total_comprado')
             ->limit($limit)
             ->get()
@@ -173,26 +171,19 @@ class FunctionCallingService
 
     private function getTotalVentas(?string $fechaInicio, ?string $fechaFin): array
     {
-        $query = DB::table('facturas')->where('autorizada_afip', true);
-
-        if ($fechaInicio) {
-            $query->where('fecha', '>=', $fechaInicio);
-        }
-        if ($fechaFin) {
-            $query->where('fecha', '<=', $fechaFin);
-        }
-
-        $total = $query->sum('total');
-        return ['total' => $total];
+        $query = DB::table('sales')->where('afip_authorized', true);
+        if ($fechaInicio) $query->where('date', '>=', $fechaInicio);
+        if ($fechaFin)    $query->where('date', '<=', $fechaFin);
+        return ['total' => $query->sum('total')];
     }
 
     private function getProductosBajoStock(int $umbral): array
     {
-        $productos = DB::table('articulos')
-            ->join('inventarios', 'articulos.id', '=', 'inventarios.articulo_id')
-            ->select('articulos.articulo as nombre', 'inventarios.cantidad')
-            ->where('inventarios.cantidad', '<=', $umbral)
-            ->orderBy('inventarios.cantidad')
+        $productos = DB::table('products')
+            ->join('stocks', 'products.id', '=', 'stocks.product_id')
+            ->select('products.name as nombre', 'stocks.quantity')
+            ->where('stocks.quantity', '<=', $umbral)
+            ->orderBy('stocks.quantity')
             ->get()
             ->toArray();
 
@@ -201,10 +192,10 @@ class FunctionCallingService
 
     private function buscarCliente(string $termino): array
     {
-        $clientes = DB::table('clientes')
-            ->where('razonsocial', 'LIKE', "%{$termino}%")
-            ->orWhere('documentounico', 'LIKE', "%{$termino}%")
-            ->select('id', 'razonsocial', 'documentounico', 'email', 'telefono')
+        $clientes = DB::table('customers')
+            ->where('business_name', 'LIKE', "%{$termino}%")
+            ->orWhere('tax_id', 'LIKE', "%{$termino}%")
+            ->select('id', 'business_name', 'tax_id', 'email', 'phone')
             ->limit(10)
             ->get()
             ->toArray();
@@ -215,17 +206,17 @@ class FunctionCallingService
     private function crearCategoria(string $nombre): array
     {
         try {
-            $nombre = mb_strtoupper($nombre);
-            $request = Request::create('/categorias', 'POST', ['categoria' => $nombre]);
+            $nombre  = mb_strtoupper($nombre);
+            $request = Request::create('/categorias', 'POST', ['name' => $nombre]);
             $controller = app(CategoriaController::class);
             $controller->store($request);
 
-            $categoria = DB::table('categorias')->where('categoria', $nombre)->first();
+            $categoria = DB::table('categories')->where('name', $nombre)->first();
 
             return [
                 'success' => true,
-                'id' => $categoria->id,
-                'nombre' => $categoria->categoria,
+                'id'      => $categoria->id,
+                'nombre'  => $categoria->name,
             ];
         } catch (\Exception $e) {
             return ['error' => $e->getMessage()];

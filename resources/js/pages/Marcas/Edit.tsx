@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface Marca {
     id: number;
-    marca: string;
+    name: string;
 }
 
 interface Props {
@@ -16,7 +16,7 @@ interface Props {
 
 export default function Edit({ marca }: Props) {
     const { data, setData, put, processing, errors } = useForm({
-        marca: marca.marca,
+        name: marca.name,
     });
 
     const submit = (e: React.FormEvent) => {
@@ -35,12 +35,12 @@ export default function Edit({ marca }: Props) {
                 <CardContent>
                     <form onSubmit={submit} className="space-y-4">
                         <div>
-                            <Label htmlFor="marca">Marca *</Label>
+                            <Label htmlFor="name">Nombre *</Label>
                             <Input
-                                id="marca"
-                                value={data.marca}
-                                onChange={(e) => setData('marca', e.target.value)}
-                                error={errors.marca}
+                                id="name"
+                                value={data.name}
+                                onChange={(e) => setData('name', e.target.value)}
+                                error={errors.name}
                                 placeholder="Ingrese el nombre de la marca"
                             />
                         </div>

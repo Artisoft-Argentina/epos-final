@@ -10,8 +10,8 @@ import { Link } from '@inertiajs/react';
 
 interface ListaPrecio {
     id: number;
-    nombre: string;
-    porcentaje: number;
+    name: string;
+    percentage: number;
     default_pos: boolean;
     default_ecommerce: boolean;
 }
@@ -21,17 +21,13 @@ interface Props {
 }
 
 export default function Edit({ lista }: Props) {
-    console.log('Lista data:', lista);
-    
     const { data, setData, put, processing, errors } = useForm({
-        nombre: lista.nombre || '',
-        porcentaje: Number(lista.porcentaje) || 0,
+        name: lista.name || '',
+        percentage: Number(lista.percentage) || 0,
         default_pos: Boolean(lista.default_pos),
         default_ecommerce: Boolean(lista.default_ecommerce),
-        regenerar_precios: false
+        regenerar_precios: false,
     });
-    
-    console.log('Form data:', data);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -40,7 +36,7 @@ export default function Edit({ lista }: Props) {
 
     return (
         <AppSidebarLayout>
-            <Head title={`Editar ${lista.nombre}`} />
+            <Head title={`Editar ${lista.name}`} />
             
             <div className="p-6">
                 <div className="flex items-center gap-4 mb-6">
@@ -59,31 +55,27 @@ export default function Edit({ lista }: Props) {
                     <CardContent>
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div>
-                                <Label htmlFor="nombre">Nombre</Label>
+                                <Label htmlFor="name">Nombre</Label>
                                 <Input
-                                    id="nombre"
-                                    value={data.nombre}
-                                    onChange={(e) => setData('nombre', e.target.value)}
-                                    className={errors.nombre ? 'border-red-500' : ''}
+                                    id="name"
+                                    value={data.name}
+                                    onChange={(e) => setData('name', e.target.value)}
+                                    className={errors.name ? 'border-red-500' : ''}
                                 />
-                                {errors.nombre && (
-                                    <p className="text-red-500 text-sm mt-1">{errors.nombre}</p>
-                                )}
+                                {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
                             </div>
 
                             <div>
-                                <Label htmlFor="porcentaje">Porcentaje de Incremento (%)</Label>
+                                <Label htmlFor="percentage">Porcentaje de Incremento (%)</Label>
                                 <Input
-                                    id="porcentaje"
+                                    id="percentage"
                                     type="number"
                                     step="0.01"
-                                    value={data.porcentaje}
-                                    onChange={(e) => setData('porcentaje', parseFloat(e.target.value) || 0)}
-                                    className={errors.porcentaje ? 'border-red-500' : ''}
+                                    value={data.percentage}
+                                    onChange={(e) => setData('percentage', parseFloat(e.target.value) || 0)}
+                                    className={errors.percentage ? 'border-red-500' : ''}
                                 />
-                                {errors.porcentaje && (
-                                    <p className="text-red-500 text-sm mt-1">{errors.porcentaje}</p>
-                                )}
+                                {errors.percentage && <p className="text-red-500 text-sm mt-1">{errors.percentage}</p>}
                             </div>
 
                             <div className="space-y-3">

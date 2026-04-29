@@ -51,7 +51,7 @@ interface DashboardProps {
     ventasDelMes: number;
     saldoImpagas: number;
     productosVendidos: Array<{
-        articulo: string;
+        name: string;
         total_vendido: number;
     }>;
     ventasPorDia: Array<{
@@ -314,7 +314,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                                                 <span className="bg-primary/10 text-primary flex size-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold">
                                                     {index + 1}
                                                 </span>
-                                                <span className="truncate text-sm">{producto.articulo}</span>
+                                                <span className="truncate text-sm">{producto.name}</span>
                                             </div>
                                             <Badge variant="secondary" className="shrink-0 tabular-nums">
                                                 {producto.total_vendido}

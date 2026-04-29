@@ -8,17 +8,17 @@ class AnalyticsService
 {
     public function getTopSellingProducts(int $limit = 10, ?string $startDate = null, ?string $endDate = null): array
     {
-        $query = DB::table('articulo_factura')
-            ->join('articulos', 'articulo_factura.articulo_id', '=', 'articulos.id')
-            ->join('facturas', 'articulo_factura.factura_id', '=', 'facturas.id')
-            ->select('articulos.articulo as nombre', DB::raw('SUM(articulo_factura.cantidad) as total_vendido'))
-            ->groupBy('articulo_factura.articulo_id', 'articulos.articulo');
+        $query = DB::table('sale_products')
+            ->join('products', 'sale_products.product_id', '=', 'products.id')
+            ->join('sales', 'sale_products.sale_id', '=', 'sales.id')
+            ->select('products.name as nombre', DB::raw('SUM(sale_products.quantity) as total_vendido'))
+            ->groupBy('sale_products.product_id', 'products.name');
         
         if ($startDate) {
-            $query->where('facturas.fecha', '>=', $startDate);
+            $query->where('sales.date', '>=', $startDate);
         }
         if ($endDate) {
-            $query->where('facturas.fecha', '<=', $endDate);
+            $query->where('sales.date', '<=', $endDate);
         }
         
         return $query->orderByDesc('total_vendido')
@@ -29,22 +29,22 @@ class AnalyticsService
 
     public function getMonthlyRevenue(?string $startDate = null, ?string $endDate = null): array
     {
-        $query = DB::table('facturas')
+        $query = DB::table('sales')
             ->select(
-                DB::raw('YEAR(fecha) as year'),
-                DB::raw('MONTH(fecha) as month'),
+                DB::raw('EXTRACT(YEAR FROM date)::integer as year'),
+                DB::raw('EXTRACT(MONTH FROM date)::integer as month'),
                 DB::raw('SUM(total) as revenue')
             )
-            ->where('autorizada_afip', true)
+            ->where('afip_authorized', true)
             ->groupBy('year', 'month')
             ->orderBy('year', 'desc')
             ->orderBy('month', 'desc');
         
         if ($startDate) {
-            $query->where('fecha', '>=', $startDate);
+            $query->where('date', '>=', $startDate);
         }
         if ($endDate) {
-            $query->where('fecha', '<=', $endDate);
+            $query->where('date', '<=', $endDate);
         }
         
         return $query->limit(12)->get()->toArray();
@@ -52,20 +52,20 @@ class AnalyticsService
 
     public function getBestMonth(?string $startDate = null, ?string $endDate = null): ?object
     {
-        $query = DB::table('facturas')
+        $query = DB::table('sales')
             ->select(
-                DB::raw('YEAR(fecha) as year'),
-                DB::raw('MONTH(fecha) as month'),
+                DB::raw('EXTRACT(YEAR FROM date)::integer as year'),
+                DB::raw('EXTRACT(MONTH FROM date)::integer as month'),
                 DB::raw('SUM(total) as revenue')
             )
-            ->where('autorizada_afip', true)
+            ->where('afip_authorized', true)
             ->groupBy('year', 'month');
         
         if ($startDate) {
-            $query->where('fecha', '>=', $startDate);
+            $query->where('date', '>=', $startDate);
         }
         if ($endDate) {
-            $query->where('fecha', '<=', $endDate);
+            $query->where('date', '<=', $endDate);
         }
         
         return $query->orderByDesc('revenue')->first();
@@ -73,14 +73,14 @@ class AnalyticsService
 
     public function getTotalSales(?string $startDate = null, ?string $endDate = null): float
     {
-        $query = DB::table('facturas')
-            ->where('autorizada_afip', true);
+        $query = DB::table('sales')
+            ->where('afip_authorized', true);
         
         if ($startDate) {
-            $query->where('fecha', '>=', $startDate);
+            $query->where('date', '>=', $startDate);
         }
         if ($endDate) {
-            $query->where('fecha', '<=', $endDate);
+            $query->where('date', '<=', $endDate);
         }
         
         return $query->sum('total');
@@ -88,17 +88,17 @@ class AnalyticsService
 
     public function getTopClients(int $limit = 10, ?string $startDate = null, ?string $endDate = null): array
     {
-        $query = DB::table('facturas')
-            ->join('clientes', 'facturas.cliente_id', '=', 'clientes.id')
-            ->select('clientes.razonsocial as nombre', DB::raw('SUM(facturas.total) as total_comprado'))
-            ->where('facturas.autorizada_afip', true)
-            ->groupBy('facturas.cliente_id', 'clientes.razonsocial');
+        $query = DB::table('sales')
+            ->join('customers', 'sales.customer_id', '=', 'customers.id')
+            ->select('customers.business_name as nombre', DB::raw('SUM(sales.total) as total_comprado'))
+            ->where('sales.afip_authorized', true)
+            ->groupBy('sales.customer_id', 'customers.business_name');
         
         if ($startDate) {
-            $query->where('facturas.fecha', '>=', $startDate);
+            $query->where('sales.date', '>=', $startDate);
         }
         if ($endDate) {
-            $query->where('facturas.fecha', '<=', $endDate);
+            $query->where('sales.date', '<=', $endDate);
         }
         
         return $query->orderByDesc('total_comprado')
@@ -109,17 +109,17 @@ class AnalyticsService
 
     public function getTopSellers(?string $startDate = null, ?string $endDate = null): array
     {
-        $query = DB::table('facturas')
-            ->join('users', 'facturas.user_id', '=', 'users.id')
-            ->select('users.name as vendedor', DB::raw('SUM(facturas.total) as total_vendido'))
-            ->where('facturas.autorizada_afip', true)
-            ->groupBy('facturas.user_id', 'users.name');
+        $query = DB::table('sales')
+            ->join('users', 'sales.user_id', '=', 'users.id')
+            ->select('users.name as vendedor', DB::raw('SUM(sales.total) as total_vendido'))
+            ->where('sales.afip_authorized', true)
+            ->groupBy('sales.user_id', 'users.name');
         
         if ($startDate) {
-            $query->where('facturas.fecha', '>=', $startDate);
+            $query->where('sales.date', '>=', $startDate);
         }
         if ($endDate) {
-            $query->where('facturas.fecha', '<=', $endDate);
+            $query->where('sales.date', '<=', $endDate);
         }
         
         return $query->orderByDesc('total_vendido')
@@ -130,11 +130,11 @@ class AnalyticsService
 
     public function getLowStock(int $threshold = 10): array
     {
-        return DB::table('articulos')
-            ->join('inventarios', 'articulos.id', '=', 'inventarios.articulo_id')
-            ->select('articulos.articulo as nombre', 'inventarios.cantidad')
-            ->where('inventarios.cantidad', '<=', $threshold)
-            ->orderBy('inventarios.cantidad')
+        return DB::table('products')
+            ->join('stocks', 'products.id', '=', 'stocks.product_id')
+            ->select('products.name as nombre', 'stocks.quantity')
+            ->where('stocks.quantity', '<=', $threshold)
+            ->orderBy('stocks.quantity')
             ->get()
             ->toArray();
     }

@@ -11,8 +11,8 @@ class MigrateExistingTenant extends Command
 {
     protected $signature = 'tenant:migrate-existing
                             {--slug= : Subdominio para la empresa (ej: principal)}
-                            {--razonsocial= : Razón social (si la tabla inicialsettings no existe)}
-                            {--cuit= : CUIT (si la tabla inicialsettings no existe)}
+                            {--business-name= : Razón social (si la tabla settings no existe)}
+                            {--tax-id= : CUIT (si la tabla settings no existe)}
                             {--confirm : Confirmar sin preguntar interactivamente}';
 
     protected $description = 'Migra los datos de la BD actual como el primer tenant';
@@ -24,22 +24,22 @@ class MigrateExistingTenant extends Command
         // 1. Intentar leer datos de InitialSetting actual
         $empresa = null;
         try {
-            $empresa = DB::connection('mysql')->table('inicialsettings')->first();
+            $empresa = DB::connection('mysql')->table('settings')->first();
         } catch (\Exception $e) {
-            $this->warn('Tabla inicialsettings no encontrada en BD actual. Usando valores de los argumentos.');
+            $this->warn('Tabla settings no encontrada en BD actual. Usando valores de los argumentos.');
         }
 
         if (! $empresa) {
-            $this->warn('No se encontró registro en inicialsettings. Se creará un tenant vacío.');
+            $this->warn('No se encontró registro en settings. Se creará un tenant vacío.');
         }
 
-        $razonsocial = $empresa?->razonsocial ?? $this->option('razonsocial') ?? 'Empresa Principal';
-        $cuit        = $empresa?->cuit        ?? $this->option('cuit')        ?? '';
-        $slug        = $this->option('slug') ?: $this->ask('Subdominio para esta empresa (ej: principal)', 'principal');
+        $businessName = $empresa?->business_name ?? $this->option('business-name') ?? 'Empresa Principal';
+        $taxId        = $empresa?->tax_id        ?? $this->option('tax-id')        ?? '';
+        $slug         = $this->option('slug') ?: $this->ask('Subdominio para esta empresa (ej: principal)', 'principal');
 
         $this->table(['Campo', 'Valor'], [
-            ['Razón Social', $razonsocial],
-            ['CUIT', $cuit],
+            ['Razón Social', $businessName],
+            ['CUIT', $taxId],
             ['Subdominio', $slug . '.' . env('CENTRAL_DOMAIN', parse_url(config('app.url'), PHP_URL_HOST))],
         ]);
 
@@ -48,13 +48,12 @@ class MigrateExistingTenant extends Command
             return self::SUCCESS;
         }
 
-        // 2. Crear el tenant
         $this->info('Creando tenant...');
         $tenant = Tenant::create([
-            'razonsocial' => $razonsocial,
-            'cuit'        => preg_replace('/\D/', '', (string) $cuit),
-            'plan'        => 'pro',
-            'status'      => 'active',
+            'business_name' => $businessName,
+            'tax_id'        => preg_replace('/\D/', '', (string) $taxId),
+            'plan'          => 'pro',
+            'status'        => 'active',
         ]);
 
         $subdomain = $slug . '.' . env('CENTRAL_DOMAIN', parse_url(config('app.url'), PHP_URL_HOST));
@@ -73,16 +72,15 @@ class MigrateExistingTenant extends Command
 
         try {
             $tables = [
-                'roles', 'users', 'password_reset_tokens', 'sessions',
-                'inicialsettings', 'marcas', 'categorias', 'suppliers',
-                'articulos', 'articulo_imagenes', 'inventarios', 'movimientos',
-                'remitos', 'articulo_remito', 'presupuestos', 'articulo_presupuesto',
-                'facturas', 'articulo_factura', 'factura_pagos',
-                'cuentacorrientes', 'pagos', 'recibos', 'pago_recibo', 'movimientocuentas',
-                'clientes', 'entregas', 'listas_precios', 'articulo_lista_precio',
-                'compras', 'compra_detalles', 'carts', 'activity_log',
+                'roles', 'users', 'password_reset_tokens',
+                'settings', 'brands', 'categories', 'suppliers',
+                'products', 'product_images', 'stocks', 'stock_movements',
+                'orders', 'order_products', 'quotes', 'product_quotes',
+                'sales', 'sale_products', 'sale_payments',
+                'customers', 'deliveries', 'price_lists', 'price_list_products',
+                'purchases', 'purchase_details', 'carts', 'activity_log',
                 'telegram_users', 'telegram_conversations',
-                'provincias', 'localidades',
+                'states', 'cities',
             ];
 
             $centralDb = config('database.connections.mysql.database');

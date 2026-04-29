@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Articulo;
-use App\Models\Categoria;
-use App\Models\Marca;
+use App\Models\Product;
+use App\Models\Category;
+use App\Models\Brand;
 use App\Models\Supplier;
 use App\Services\ImageService;
 use Illuminate\Http\Request;
@@ -18,13 +18,13 @@ class ArticuloController extends Controller
 
     public function index(Request $request)
     {
-        $query = Articulo::with(['categoria', 'marca', 'supplier']);
+        $query = Product::with(['category', 'brand', 'supplier']);
 
         if ($request->search) {
             $query->where(function($q) use ($request) {
-                $q->where('codarticulo', 'like', '%' . $request->search . '%')
-                  ->orWhere('articulo', 'like', '%' . $request->search . '%')
-                  ->orWhere('descripcion', 'like', '%' . $request->search . '%');
+                $q->where('sku', 'like', '%' . $request->search . '%')
+                  ->orWhere('name', 'like', '%' . $request->search . '%')
+                  ->orWhere('description', 'like', '%' . $request->search . '%');
             });
         }
 
@@ -37,8 +37,8 @@ class ArticuloController extends Controller
     public function create()
     {
         return Inertia::render('Articulos/Create', [
-            'categorias' => Categoria::all(),
-            'marcas' => Marca::all(),
+            'categorias' => Category::all(),
+            'marcas' => Brand::all(),
             'suppliers' => Supplier::all(),
         ]);
     }
@@ -46,31 +46,31 @@ class ArticuloController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'codarticulo' => 'required|string|max:255',
-            'articulo' => 'required|string|max:255',
-            'descripcion' => 'required|string',
-            'medida' => 'required|string|max:255',
-            'precio' => 'required|numeric|min:0',
-            'alicuota' => 'required|numeric|min:0',
-            'stockminimo' => 'required|integer|min:0',
-            'marca_id' => 'required|exists:marcas,id',
-            'categoria_id' => 'required|exists:categorias,id',
+            'sku' => 'required|string|max:255',
+            'name' => 'required|string|max:255',
+            'description' => 'required|string',
+            'unit' => 'required|string|max:255',
+            'price' => 'required|numeric|min:0',
+            'tax_rate' => 'required|numeric|min:0',
+            'min_stock' => 'required|integer|min:0',
+            'brand_id' => 'required|exists:brands,id',
+            'category_id' => 'required|exists:categories,id',
             'supplier_id' => 'nullable|exists:suppliers,id',
             'imagenes.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120'
         ]);
 
-        $articulo = Articulo::create($request->except('imagenes'));
+        $product = Product::create($request->except('imagenes'));
 
         if ($request->hasFile('imagenes')) {
             foreach ($request->file('imagenes') as $index => $imagen) {
-                $resultado = $this->imageService->processArticuloImage($imagen, $articulo->id, $index);
+                $resultado = $this->imageService->processProductImage($imagen, $product->id, $index);
 
-                $articulo->imagenes()->create([
-                    'nombre_archivo' => $resultado['nombre_archivo'],
-                    'ruta' => $resultado['ruta'],
-                    'ruta_thumb' => $resultado['ruta_thumb'],
-                    'es_principal' => $index === 0,
-                    'orden' => $index
+                $product->images()->create([
+                    'filename'       => $resultado['filename'],
+                    'path'           => $resultado['path'],
+                    'thumbnail_path' => $resultado['thumbnail_path'],
+                    'is_primary'     => $index === 0,
+                    'sort_order'     => $index,
                 ]);
             }
         }
@@ -78,35 +78,35 @@ class ArticuloController extends Controller
         return redirect()->route('articulos.index')->with('success', 'Artículo creado exitosamente');
     }
 
-    public function show(Articulo $articulo)
+    public function show(Product $articulo)
     {
         return Inertia::render('Articulos/Show', [
-            'articulo' => $articulo->load(['categoria', 'marca', 'supplier', 'imagenes', 'inventario'])
+            'articulo' => $articulo->load(['category', 'brand', 'supplier', 'images', 'stock'])
         ]);
     }
 
-    public function edit(Articulo $articulo)
+    public function edit(Product $articulo)
     {
         return Inertia::render('Articulos/Edit', [
-            'articulo' => $articulo->load(['imagenes', 'supplier']),
-            'categorias' => Categoria::all(),
-            'marcas' => Marca::all(),
+            'articulo' => $articulo->load(['images', 'supplier']),
+            'categorias' => Category::all(),
+            'marcas' => Brand::all(),
             'suppliers' => Supplier::all(),
         ]);
     }
 
-    public function update(Request $request, Articulo $articulo)
+    public function update(Request $request, Product $articulo)
     {
         $request->validate([
-            'codarticulo' => 'required|string|max:255',
-            'articulo' => 'required|string|max:255',
-            'descripcion' => 'required|string',
-            'medida' => 'required|string|max:255',
-            'precio' => 'required|numeric|min:0',
-            'alicuota' => 'required|numeric|min:0',
-            'stockminimo' => 'required|integer|min:0',
-            'marca_id' => 'required|exists:marcas,id',
-            'categoria_id' => 'required|exists:categorias,id',
+            'sku' => 'required|string|max:255',
+            'name' => 'required|string|max:255',
+            'description' => 'required|string',
+            'unit' => 'required|string|max:255',
+            'price' => 'required|numeric|min:0',
+            'tax_rate' => 'required|numeric|min:0',
+            'min_stock' => 'required|integer|min:0',
+            'brand_id' => 'required|exists:brands,id',
+            'category_id' => 'required|exists:categories,id',
             'supplier_id' => 'nullable|exists:suppliers,id',
             'imagenes.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120'
         ]);
@@ -114,17 +114,17 @@ class ArticuloController extends Controller
         $articulo->update($request->except('imagenes'));
 
         if ($request->hasFile('imagenes')) {
-            $currentCount = $articulo->imagenes()->count();
+            $currentCount = $articulo->images()->count();
 
             foreach ($request->file('imagenes') as $index => $imagen) {
-                $resultado = $this->imageService->processArticuloImage($imagen, $articulo->id, $currentCount + $index);
+                $resultado = $this->imageService->processProductImage($imagen, $articulo->id, $currentCount + $index);
 
-                $articulo->imagenes()->create([
-                    'nombre_archivo' => $resultado['nombre_archivo'],
-                    'ruta' => $resultado['ruta'],
-                    'ruta_thumb' => $resultado['ruta_thumb'],
-                    'es_principal' => $currentCount === 0 && $index === 0,
-                    'orden' => $currentCount + $index
+                $articulo->images()->create([
+                    'filename'       => $resultado['filename'],
+                    'path'           => $resultado['path'],
+                    'thumbnail_path' => $resultado['thumbnail_path'],
+                    'is_primary'     => $currentCount === 0 && $index === 0,
+                    'sort_order'     => $currentCount + $index,
                 ]);
             }
         }
@@ -132,11 +132,10 @@ class ArticuloController extends Controller
         return redirect()->route('articulos.index')->with('success', 'Artículo actualizado exitosamente');
     }
 
-    public function destroy(Articulo $articulo)
+    public function destroy(Product $articulo)
     {
-        // Eliminar imágenes del storage
-        foreach ($articulo->imagenes as $imagen) {
-            $this->imageService->deleteArticuloImage($imagen->ruta, $imagen->ruta_thumb);
+        foreach ($articulo->images as $image) {
+            $this->imageService->deleteProductImage($image->path, $image->thumbnail_path);
         }
 
         $articulo->delete();

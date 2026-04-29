@@ -8,8 +8,8 @@ import { router } from '@inertiajs/react';
 
 interface ListaPrecio {
     id: number;
-    nombre: string;
-    porcentaje: number;
+    name: string;
+    percentage: number;
     default_pos: boolean;
     default_ecommerce: boolean;
 }
@@ -45,7 +45,7 @@ export default function Index({ listas }: Props) {
                         <Card key={lista.id}>
                             <CardHeader>
                                 <CardTitle className="flex items-center justify-between">
-                                    <span>{lista.nombre}</span>
+                                    <span>{lista.name}</span>
                                     <div className="flex gap-2">
                                         {lista.default_pos && (
                                             <Badge variant="outline" className="bg-blue-50 text-blue-700">
@@ -64,7 +64,7 @@ export default function Index({ listas }: Props) {
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <p className="text-sm text-gray-600">
-                                            Incremento: <span className="font-semibold">{lista.porcentaje}%</span>
+                                            Incremento: <span className="font-semibold">{lista.percentage}%</span>
                                         </p>
                                     </div>
                                     <div className="flex gap-2">

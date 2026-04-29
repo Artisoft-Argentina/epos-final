@@ -32,10 +32,10 @@ class EstadoCuentaExport implements FromArray, WithStyles, WithColumnWidths
         $data[] = [''];
         
         // Información del cliente
-        $data[] = ['Cliente:', $this->cliente->razonsocial];
-        $data[] = ['Documento:', $this->cliente->documentounico];
+        $data[] = ['Cliente:', $this->cliente->business_name];
+        $data[] = ['Documento:', $this->cliente->tax_id];
         $data[] = ['Email:', $this->cliente->email];
-        $data[] = ['Teléfono:', $this->cliente->telefono];
+        $data[] = ['Teléfono:', $this->cliente->phone];
         $data[] = [''];
         
         // Resumen
@@ -50,17 +50,17 @@ class EstadoCuentaExport implements FromArray, WithStyles, WithColumnWidths
         $data[] = ['Factura', 'Fecha', 'Total', 'Pagado', 'Saldo Pendiente', 'Estado'];
         
         // Facturas
-        foreach ($this->facturas as $factura) {
-            $totalPagado = $factura->pagos->sum('monto');
-            $saldoPendiente = $factura->total - $totalPagado;
+        foreach ($this->facturas as $sale) {
+            $totalPagado    = $sale->payments->sum('amount');
+            $saldoPendiente = $sale->total - $totalPagado;
             
             $data[] = [
-                $factura->numfactura,
-                date('d/m/Y', strtotime($factura->fecha)),
-                '$' . number_format($factura->total, 2),
+                $sale->invoice_number,
+                date('d/m/Y', strtotime($sale->date)),
+                '$' . number_format($sale->total, 2),
                 '$' . number_format($totalPagado, 2),
                 '$' . number_format($saldoPendiente, 2),
-                $saldoPendiente > 0 ? 'Pendiente' : 'Pagada'
+                $saldoPendiente > 0 ? 'Pendiente' : 'Pagada',
             ];
         }
         

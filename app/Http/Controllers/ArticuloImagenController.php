@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Articulo;
-use App\Models\ArticuloImagen;
+use App\Models\Product;
+use App\Models\ProductImage;
 use App\Services\ImageService;
 use Illuminate\Http\Request;
 
@@ -13,61 +13,58 @@ class ArticuloImagenController extends Controller
         protected ImageService $imageService
     ) {}
 
-    public function store(Request $request, Articulo $articulo)
+    public function store(Request $request, Product $articulo)
     {
         $request->validate([
             'imagenes.*' => 'required|image|mimes:jpeg,png,jpg,gif|max:5120'
         ]);
 
-        $imagenes = [];
+        $images = [];
 
         foreach ($request->file('imagenes') as $index => $imagen) {
-            $resultado = $this->imageService->processArticuloImage($imagen, $articulo->id, $index);
+            $resultado = $this->imageService->processProductImage($imagen, $articulo->id, $index);
 
-            $articuloImagen = ArticuloImagen::create([
-                'articulo_id' => $articulo->id,
-                'nombre_archivo' => $resultado['nombre_archivo'],
-                'ruta' => $resultado['ruta'],
-                'ruta_thumb' => $resultado['ruta_thumb'],
-                'es_principal' => $index === 0 && $articulo->imagenes()->count() === 0,
-                'orden' => $articulo->imagenes()->count() + $index
+            $image = ProductImage::create([
+                'product_id'     => $articulo->id,
+                'filename'       => $resultado['filename'],
+                'path'           => $resultado['path'],
+                'thumbnail_path' => $resultado['thumbnail_path'],
+                'is_primary'     => $index === 0 && $articulo->images()->count() === 0,
+                'sort_order'     => $articulo->images()->count() + $index,
             ]);
 
-            $imagenes[] = $articuloImagen;
+            $images[] = $image;
         }
 
-        return response()->json(['imagenes' => $imagenes]);
+        return response()->json(['imagenes' => $images]);
     }
 
-    public function destroy(ArticuloImagen $imagen)
+    public function destroy(ProductImage $imagen)
     {
-        $this->imageService->deleteArticuloImage($imagen->ruta, $imagen->ruta_thumb);
+        $this->imageService->deleteProductImage($imagen->path, $imagen->thumbnail_path);
         $imagen->delete();
 
         return back();
     }
 
-    public function setPrincipal(ArticuloImagen $imagen)
+    public function setPrincipal(ProductImage $imagen)
     {
-        ArticuloImagen::where('articulo_id', $imagen->articulo_id)
-                     ->update(['es_principal' => false]);
-
-        $imagen->update(['es_principal' => true]);
+        ProductImage::where('product_id', $imagen->product_id)->update(['is_primary' => false]);
+        $imagen->update(['is_primary' => true]);
 
         return back();
     }
 
-    public function updateOrder(Request $request, Articulo $articulo)
+    public function updateOrder(Request $request, Product $articulo)
     {
         $request->validate([
             'imagenes' => 'required|array',
-            'imagenes.*.id' => 'required|exists:articulo_imagenes,id',
+            'imagenes.*.id' => 'required|exists:product_images,id',
             'imagenes.*.orden' => 'required|integer'
         ]);
 
         foreach ($request->imagenes as $imagenData) {
-            ArticuloImagen::where('id', $imagenData['id'])
-                         ->update(['orden' => $imagenData['orden']]);
+            ProductImage::where('id', $imagenData['id'])->update(['sort_order' => $imagenData['orden']]);
         }
 
         return back();
