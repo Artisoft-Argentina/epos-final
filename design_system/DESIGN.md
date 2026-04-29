@@ -76,74 +76,72 @@ La base del sistema está optimizada para **light mode**.
 
 ## 4. Color Palette
 
-Los colores se mapean a la **paleta estándar de Tailwind CSS** para mantener consistencia y facilitar el mantenimiento. Se indican los valores originales del diseño y su equivalente Tailwind más cercano.
+Los colores usan los **valores hex exactos del diseño**, convertidos a `oklch` para compatibilidad con Tailwind v4. Son la fuente de verdad — no aproximaciones de escala.
 
 ## 4.1 Brand Colors
 
 ### Primary
-- Diseño: `#0B7D6E` → **Tailwind `teal-700`** (`#0f766e`)
+- Diseño: `#0B7D6E` → `oklch(0.530 0.094 180.3)`
 - Variable CSS: `--primary`
 - Se utiliza en: botones primarios, navegación activa, métricas destacadas, acciones principales
 
 ### Primary Hover
-- Diseño: `#09695D` → **Tailwind `teal-800`** (`#115e59`)
+- Diseño: `#09695D` → `oklch(0.468 0.082 181.2)`
 
 ### Primary Soft
-- Diseño: `#E7F4F1` → **Tailwind `teal-50`** (`#f0fdfa`)
+- Diseño: `#E7F4F1` → `oklch(0.957 0.014 180.7)` — `--secondary`
 
 ### Secondary
-- Diseño: `#3E5F5A` → **Tailwind `teal-900`** (`#134e4a`)
-- Variable CSS: `--secondary`
+- Diseño: `#3E5F5A` → `oklch(0.458 0.039 184.1)`
+- Variable CSS: `--secondary-foreground`
 - Color de apoyo para iconografía, texto secundario y detalles visuales.
 
 ### Accent
-- Diseño: `#5F8F87` → **Tailwind `teal-600`** (`#0d9488`)
-- Variable CSS: `--accent`
+- Diseño: `#5F8F87` → `oklch(0.613 0.053 182.9)`
+- Variable CSS: `--accent-foreground`
 - Acento auxiliar para resaltar información secundaria o elementos gráficos.
 
 ---
 
 ## 4.2 Neutral Colors
 
-Se utiliza la escala **gray** de Tailwind (grises neutros puros).
+Se usan los valores exactos del diseño.
 
 ### Surfaces and Backgrounds
-- `#FFFFFF` → `white` — Surface principal (`--card`)
-- `#F7F8F8` → **`gray-50`** (`#f9fafb`) — Background general (`--background`)
-- `#F0F2F2` → **`gray-100`** (`#f3f4f6`) — Hover suave / superficie alternativa
-- `#E7EBEA` → **`gray-200`** (`#e5e7eb`) — Fondo sutil complementario
+- `#FFFFFF` → `oklch(1 0 0)` — Surface principal (`--card`)
+- `#F7F8F8` → `oklch(0.978 0.001 197.1)` — Background general (`--background`)
+- `#F0F2F2` → `oklch(0.960 0.002 197.1)` — Hover suave / superficie alternativa (`--muted`)
+- `#E7EBEA` → `oklch(0.937 0.004 179.7)` — Fondo sutil complementario
 
 ### Borders
-- `#E3E7E6` → **`gray-200`** (`#e5e7eb`) — Border subtle (`--border`)
-- `#C8CFCD` → **`gray-300`** (`#d1d5db`) — Border medium / disabled
+- `#E3E7E6` → `oklch(0.925 0.004 179.7)` — Border subtle (`--border`, `--input`)
+- `#C8CFCD` → `oklch(0.849 0.008 177.3)` — Border medium / disabled
 
 ### Text
-- `#111111` → **`gray-900`** (`#111827`) — Heading strong (`--foreground`)
-- `#1F2A28` → **`gray-800`** (`#1f2937`) — Text primary
-- `#48615C` → **`gray-500`** (`#6b7280`) — Text secondary
-- `#7B8A87` → **`gray-400`** (`#9ca3af`) — Text muted (`--muted-foreground`)
+- `#111111` → `oklch(0.178 0.000 89.9)` — Heading strong (`--foreground`)
+- `#1F2A28` → `oklch(0.274 0.016 182.8)` — Text primary (`--card-foreground`)
+- `#48615C` → `oklch(0.471 0.031 181.3)` — Text secondary
+- `#7B8A87` → `oklch(0.620 0.018 182.4)` — Text muted (`--muted-foreground`)
 
 ---
 
 ## 4.3 Semantic Colors
 
-Estos colores **no existen por defecto en shadcn/ui** y se agregan como variables CSS custom con sus clases Tailwind correspondientes.
-
 ### Success
-- Base: `#1F8F63` → **Tailwind `emerald-600`** (`#059669`) — `--success`
-- Soft: `#E7F6EE` → **Tailwind `emerald-50`** (`#ecfdf5`) — `--success-soft`
+- Base: `#1F8F63` → `oklch(0.579 0.119 161.4)` — `--success`
+- Soft: `#E7F6EE` → `oklch(0.960 0.019 162.9)` — `--success-soft`
 
 ### Warning
-- Base: `#D48A1F` → **Tailwind `amber-600`** (`#d97706`) — `--warning`
-- Soft: `#FFF4E2` → **Tailwind `amber-50`** (`#fffbeb`) — `--warning-soft`
+- Base: `#D48A1F` → `oklch(0.693 0.142 69.4)` — `--warning`
+- Soft: `#FFF4E2` → `oklch(0.971 0.026 80.3)` — `--warning-soft`
 
 ### Danger / Destructive
-- Base: `#D14343` → **Tailwind `red-600`** (`#dc2626`) — `--destructive`
-- Soft: `#FCECEC` → **Tailwind `red-50`** (`#fef2f2`) — `--destructive-soft`
+- Base: `#D14343` → `oklch(0.586 0.179 24.5)` — `--destructive`
+- Soft: `#FCECEC` → `oklch(0.956 0.017 17.5)` — `--destructive-soft`
 
 ### Info
-- Base: `#3C7BBF` → **Tailwind `blue-500`** (`#3b82f6`) — `--info`
-- Soft: `#EAF3FC` → **Tailwind `blue-50`** (`#eff6ff`) — `--info-soft`
+- Base: `#3C7BBF` → `oklch(0.574 0.124 252.3)` — `--info`
+- Soft: `#EAF3FC` → `oklch(0.960 0.015 248.0)` — `--info-soft`
 
 ---
 
@@ -337,7 +335,7 @@ Los bordes deben ser discretos y funcionales.
 - El borde no debe competir con el contenido
 
 ### Recommended Border Color
-- `gray-200` (`#e5e7eb`) via `--border`
+- `#E3E7E6` via `--border`
 
 ---
 
@@ -695,6 +693,7 @@ Este design system aplica al **panel de administración** (tenant app).
 
 ### Implementación técnica
 - Los tokens se definen como **CSS custom properties** en `resources/css/app.css`
+- Los valores de color son los **hex exactos del diseño**, convertidos a `oklch` para compatibilidad con Tailwind v4
 - shadcn/ui consume las variables via `@theme` de Tailwind v4
 - Los componentes de `components/ui/` no se modifican — heredan el tema automáticamente
 - Un cambio de color/font/radius = 1 línea en `app.css` → se propaga a todo el admin
@@ -715,7 +714,7 @@ EPOS debe construir una experiencia visual moderna, clara y consistente para ges
 
 El sistema base se apoya en:
 - light mode
-- identidad teal / verde petróleo (paleta `teal` de Tailwind)
+- identidad teal / verde petróleo (valores hex exactos del diseño, en `oklch`)
 - tipografía Instrument Sans
 - superficies suaves
 - cards limpias
