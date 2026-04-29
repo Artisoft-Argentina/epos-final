@@ -1,11 +1,6 @@
 #!/bin/sh
 set -e
 
-if [ ! -f vendor/autoload.php ]; then
-    echo "==> Instalando dependencias PHP (composer install)..."
-    composer install --no-interaction --prefer-dist --optimize-autoloader
-fi
-
 echo "==> Esperando que PostgreSQL esté disponible en ${DB_HOST:-postgres}:${DB_PORT:-5432}..."
 until pg_isready -h "${DB_HOST:-postgres}" -p "${DB_PORT:-5432}" -U "${DB_USERNAME:-epos_user}" -q; do
     sleep 1

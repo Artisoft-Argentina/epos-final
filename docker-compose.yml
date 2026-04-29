@@ -25,10 +25,6 @@ services:
       - RUN_SEEDERS=true
     volumes:
       - .:/var/www/html
-      - ./docker/nginx.conf:/etc/nginx/nginx.conf
-      - ./docker/php.ini:/usr/local/etc/php/conf.d/custom.ini
-      - ./docker/supervisord.conf:/etc/supervisor/conf.d/supervisord.conf
-      - ./docker/entrypoint.dev.sh:/entrypoint.sh
     depends_on:
       postgres:
         condition: service_healthy

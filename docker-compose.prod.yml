@@ -23,9 +23,6 @@ services:
       - RUN_MIGRATIONS=true
       - RUN_SEEDERS=true
     volumes:
-      # vendor_data persiste las dependencias PHP entre reinicios.
-      # IMPORTANTE: si cambian composer.json/lock, correr: docker compose down -v && docker compose up --build
-      - vendor_data:/var/www/html/vendor
       # public/build viene de la imagen (node-builder). NO montar como volumen:
       # un volumen existente ocultaría los assets nuevos tras un rebuild.
       - ./storage:/var/www/html/storage
@@ -73,7 +70,6 @@ services:
 volumes:
   postgres_data:
   redis_data:
-  vendor_data:
 
 networks:
   epos-network:
