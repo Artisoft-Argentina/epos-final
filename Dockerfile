@@ -57,7 +57,7 @@ WORKDIR /var/www/html
 
 # Instalar dependencias PHP primero (aprovecha caché de Docker)
 COPY --chown=www-data:www-data composer.json composer.lock ./
-RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
+RUN composer install --optimize-autoloader --no-interaction --no-scripts
 
 # Copiar el resto de la aplicación
 COPY --chown=www-data:www-data . .

@@ -1,9 +1,9 @@
 #!/bin/sh
 set -e
 
-if [ ! -f vendor/autoload.php ]; then
-    echo "==> Instalando dependencias PHP (composer install)..."
-    composer install --no-interaction --prefer-dist --optimize-autoloader
+if [ ! -d node_modules ]; then
+    echo "==> Instalando dependencias JS (npm ci)..."
+    npm ci && npm run build
 fi
 
 echo "==> Esperando que PostgreSQL esté disponible en ${DB_HOST:-postgres}:${DB_PORT:-5432}..."

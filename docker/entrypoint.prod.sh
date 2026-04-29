@@ -1,11 +1,6 @@
 #!/bin/sh
 set -e
 
-if [ ! -f vendor/autoload.php ]; then
-    echo "==> Instalando dependencias PHP (composer install)..."
-    composer install --no-interaction --prefer-dist --optimize-autoloader
-fi
-
 if [ ! -d node_modules ]; then
     echo "==> Instalando dependencias JS (npm ci)..."
     npm ci && npm run build
