@@ -26,8 +26,8 @@ export function DeleteConfirmationDialog({ url, title = "Confirmar eliminación"
 
     return (
         <>
-            <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
-                <Trash2 className="w-4 h-4 text-red-500" />
+            <Button variant="destructive-soft" size="icon" className="size-8" onClick={() => setOpen(true)} title="Eliminar">
+                <Trash2 className="size-3.5" />
             </Button>
             
             <Dialog open={open} onOpenChange={setOpen}>
