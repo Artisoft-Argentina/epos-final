@@ -119,7 +119,7 @@ queue-work:
 # ─── PRODUCCIÓN ───────────────────────────────────────────
 
 prod-build:
-	$(COMPOSE_PROD) build
+	$(COMPOSE_PROD) build --no-cache
 
 prod-up:
 	$(COMPOSE_PROD) up -d --force-recreate
@@ -137,7 +137,7 @@ prod-deploy:
 	@echo "==> Actualizando código..."
 	git pull origin main
 	@echo "==> Reconstruyendo imagen..."
-	$(COMPOSE_PROD) build
+	$(COMPOSE_PROD) build --no-cache
 	@echo "==> Reiniciando servicios..."
 	$(COMPOSE_PROD) up -d --force-recreate
 	@echo "==> Optimizando..."
