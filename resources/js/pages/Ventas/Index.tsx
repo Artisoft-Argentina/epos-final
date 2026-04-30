@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { PageHeader } from '@/components/page-header';
 import { DataTable, type Column } from '@/components/data-table';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
+import { ActionButton } from '@/components/action-button';
 import { Pagination } from '@/components/pagination';
 import { Plus, Eye, Edit, DollarSign, Package, FileText, Download, Search } from 'lucide-react';
 import { toast } from 'sonner';
@@ -102,45 +103,31 @@ export default function Index({ facturas }: Props) {
             render: (row) => (
                 <div className="flex items-center justify-end gap-1">
                     <Link href={route('ventas.show', row.id)}>
-                        <Button variant="outline" size="icon" className="size-8" title="Ver">
-                            <Eye className="size-3.5" />
-                        </Button>
+                        <ActionButton title="Ver"><Eye className="size-3.5" /></ActionButton>
                     </Link>
                     {!row.cae && (
                         <Link href={route('ventas.edit', row.id)}>
-                            <Button variant="outline" size="icon" className="size-8" title="Editar">
-                                <Edit className="size-3.5" />
-                            </Button>
+                            <ActionButton title="Editar"><Edit className="size-3.5" /></ActionButton>
                         </Link>
                     )}
                     {tieneEntregasPendientes(row) && (
                         <Link href={route('entregas.create', row.id)}>
-                            <Button variant="outline" size="icon" className="size-8" title="Crear entrega">
-                                <Package className="size-3.5" />
-                            </Button>
+                            <ActionButton title="Crear entrega"><Package className="size-3.5" /></ActionButton>
                         </Link>
                     )}
                     {!row.cae && (
-                        <Button
-                            variant="outline" size="icon" className="size-8"
-                            title="Autorizar AFIP"
-                            onClick={() => router.post(route('afip.authorize', row.id))}
-                        >
+                        <ActionButton title="Autorizar AFIP" onClick={() => router.post(route('afip.authorize', row.id))}>
                             <FileText className="size-3.5" />
-                        </Button>
+                        </ActionButton>
                     )}
                     {row.cae && (
                         <a href={route('facturas.pdf', row.id)} target="_blank">
-                            <Button variant="outline" size="icon" className="size-8" title="Descargar PDF">
-                                <Download className="size-3.5" />
-                            </Button>
+                            <ActionButton title="Descargar PDF"><Download className="size-3.5" /></ActionButton>
                         </a>
                     )}
                     {row.payment_status === 'NO' && (
                         <Link href={route('pagos.create', row.id)}>
-                            <Button variant="outline" size="icon" className="size-8" title="Registrar pago">
-                                <DollarSign className="size-3.5" />
-                            </Button>
+                            <ActionButton title="Registrar pago"><DollarSign className="size-3.5" /></ActionButton>
                         </Link>
                     )}
                     <DeleteConfirmationDialog

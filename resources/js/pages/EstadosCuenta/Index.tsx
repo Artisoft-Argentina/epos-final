@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { PageHeader } from '@/components/page-header';
 import { DataTable, type Column } from '@/components/data-table';
 import { Pagination } from '@/components/pagination';
+import { ActionButton } from '@/components/action-button';
 import { FileText, Search, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { useEffect, useState } from 'react';
@@ -74,14 +75,10 @@ export default function Index({ clientes }: Props) {
             render: (row) => (
                 <div className="flex items-center justify-end gap-1">
                     <Link href={route('clientes.estado-cuenta', row.id)}>
-                        <Button variant="outline" size="icon" className="size-8" title="Ver estado de cuenta">
-                            <FileText className="size-3.5" />
-                        </Button>
+                        <ActionButton title="Ver estado de cuenta"><FileText className="size-3.5" /></ActionButton>
                     </Link>
                     <Link href={route('clientes.exportar-excel', row.id)}>
-                        <Button variant="outline" size="icon" className="size-8" title="Exportar Excel">
-                            <Download className="size-3.5" />
-                        </Button>
+                        <ActionButton title="Exportar Excel"><Download className="size-3.5" /></ActionButton>
                     </Link>
                 </div>
             ),

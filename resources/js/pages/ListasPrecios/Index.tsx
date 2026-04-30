@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { PageHeader } from '@/components/page-header';
 import { DataTable, type Column } from '@/components/data-table';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
+import { ActionButton } from '@/components/action-button';
 import { Plus, Edit, Eye } from 'lucide-react';
 
 interface ListaPrecio { id: number; name: string; percentage: number; default_pos: boolean; default_ecommerce: boolean; }
@@ -35,16 +36,12 @@ export default function Index({ listas }: Props) {
             render: (row) => (
                 <div className="flex items-center justify-end gap-1">
                     <Link href={route('listas-precios.show', row.id)}>
-                        <Button variant="outline" size="icon" className="size-8" title="Ver precios"><Eye className="size-3.5" /></Button>
+                        <ActionButton title="Ver precios"><Eye className="size-3.5" /></ActionButton>
                     </Link>
                     <Link href={route('listas-precios.edit', row.id)}>
-                        <Button variant="outline" size="icon" className="size-8" title="Editar"><Edit className="size-3.5" /></Button>
+                        <ActionButton title="Editar"><Edit className="size-3.5" /></ActionButton>
                     </Link>
-                    <DeleteConfirmationDialog
-                        url={route('listas-precios.destroy', row.id)}
-                        title="Eliminar lista de precios"
-                        description={`¿Estás seguro de eliminar la lista ${row.name}?`}
-                    />
+                    <DeleteConfirmationDialog url={route('listas-precios.destroy', row.id)} title="Eliminar lista de precios" description={`¿Estás seguro de eliminar la lista ${row.name}?`} />
                 </div>
             ),
         },

@@ -7,6 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { PageHeader } from '@/components/page-header';
 import { DataTable, type Column } from '@/components/data-table';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
+import { ActionButton } from '@/components/action-button';
 import { Pagination } from '@/components/pagination';
 import { Plus, Edit, Search, Printer, Eye, BarChart2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -96,13 +97,13 @@ export default function Index({ articulos, filters }: Props) {
             render: (row) => (
                 <div className="flex items-center justify-end gap-1">
                     <Link href={route('articulos.show', row.id)}>
-                        <Button variant="outline" size="icon" className="size-8" title="Ver"><Eye className="size-3.5" /></Button>
+                        <ActionButton title="Ver"><Eye className="size-3.5" /></ActionButton>
                     </Link>
                     <Link href={route('movimientos.index', row.id)}>
-                        <Button variant="outline" size="icon" className="size-8" title="Movimientos"><BarChart2 className="size-3.5" /></Button>
+                        <ActionButton title="Movimientos"><BarChart2 className="size-3.5" /></ActionButton>
                     </Link>
                     <Link href={route('articulos.edit', row.id)}>
-                        <Button variant="outline" size="icon" className="size-8" title="Editar"><Edit className="size-3.5" /></Button>
+                        <ActionButton title="Editar"><Edit className="size-3.5" /></ActionButton>
                     </Link>
                     <DeleteConfirmationDialog
                         url={route('articulos.destroy', row.id)}

@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { PageHeader } from '@/components/page-header';
 import { DataTable, type Column } from '@/components/data-table';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
+import { ActionButton } from '@/components/action-button';
 import { Pagination } from '@/components/pagination';
 import { Plus, Eye, ShoppingCart, Search } from 'lucide-react';
 import { toast } from 'sonner';
@@ -72,17 +73,13 @@ export default function Index({ presupuestos }: Props) {
             align: 'right',
             render: (row) => (
                 <div className="flex items-center justify-end gap-1">
-                    <Button size="icon" className="size-8" title="Convertir a venta" onClick={() => convertirAVenta(row.id)}>
+                    <ActionButton title="Convertir a venta" onClick={() => convertirAVenta(row.id)}>
                         <ShoppingCart className="size-3.5" />
-                    </Button>
+                    </ActionButton>
                     <Link href={route('presupuestos.show', row.id)}>
-                        <Button variant="outline" size="icon" className="size-8" title="Ver"><Eye className="size-3.5" /></Button>
+                        <ActionButton title="Ver"><Eye className="size-3.5" /></ActionButton>
                     </Link>
-                    <DeleteConfirmationDialog
-                        url={route('presupuestos.destroy', row.id)}
-                        title="Eliminar presupuesto"
-                        description={`¿Está seguro que desea eliminar el presupuesto #${row.numpresupuesto}?`}
-                    />
+                    <DeleteConfirmationDialog url={route('presupuestos.destroy', row.id)} title="Eliminar presupuesto" description={`¿Está seguro que desea eliminar el presupuesto #${row.numpresupuesto}?`} />
                 </div>
             ),
         },

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/page-header';
 import { DataTable, type Column } from '@/components/data-table';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
+import { ActionButton } from '@/components/action-button';
 import { Plus, Eye, SquarePen } from 'lucide-react';
 
 interface Order {
@@ -61,16 +62,12 @@ export default function Index({ orders }: Props) {
             render: (row) => (
                 <div className="flex items-center justify-end gap-1">
                     <Link href={route('orders.show', row.id)}>
-                        <Button variant="outline" size="icon" className="size-8" title="Ver"><Eye className="size-3.5" /></Button>
+                        <ActionButton title="Ver"><Eye className="size-3.5" /></ActionButton>
                     </Link>
                     <Link href={route('orders.edit', row.id)}>
-                        <Button variant="outline" size="icon" className="size-8" title="Editar"><SquarePen className="size-3.5" /></Button>
+                        <ActionButton title="Editar"><SquarePen className="size-3.5" /></ActionButton>
                     </Link>
-                    <DeleteConfirmationDialog
-                        url={route('orders.destroy', row.id)}
-                        title="Eliminar Orden"
-                        description="¿Estás seguro de que deseas eliminar esta orden? Esta acción no se puede deshacer."
-                    />
+                    <DeleteConfirmationDialog url={route('orders.destroy', row.id)} title="Eliminar Orden" description="¿Estás seguro de que deseas eliminar esta orden?" />
                 </div>
             ),
         },

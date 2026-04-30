@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { router } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Trash2 } from 'lucide-react';
 
 interface DeleteConfirmationDialogProps {
@@ -26,9 +27,14 @@ export function DeleteConfirmationDialog({ url, title = "Confirmar eliminación"
 
     return (
         <>
-            <Button variant="destructive-soft" size="icon" className="size-8" onClick={() => setOpen(true)} title="Eliminar">
-                <Trash2 className="size-3.5" />
-            </Button>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button variant="destructive-soft" size="icon" className="size-8" onClick={() => setOpen(true)}>
+                        <Trash2 className="size-3.5" />
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent>Eliminar</TooltipContent>
+            </Tooltip>
             
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogContent>

@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { PageHeader } from '@/components/page-header';
 import { DataTable, type Column } from '@/components/data-table';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
+import { ActionButton } from '@/components/action-button';
 import { Pagination } from '@/components/pagination';
 import { Plus, Edit } from 'lucide-react';
 
@@ -44,13 +45,9 @@ export default function Index({ users }: Props) {
             render: (row) => (
                 <div className="flex items-center justify-end gap-1">
                     <Link href={route('users.edit', row.id)}>
-                        <Button variant="outline" size="icon" className="size-8" title="Editar"><Edit className="size-3.5" /></Button>
+                        <ActionButton title="Editar"><Edit className="size-3.5" /></ActionButton>
                     </Link>
-                    <DeleteConfirmationDialog
-                        url={route('users.destroy', row.id)}
-                        title="Eliminar usuario"
-                        description={`¿Está seguro que desea eliminar al usuario ${row.name}?`}
-                    />
+                    <DeleteConfirmationDialog url={route('users.destroy', row.id)} title="Eliminar usuario" description={`¿Está seguro que desea eliminar al usuario ${row.name}?`} />
                 </div>
             ),
         },

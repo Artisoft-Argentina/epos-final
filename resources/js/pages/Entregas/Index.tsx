@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { PageHeader } from '@/components/page-header';
 import { DataTable, type Column } from '@/components/data-table';
 import { Pagination } from '@/components/pagination';
+import { ActionButton } from '@/components/action-button';
 import { CheckCircle, XCircle } from 'lucide-react';
 
 interface Entrega {
@@ -101,12 +102,12 @@ export default function Index({ entregas }: Props) {
             align: 'right',
             render: (row) => row.estado !== 'pendiente' ? null : (
                 <div className="flex items-center justify-end gap-1">
-                    <Button variant="outline" size="icon" className="size-8 border-success/30 text-success hover:bg-success-soft" title="Completar entrega" onClick={() => marcarEntregada(row.id)}>
+                    <ActionButton variant="outline" title="Completar entrega" className="border-success/30 text-success hover:bg-success-soft" onClick={() => marcarEntregada(row.id)}>
                         <CheckCircle className="size-3.5" />
-                    </Button>
-                    <Button variant="destructive-soft" size="icon" className="size-8" title="Cancelar entrega" onClick={() => cancelarEntrega(row.id)}>
+                    </ActionButton>
+                    <ActionButton variant="destructive-soft" title="Cancelar entrega" onClick={() => cancelarEntrega(row.id)}>
                         <XCircle className="size-3.5" />
-                    </Button>
+                    </ActionButton>
                 </div>
             ),
         },

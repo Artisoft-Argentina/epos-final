@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/page-header';
 import { DataTable, type Column } from '@/components/data-table';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
+import { ActionButton } from '@/components/action-button';
 import { Pagination } from '@/components/pagination';
 import { Plus, Edit } from 'lucide-react';
 import { toast } from 'sonner';
@@ -31,13 +32,9 @@ export default function Index({ marcas }: Props) {
             render: (row) => (
                 <div className="flex items-center justify-end gap-1">
                     <Link href={route('marcas.edit', row.id)}>
-                        <Button variant="outline" size="icon" className="size-8" title="Editar"><Edit className="size-3.5" /></Button>
+                        <ActionButton title="Editar"><Edit className="size-3.5" /></ActionButton>
                     </Link>
-                    <DeleteConfirmationDialog
-                        url={route('marcas.destroy', row.id)}
-                        title="Eliminar marca"
-                        description={`¿Está seguro que desea eliminar la marca ${row.name}?`}
-                    />
+                    <DeleteConfirmationDialog url={route('marcas.destroy', row.id)} title="Eliminar marca" description={`¿Está seguro que desea eliminar la marca ${row.name}?`} />
                 </div>
             ),
         },

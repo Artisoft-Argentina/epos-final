@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { PageHeader } from '@/components/page-header';
 import { DataTable, type Column } from '@/components/data-table';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
+import { ActionButton } from '@/components/action-button';
 import { Plus, Edit, Package, AlertTriangle, SlidersHorizontal, History } from 'lucide-react';
 import { toast } from 'sonner';
 import { useEffect, useState } from 'react';
@@ -100,20 +101,20 @@ export default function Index({ inventarios }: Props) {
                 return (
                     <div className="flex items-center justify-end gap-1">
                         {isAdmin && diff !== 0 && (
-                            <Button variant="outline" size="icon" className="size-8 border-warning/30 text-warning hover:bg-warning-soft" title="Conciliar" onClick={() => router.post(route('inventarios.reconcile', row.id))}>
+                            <ActionButton variant="outline" title="Conciliar" className="border-warning/30 text-warning hover:bg-warning-soft" onClick={() => router.post(route('inventarios.reconcile', row.id))}>
                                 <AlertTriangle className="size-3.5" />
-                            </Button>
+                            </ActionButton>
                         )}
                         {isAdmin && (
-                            <Button variant="outline" size="icon" className="size-8" title="Ajuste manual" onClick={() => setAdjustModal({ stockId: row.id, productName: row.product?.name ?? '-', type: 'entry', quantity: '', reason: '' })}>
+                            <ActionButton title="Ajuste manual" onClick={() => setAdjustModal({ stockId: row.id, productName: row.product?.name ?? '-', type: 'entry', quantity: '', reason: '' })}>
                                 <SlidersHorizontal className="size-3.5" />
-                            </Button>
+                            </ActionButton>
                         )}
                         <Link href={route('movimientos.index', row.product_id) + '?from=inventarios'}>
-                            <Button variant="outline" size="icon" className="size-8" title="Movimientos"><History className="size-3.5" /></Button>
+                            <ActionButton title="Movimientos"><History className="size-3.5" /></ActionButton>
                         </Link>
                         <Link href={route('inventarios.edit', row.id)}>
-                            <Button variant="outline" size="icon" className="size-8" title="Editar"><Edit className="size-3.5" /></Button>
+                            <ActionButton title="Editar"><Edit className="size-3.5" /></ActionButton>
                         </Link>
                         <DeleteConfirmationDialog
                             url={route('inventarios.destroy', row.id)}

@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { PageHeader } from '@/components/page-header';
 import { DataTable, type Column } from '@/components/data-table';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
+import { ActionButton } from '@/components/action-button';
 import { Pagination } from '@/components/pagination';
 import { Plus, Edit, Search, FileText, Eye } from 'lucide-react';
 import { toast } from 'sonner';
@@ -76,14 +77,14 @@ export default function Index({ clientes, filters }: Props) {
             render: (row) => (
                 <div className="flex items-center justify-end gap-1">
                     <Link href={route('clientes.estado-cuenta', row.id)}>
-                        <Button variant="outline" size="icon" className="size-8" title="Estado de cuenta">
+                        <ActionButton title="Estado de cuenta">
                             <FileText className="size-3.5" />
-                        </Button>
+                        </ActionButton>
                     </Link>
                     <Link href={route('clientes.edit', row.id)}>
-                        <Button variant="outline" size="icon" className="size-8" title="Editar">
+                        <ActionButton title="Editar">
                             <Edit className="size-3.5" />
-                        </Button>
+                        </ActionButton>
                     </Link>
                     <DeleteConfirmationDialog
                         url={route('clientes.destroy', row.id)}
