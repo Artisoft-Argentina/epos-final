@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link } from '@inertiajs/react';
@@ -96,11 +97,11 @@ export default function Show({ factura }: Props) {
                             <div><label className="text-sm font-medium text-gray-500">Cliente</label><p className="text-sm">{factura.customer.business_name}</p></div>
                             <div><label className="text-sm font-medium text-gray-500">Vendedor</label><p className="text-sm">{factura.user.name}</p></div>
                             <div>
-                                <label className="text-sm font-medium text-gray-500">Estado</label>
-                                <p className="text-sm">
-                                    <span className={`px-2 py-1 rounded text-xs ${factura.payment_status === 'SI' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                <label className="text-sm font-medium text-muted-foreground">Estado</label>
+                                <p className="text-sm mt-1">
+                                    <Badge variant={factura.payment_status === 'SI' ? 'success' : 'warning'}>
                                         {factura.payment_status === 'SI' ? 'Pagada' : 'Pendiente'}
-                                    </span>
+                                    </Badge>
                                 </p>
                             </div>
                             <div><label className="text-sm font-medium text-gray-500">Fecha</label><p className="text-sm">{new Date(factura.date).toLocaleDateString()}</p></div>
@@ -116,7 +117,7 @@ export default function Show({ factura }: Props) {
                             {factura.additional_discount && Number(factura.additional_discount) > 0 && <div><label className="text-sm font-medium text-gray-500">Descuento</label><p className="text-sm text-green-600">-${Number(factura.additional_discount).toFixed(2)}</p></div>}
                             <div><label className="text-sm font-medium text-gray-500">Total</label><p className="text-lg font-bold">${Number(factura.total).toFixed(2)}</p></div>
                             <div><label className="text-sm font-medium text-gray-500">Total Pagado</label><p className="text-sm font-semibold text-green-600">${totalPagado.toFixed(2)}</p></div>
-                            {saldoPendiente > 0 && <div><label className="text-sm font-medium text-gray-500">Saldo Pendiente</label><p className="text-lg font-bold text-red-600">${saldoPendiente.toFixed(2)}</p></div>}
+                            {saldoPendiente > 0 && <div><label className="text-sm font-medium text-muted-foreground">Saldo Pendiente</label><p className="text-lg font-bold text-destructive">${saldoPendiente.toFixed(2)}</p></div>}
                         </CardContent>
                     </Card>
                 </div>

@@ -25,6 +25,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('admin/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])->name('admin.dashboard')->middleware(['role:admin,superadmin']);
     Route::get('dashboard/export', [\App\Http\Controllers\DashboardController::class, 'exportExcel'])->name('dashboard.export')->middleware(['role:admin,superadmin']);
+
+    // Design System demo (solo en desarrollo)
+    Route::get('design-system', function () {
+        return inertia('design-system');
+    })->name('design-system')->middleware(['role:admin,superadmin']);
     
     // Dashboard para usuarios regulares
     Route::get('user/dashboard', [\App\Http\Controllers\UserDashboardController::class, 'index'])->name('user.dashboard');

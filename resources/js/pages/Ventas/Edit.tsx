@@ -4,7 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { FormField } from '@/components/form-field';
+import { ArrowLeft, AlertTriangle } from 'lucide-react';
 
 interface Factura {
     id: number;
@@ -58,17 +60,18 @@ export default function Edit({ factura }: Props) {
                             Volver
                         </Button>
                     </Link>
-                    <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
-                        Editar Factura #{factura.numfactura}
-                    </h1>
+                            <h1 className="text-2xl font-semibold text-foreground">
+                                Editar Factura #{factura.numfactura}
+                            </h1>
                 </div>
 
                 {factura.cae && (
-                    <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                        <p className="text-yellow-800">
+                    <Alert variant="warning">
+                        <AlertTriangle className="size-4" />
+                        <AlertDescription>
                             Esta factura ya está autorizada en AFIP (CAE: {factura.cae}) y no puede ser editada.
-                        </p>
-                    </div>
+                        </AlertDescription>
+                    </Alert>
                 )}
 
                 <div className="grid gap-6 md:grid-cols-2">
@@ -98,39 +101,12 @@ export default function Edit({ factura }: Props) {
                         </CardHeader>
                         <CardContent>
                             <form onSubmit={handleSubmit} className="space-y-4">
-                                <div>
-                                    <Label htmlFor="recargo">Recargo</Label>
-                                    <Input
-                                        id="recargo"
-                                        type="text"
-                                        min="0"
-                                        value={data.recargo.toString()}
-                                        onChange={(e) => {
-                                            const value = e.target.value;
-                                            const numValue = value.includes('.') ? parseFloat(value) : parseFloat(value + '.00');
-                                            setData('recargo', isNaN(numValue) ? 0 : numValue);
-                                        }}
-                                        disabled={!!factura.cae}
-                                    />
-                                    {errors.recargo && <p className="text-red-500 text-sm">{errors.recargo}</p>}
-                                </div>
-
-                                <div>
-                                    <Label htmlFor="descuento">Descuento</Label>
-                                    <Input
-                                        id="descuento"
-                                        type="text"
-                                        min="0"
-                                        value={data.descuento.toString()}
-                                        onChange={(e) => {
-                                            const value = e.target.value;
-                                            const numValue = value.includes('.') ? parseFloat(value) : parseFloat(value + '.00');
-                                            setData('descuento', isNaN(numValue) ? 0 : numValue);
-                                        }}
-                                        disabled={!!factura.cae}
-                                    />
-                                    {errors.descuento && <p className="text-red-500 text-sm">{errors.descuento}</p>}
-                                </div>
+                                <FormField label="Recargo" htmlFor="recargo" error={errors.recargo}>
+                                    <Input id="recargo" type="text" min="0" value={data.recargo.toString()} onChange={(e) => { const v = e.target.value; const n = v.includes('.') ? parseFloat(v) : parseFloat(v + '.00'); setData('recargo', isNaN(n) ? 0 : n); }} disabled={!!factura.cae} placeholder="0.00" />
+                                </FormField>
+                                <FormField label="Descuento" htmlFor="descuento" error={errors.descuento}>
+                                    <Input id="descuento" type="text" min="0" value={data.descuento.toString()} onChange={(e) => { const v = e.target.value; const n = v.includes('.') ? parseFloat(v) : parseFloat(v + '.00'); setData('descuento', isNaN(n) ? 0 : n); }} disabled={!!factura.cae} placeholder="0.00" />
+                                </FormField>
 
                                 <div className="pt-4 border-t">
                                     <div className="flex justify-between items-center">
