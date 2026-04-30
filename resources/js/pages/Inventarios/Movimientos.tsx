@@ -1,8 +1,10 @@
 import { Head, Link } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, TrendingDown, TrendingUp, RefreshCw, AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ArrowLeft, TrendingDown, TrendingUp, RefreshCw, AlertTriangle } from 'lucide-react';
 import { Pagination } from '@/components/pagination';
 
 interface Articulo {
@@ -66,37 +68,21 @@ function TipoBadge({ tipo, tipos }: { tipo: string; tipos: Record<string, string
     const esEntrada = TIPOS_ENTRADA.includes(tipo);
     const esSalida  = TIPOS_SALIDA.includes(tipo);
     const esDevolucion = tipo === 'return';
-
-    let variant: 'default' | 'destructive' | 'secondary' | 'outline' = 'secondary';
-    let colorClass = '';
-
-    if (esDevolucion) {
-        colorClass = 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
-    } else if (esEntrada) {
-        colorClass = 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-    } else if (esSalida) {
-        colorClass = 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
-    }
-
+    const variant = esDevolucion ? 'warning' : esEntrada ? 'success' : esSalida ? 'destructive' : 'secondary';
+    const Icon = esDevolucion ? RefreshCw : esEntrada ? TrendingUp : TrendingDown;
     return (
-        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${colorClass}`}>
-            {esDevolucion ? (
-                <RefreshCw className="w-3 h-3" />
-            ) : esEntrada ? (
-                <TrendingUp className="w-3 h-3" />
-            ) : (
-                <TrendingDown className="w-3 h-3" />
-            )}
+        <Badge variant={variant}>
+            <Icon className="size-3" />
             {tipos[tipo] ?? tipo}
-        </span>
+        </Badge>
     );
 }
 
 function CantidadCell({ tipo, cantidad }: { tipo: string; cantidad: number }) {
     const esEntrada = TIPOS_ENTRADA.includes(tipo);
     return (
-        <span className={`font-semibold tabular-nums ${esEntrada ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-            {esEntrada ? '+' : '−'}{cantidad}
+        <span className={`font-semibold tabular-nums ${esEntrada ? 'text-success' : 'text-destructive'}`}>
+            {esEntrada ? '+' : '-'}{cantidad}
         </span>
     );
 }
@@ -168,14 +154,14 @@ export default function Movimientos({ articulo, inventario, movimientos, stockCa
 
                 {/* Alerta de inconsistencia */}
                 {inconsistente && (
-                    <div className="flex items-start gap-3 rounded-lg border border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-950 p-4">
-                        <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5 shrink-0" />
-                        <div className="text-sm text-yellow-800 dark:text-yellow-200">
+                    <Alert variant="warning">
+                        <AlertTriangle className="size-4" />
+                        <AlertDescription>
                             <strong>Inconsistencia detectada:</strong> el stock actual ({stockActual}) difiere del stock calculado
                             a partir de movimientos ({stockCalculado}). Puede haber modificaciones de stock anteriores a la
                             implementación de trazabilidad.
-                        </div>
-                    </div>
+                        </AlertDescription>
+                    </Alert>
                 )}
 
                 {/* Tabla de movimientos */}

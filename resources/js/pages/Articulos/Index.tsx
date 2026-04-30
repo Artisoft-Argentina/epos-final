@@ -10,8 +10,7 @@ import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialo
 import { ActionButton } from '@/components/action-button';
 import { Pagination } from '@/components/pagination';
 import { Plus, Edit, Search, Printer, Eye, BarChart2 } from 'lucide-react';
-import { toast } from 'sonner';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 interface Product {
     id: number;
@@ -31,10 +30,6 @@ export default function Index({ articulos, filters }: Props) {
     const page = usePage<any>();
     const [search, setSearch] = useState(filters.search || '');
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
-
-    useEffect(() => {
-        if (page.props.flash?.success) toast.success(page.props.flash.success);
-    }, [page.props.flash]);
 
     const handleSearch = (value: string) => {
         setSearch(value);

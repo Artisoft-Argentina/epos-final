@@ -1,4 +1,4 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/page-header';
@@ -7,17 +7,11 @@ import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialo
 import { ActionButton } from '@/components/action-button';
 import { Pagination } from '@/components/pagination';
 import { Plus, Edit } from 'lucide-react';
-import { toast } from 'sonner';
-import { useEffect } from 'react';
 
 interface Categoria { id: number; name: string; }
 interface Props { categorias: { data: Categoria[]; links: any; meta: any }; }
 
 export default function Index({ categorias }: Props) {
-    const page = usePage<any>();
-    useEffect(() => {
-        if (page.props.flash?.success) toast.success(page.props.flash.success);
-    }, [page.props.flash]);
 
     const columns: Column<Categoria>[] = [
         {

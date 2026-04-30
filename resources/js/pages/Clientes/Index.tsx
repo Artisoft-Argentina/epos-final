@@ -9,8 +9,7 @@ import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialo
 import { ActionButton } from '@/components/action-button';
 import { Pagination } from '@/components/pagination';
 import { Plus, Edit, Search, FileText, Eye } from 'lucide-react';
-import { toast } from 'sonner';
-import { useEffect, useState, useRef } from 'react';
+import { useState, useRef } from 'react';
 
 interface Cliente {
     id: number;
@@ -35,10 +34,6 @@ export default function Index({ clientes, filters }: Props) {
     const page = usePage<any>();
     const [search, setSearch] = useState(filters.search || '');
     const timeoutRef = useRef<NodeJS.Timeout>();
-
-    useEffect(() => {
-        if (page.props.flash?.success) toast.success(page.props.flash.success);
-    }, [page.props.flash]);
 
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;

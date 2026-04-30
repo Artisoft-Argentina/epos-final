@@ -8,8 +8,7 @@ import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialo
 import { ActionButton } from '@/components/action-button';
 import { Pagination } from '@/components/pagination';
 import { Plus, Eye, ShoppingCart, Search } from 'lucide-react';
-import { toast } from 'sonner';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 interface Presupuesto {
     id: number;
@@ -25,10 +24,6 @@ interface Props { presupuestos: { data: Presupuesto[]; links: any; meta: any }; 
 export default function Index({ presupuestos }: Props) {
     const page = usePage<any>();
     const [search, setSearch] = useState('');
-
-    useEffect(() => {
-        if (page.props.flash?.success) toast.success(page.props.flash.success);
-    }, [page.props.flash]);
 
     const filtered = presupuestos.data.filter((p) =>
         p.cliente.razonsocial.toLowerCase().includes(search.toLowerCase()) ||

@@ -1,4 +1,4 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,8 +7,7 @@ import { DataTable, type Column } from '@/components/data-table';
 import { Pagination } from '@/components/pagination';
 import { ActionButton } from '@/components/action-button';
 import { FileText, Search, Download } from 'lucide-react';
-import { toast } from 'sonner';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 interface Cliente {
     id: number;
@@ -26,10 +25,6 @@ interface Props {
 export default function Index({ clientes }: Props) {
     const page = usePage<any>();
     const [search, setSearch] = useState('');
-
-    useEffect(() => {
-        if (page.props.flash?.success) toast.success(page.props.flash.success);
-    }, [page.props.flash]);
 
     const filtered = clientes.data.filter((c) =>
         c.razonsocial.toLowerCase().includes(search.toLowerCase()) ||

@@ -9,8 +9,7 @@ import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialo
 import { ActionButton } from '@/components/action-button';
 import { Pagination } from '@/components/pagination';
 import { Plus, Eye, Edit, DollarSign, Package, FileText, Download, Search } from 'lucide-react';
-import { toast } from 'sonner';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 interface Sale {
     id: number;
@@ -48,10 +47,6 @@ function tieneEntregasPendientes(sale: Sale) {
 export default function Index({ facturas }: Props) {
     const page = usePage<any>();
     const [search, setSearch] = useState('');
-
-    useEffect(() => {
-        if (page.props.flash?.success) toast.success(page.props.flash.success);
-    }, [page.props.flash]);
 
     const filtered = facturas.data.filter((s) =>
         s.customer.business_name.toLowerCase().includes(search.toLowerCase()) ||

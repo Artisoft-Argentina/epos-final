@@ -17,7 +17,23 @@ export default function AppSidebarLayout({ children, breadcrumbs = [] }: PropsWi
                 <AppSidebarHeader breadcrumbs={breadcrumbs} />
                 {children}
             </AppContent>
-            <Toaster position="top-right" />
+            <Toaster
+                position="top-right"
+                toastOptions={{
+                    classNames: {
+                        toast: 'bg-white border border-border shadow-md rounded-lg text-foreground font-sans text-sm',
+                        title: 'font-semibold text-foreground',
+                        description: 'text-muted-foreground text-sm',
+                        success: 'border-border [&>[data-icon]]:text-success',
+                        error: 'border-destructive/20 [&>[data-icon]]:text-destructive',
+                        warning: 'border-warning/20 [&>[data-icon]]:text-warning',
+                        info: 'border-info/20 [&>[data-icon]]:text-info',
+                        actionButton: 'bg-primary text-primary-foreground',
+                        cancelButton: 'bg-muted text-muted-foreground',
+                        closeButton: 'border-border bg-white text-muted-foreground hover:text-foreground',
+                    },
+                }}
+            />
         </AppShell>
     );
 }
