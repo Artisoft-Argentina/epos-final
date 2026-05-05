@@ -19,11 +19,7 @@ const mainNavItems: NavItem[] = [
         items: [
             {
                 title: 'Clientes',
-                href: '/clientes',
-            },
-            {
-                title: 'Estados de Cuenta',
-                href: '/estados-cuenta',
+                href: '/customers',
             },
         ],
     },
