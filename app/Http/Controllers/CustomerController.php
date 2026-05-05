@@ -39,6 +39,11 @@ class CustomerController extends Controller
         return Inertia::render('Customers/Index', [
             'customers' => $query->orderBy('business_name')->paginate(15)->withQueryString(),
             'filters'   => $request->only(['search', 'active', 'tax_status']),
+            'kpis'      => [
+                'total'     => Customer::count(),
+                'active'    => Customer::where('active', true)->count(),
+                'new_month' => Customer::whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->count(),
+            ],
         ]);
     }
 

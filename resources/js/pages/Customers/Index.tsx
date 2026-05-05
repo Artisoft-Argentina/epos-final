@@ -5,10 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PageHeader } from '@/components/page-header';
+import { Card, CardContent } from '@/components/ui/card';
 import { DataTable, type Column } from '@/components/data-table';
 import { ActionButton } from '@/components/action-button';
 import { Pagination } from '@/components/pagination';
-import { Plus, Search, FileText, Edit, Power } from 'lucide-react';
+import { Plus, Search, FileText, Edit, Power, Users, UserCheck, UserPlus } from 'lucide-react';
 import { useState, useRef } from 'react';
 
 interface Customer {
@@ -20,6 +21,7 @@ interface Customer {
     dni: string | null;
     email: string | null;
     phone: string | null;
+    cellphone: string | null;
     tax_status: string;
     active: boolean;
 }
@@ -35,6 +37,11 @@ interface Props {
         active?: string;
         tax_status?: string;
     };
+    kpis: {
+        total: number;
+        active: number;
+        new_month: number;
+    };
 }
 
 const TAX_STATUS_OPTIONS = [
@@ -44,7 +51,7 @@ const TAX_STATUS_OPTIONS = [
     { value: 'Consumidor Final', label: 'Consumidor Final' },
 ];
 
-export default function Index({ customers, filters }: Props) {
+export default function Index({ customers, filters, kpis }: Props) {
     const [search, setSearch] = useState(filters.search || '');
     const timeoutRef = useRef<NodeJS.Timeout>();
 
@@ -67,22 +74,35 @@ export default function Index({ customers, filters }: Props) {
         {
             key: 'business_name',
             header: 'Cliente',
-            render: (row) => (
-                <div>
-                    <p className="font-medium text-foreground">{row.business_name}</p>
-                    {row.fantasy_name && (
-                        <p className="text-xs text-muted-foreground">{row.fantasy_name}</p>
-                    )}
-                </div>
-            ),
+            render: (row) => {
+                const initials = row.business_name
+                    .split(' ')
+                    .slice(0, 2)
+                    .map((w) => w[0])
+                    .join('')
+                    .toUpperCase();
+                return (
+                    <div className="flex items-center gap-3">
+                        <div className="size-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold shrink-0">
+                            {initials}
+                        </div>
+                        <div>
+                            <p className="font-medium text-foreground">{row.business_name}</p>
+                            {row.fantasy_name && (
+                                <p className="text-xs text-muted-foreground">{row.fantasy_name}</p>
+                            )}
+                        </div>
+                    </div>
+                );
+            },
         },
         {
             key: 'document',
-            header: 'Documento',
+            header: 'DNI / CUIT',
             render: (row) => (
-                <div className="text-sm tabular-nums">
-                    {row.tax_id && <p className="text-foreground">CUIT {row.tax_id}</p>}
-                    {row.dni && <p className="text-muted-foreground">DNI {row.dni}</p>}
+                <div className="text-sm tabular-nums space-y-0.5">
+                    {row.tax_id && <p className="text-foreground">{row.tax_id}</p>}
+                    {row.dni && <p className="text-foreground">{row.dni}</p>}
                     {!row.tax_id && !row.dni && <span className="text-muted-foreground">—</span>}
                 </div>
             ),
@@ -94,7 +114,8 @@ export default function Index({ customers, filters }: Props) {
                 <div className="text-sm">
                     {row.email && <p className="text-foreground">{row.email}</p>}
                     {row.phone && <p className="text-muted-foreground">{row.phone}</p>}
-                    {!row.email && !row.phone && <span className="text-muted-foreground">—</span>}
+                    {row.cellphone && !row.phone && <p className="text-muted-foreground">{row.cellphone}</p>}
+                    {!row.email && !row.phone && !row.cellphone && <span className="text-muted-foreground">—</span>}
                 </div>
             ),
         },
@@ -148,13 +169,36 @@ export default function Index({ customers, filters }: Props) {
             <div className="flex flex-col gap-6 p-6">
                 <PageHeader
                     title="Clientes"
-                    description={`${customers.meta?.total ?? customers.data.length} clientes registrados`}
+                    description="Gestioná tu cartera de clientes"
                     actions={
                         <Link href={route('customers.create')}>
                             <Button><Plus className="size-4" /> Nuevo Cliente</Button>
                         </Link>
                     }
                 />
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {[
+                        { label: 'Total Clientes', value: kpis.total, icon: Users, sub: 'clientes registrados' },
+                        { label: 'Clientes Activos', value: kpis.active, icon: UserCheck, sub: 'habilitados para operar' },
+                        { label: 'Nuevos este mes', value: kpis.new_month, icon: UserPlus, sub: 'altas en el mes actual' },
+                    ].map((kpi) => (
+                        <Card key={kpi.label} className="gap-0 py-0">
+                            <CardContent className="px-4 py-4 flex flex-col gap-3">
+                                <div className="flex items-center gap-2.5">
+                                    <div className="size-8 rounded-full bg-primary/5 flex items-center justify-center">
+                                        <kpi.icon className="size-4 text-primary" />
+                                    </div>
+                                    <span className="text-sm font-medium text-foreground">{kpi.label}</span>
+                                </div>
+                                <div>
+                                    <p className="text-2xl font-bold tracking-tight text-foreground tabular-nums">{kpi.value}</p>
+                                    <p className="text-xs text-muted-foreground mt-0.5">{kpi.sub}</p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
 
                 <div className="flex flex-col sm:flex-row gap-3">
                     <div className="w-full sm:max-w-sm">

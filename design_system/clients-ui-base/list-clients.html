@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>EPOS - Clientes</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        epos: {
+                            primary: '#0B7D6E',
+                            primaryHover: '#096a5d',
+                            bg: '#F8F9FA',
+                            border: '#E5E7EB',
+                            textDark: '#111827',
+                            textMuted: '#6B7280',
+                            destructive: '#EF4444',
+                        }
+                    },
+                    boxShadow: {
+                        'shadcn': '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+                    },
+                    borderRadius: {
+                        'DEFAULT': '0.5rem', // 8px default rounded
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #F8F9FA; color: #111827; }
+        .focus-ring {
+            @apply focus:outline-none focus:ring-2 focus:ring-epos-primary focus:ring-offset-2;
+        }
+    </style>
+</head>
+<body class="bg-epos-bg text-epos-textDark min-h-screen flex antialiased flex-col">
+<!-- TopNavBar -->
+<header class="bg-white flex items-center justify-between px-6 h-16 w-full border-b border-epos-border sticky top-0 z-50">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-2">
+<!-- Mobile menu toggle -->
+<button class="lg:hidden text-epos-textMuted hover:text-epos-textDark p-2 rounded-lg transition-colors">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<div class="text-xl font-bold tracking-tight text-epos-primary flex items-center gap-2 lg:hidden">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+<polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+<line x1="12" x2="12" y1="22.08" y2="12"></line>
+</svg>
+                    EPOS
+                </div>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden sm:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">search</span>
+<input class="flex h-10 w-full md:w-64 rounded-md border border-epos-border bg-transparent pl-9 pr-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-epos-primary focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50" placeholder="Buscar clientes..." type="text"/>
+</div>
+<button class="text-epos-textMuted hover:text-epos-primary transition-colors p-2 relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-1.5 right-1.5 w-2 h-2 bg-epos-destructive rounded-full"></span>
+</button>
+<button class="text-epos-textMuted hover:text-epos-primary transition-colors p-2"><span class="material-symbols-outlined">settings</span></button>
+<button class="text-epos-textMuted hover:text-epos-primary transition-colors p-2"><span class="material-symbols-outlined">help</span></button>
+<div class="w-8 h-8 rounded-full bg-epos-primary/10 text-epos-primary flex items-center justify-center font-bold text-sm ml-2 border border-epos-primary/20 overflow-hidden">
+<img alt="Usuario Administrador" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCVAerHOu4lbIN7itLxyHX3jWjHbGdLLCYEqjMsCWxtUEnmA6XmnIqdzP9afFmeJF-nAWCYcmVnFWZwkVSeShB7taN3gKKNQFuVlxaYIGrP6Ci3DFQWdhOMfKnBTFJc0gIOZ_iMDrluKagJOG1x4OA5qf57AMtAWMbrAixcMiNT7nXKFxkk_bt0HK6TfNqE3G-XgDHAhS0kIQmgVuFcagO_40RqWnbh1xjDgbAl5qkDkRWPN6e35Th_ivWSnhBRgEQuzfvx5RmSGVM"/>
+</div>
+</div>
+</header>
+<div class="flex flex-1 overflow-hidden">
+<!-- SideNavBar -->
+<aside class="hidden lg:flex flex-col w-64 bg-white border-r border-epos-border h-[calc(100vh-4rem)] overflow-y-auto">
+<div class="p-6 border-b border-epos-border">
+<div class="flex items-center gap-3 mb-2">
+<svg class="w-8 h-8 text-epos-primary" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+<polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+<line x1="12" x2="12" y1="22.08" y2="12"></line>
+</svg>
+<div>
+<h2 class="text-lg font-bold text-epos-textDark leading-tight">Gestión EPOS</h2>
+<p class="text-xs text-epos-textMuted">Business Suite</p>
+</div>
+</div>
+<button class="mt-4 w-full inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-ring bg-epos-primary text-white hover:bg-epos-primaryHover h-10 px-4 py-2 shadow-sm gap-2">
+<span class="material-symbols-outlined text-sm">add</span> Nueva Venta
+                </button>
+</div>
+<nav class="p-4 flex flex-col gap-1 flex-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-epos-textMuted hover:bg-gray-50 transition-all duration-200 text-sm font-medium" href="#">
+<span class="material-symbols-outlined text-xl">dashboard</span> Dashboard
+                </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-epos-primary/10 text-epos-primary font-semibold text-sm" href="#">
+<span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 1;">group</span> Clientes
+                </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-epos-textMuted hover:bg-gray-50 transition-all duration-200 text-sm font-medium" href="#">
+<span class="material-symbols-outlined text-xl">payments</span> Ventas
+                </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-epos-textMuted hover:bg-gray-50 transition-all duration-200 text-sm font-medium" href="#">
+<span class="material-symbols-outlined text-xl">inventory_2</span> Inventario
+                </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-epos-textMuted hover:bg-gray-50 transition-all duration-200 text-sm font-medium" href="#">
+<span class="material-symbols-outlined text-xl">shopping_cart</span> Compras
+                </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-epos-textMuted hover:bg-gray-50 transition-all duration-200 text-sm font-medium" href="#">
+<span class="material-symbols-outlined text-xl">admin_panel_settings</span> Administración
+                </a>
+</nav>
+<div class="p-4 border-t border-epos-border">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-epos-textMuted hover:bg-gray-50 transition-all duration-200 text-sm font-medium" href="#">
+<span class="material-symbols-outlined text-xl">account_circle</span> Perfil
+                </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-epos-textMuted hover:bg-gray-50 transition-all duration-200 text-sm font-medium" href="#">
+<span class="material-symbols-outlined text-xl">logout</span> Cerrar Sesión
+                </a>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 overflow-y-auto p-6 md:p-8 bg-epos-bg">
+<div class="max-w-7xl mx-auto space-y-8">
+<!-- Header Section -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+<div>
+<h1 class="text-3xl font-bold tracking-tight text-epos-textDark mb-1">Clientes</h1>
+<p class="text-sm text-epos-textMuted">Gestiona tu cartera de clientes, saldos y estados.</p>
+</div>
+<button class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-ring bg-epos-primary text-white hover:bg-epos-primaryHover h-10 px-4 py-2 shadow-sm gap-2 w-fit">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                    Nuevo Cliente
+                </button>
+</div>
+<!-- KPIs -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="bg-white rounded-xl border border-epos-border p-6 shadow-sm flex flex-col gap-2">
+<div class="flex items-center justify-between text-epos-textMuted">
+<span class="text-sm font-medium">Total Clientes</span>
+<span class="material-symbols-outlined text-[20px]">group</span>
+</div>
+<div class="text-3xl font-bold text-epos-textDark tracking-tight">1,248</div>
+<div class="text-xs text-epos-textMuted flex items-center gap-1">
+<span class="text-[#1F8F63] font-medium flex items-center"><span class="material-symbols-outlined text-[14px]">arrow_upward</span> 12%</span> desde el último mes
+                    </div>
+</div>
+<div class="bg-white rounded-xl border border-epos-border p-6 shadow-sm flex flex-col gap-2">
+<div class="flex items-center justify-between text-epos-textMuted">
+<span class="text-sm font-medium">Deuda Total</span>
+<span class="material-symbols-outlined text-[20px]">account_balance_wallet</span>
+</div>
+<div class="text-3xl font-bold text-epos-destructive tracking-tight">$450.200</div>
+<div class="text-xs text-epos-textMuted flex items-center gap-1">
+                        En 45 clientes con saldo pendiente
+                    </div>
+</div>
+<div class="bg-white rounded-xl border border-epos-border p-6 shadow-sm flex flex-col gap-2">
+<div class="flex items-center justify-between text-epos-textMuted">
+<span class="text-sm font-medium">Nuevos Clientes (Mes)</span>
+<span class="material-symbols-outlined text-[20px]">person_add</span>
+</div>
+<div class="text-3xl font-bold text-epos-textDark tracking-tight">48</div>
+<div class="text-xs text-epos-textMuted flex items-center gap-1">
+<span class="text-[#1F8F63] font-medium flex items-center"><span class="material-symbols-outlined text-[14px]">arrow_upward</span> 4</span> en esta semana
+                    </div>
+</div>
+</div>
+<!-- List Section -->
+<div class="bg-white rounded-xl border border-epos-border shadow-sm overflow-hidden flex flex-col">
+<!-- Toolbar/Filters -->
+<div class="p-4 border-b border-epos-border flex flex-col md:flex-row gap-4 items-center justify-between">
+<div class="relative w-full md:w-80">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">search</span>
+<input class="flex h-10 w-full rounded-md border border-epos-border bg-transparent pl-9 pr-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-epos-primary focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50" placeholder="Buscar por nombre o CUIT..." type="text"/>
+</div>
+<div class="flex items-center gap-3 w-full md:w-auto">
+<select class="flex h-10 w-full md:w-auto items-center justify-between rounded-md border border-epos-border bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-epos-primary focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 appearance-none">
+<option value="">Estado: Todos</option>
+<option value="active">Activos</option>
+<option value="inactive">Inactivos</option>
+</select>
+<select class="flex h-10 w-full md:w-auto items-center justify-between rounded-md border border-epos-border bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-epos-primary focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 appearance-none">
+<option value="">Provincia: Todas</option>
+<option value="caba">CABA</option>
+<option value="ba">Buenos Aires</option>
+<option value="cba">Córdoba</option>
+</select>
+<button class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-ring border border-epos-border bg-transparent hover:bg-gray-100 h-10 px-3 py-2 shadow-sm">
+<span class="material-symbols-outlined text-[20px] text-epos-textMuted">filter_list</span>
+</button>
+</div>
+</div>
+<!-- Table -->
+<div class="overflow-x-auto w-full">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-epos-border text-xs text-epos-textMuted uppercase tracking-wider font-semibold bg-gray-50/50">
+<th class="px-6 py-4 font-semibold">Nombre</th>
+<th class="px-6 py-4 font-semibold">CUIT/DNI</th>
+<th class="px-6 py-4 font-semibold">Localidad</th>
+<th class="px-6 py-4 font-semibold">Cond. IVA</th>
+<th class="px-6 py-4 font-semibold text-right">Saldo</th>
+<th class="px-6 py-4 font-semibold text-center">Estado</th>
+<th class="px-6 py-4 text-right"></th>
+</tr>
+</thead>
+<tbody class="text-sm divide-y divide-epos-border">
+<!-- Row 1 -->
+<tr class="hover:bg-gray-50/50 transition-colors group cursor-pointer">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-epos-primary/10 text-epos-primary flex items-center justify-center font-semibold text-xs">
+                                            MI
+                                        </div>
+<div>
+<div class="font-medium text-epos-textDark">Martínez e Hijos SRL</div>
+<div class="text-xs text-epos-textMuted">contacto@martinezhijos.com</div>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 text-epos-textMuted">30-71234567-8</td>
+<td class="px-6 py-4 text-epos-textMuted">CABA</td>
+<td class="px-6 py-4 text-epos-textMuted">Resp. Inscripto</td>
+<td class="px-6 py-4 text-right font-medium text-epos-destructive">- $15.400,00</td>
+<td class="px-6 py-4 text-center">
+<div class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-epos-primary/10 text-epos-primary">
+<div class="w-2 h-2 rounded-full bg-epos-primary mr-1.5"></div> Activo
+                                        </div>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-gray-400 hover:text-epos-primary p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-[18px]">more_horiz</span>
+</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-gray-50/50 transition-colors group cursor-pointer">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center font-semibold text-xs">
+                                            LG
+                                        </div>
+<div>
+<div class="font-medium text-epos-textDark">Laura Gómez</div>
+<div class="text-xs text-epos-textMuted">laurag@gmail.com</div>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 text-epos-textMuted">27-32145678-9</td>
+<td class="px-6 py-4 text-epos-textMuted">Córdoba</td>
+<td class="px-6 py-4 text-epos-textMuted">Monotributista</td>
+<td class="px-6 py-4 text-right font-medium text-[#1F8F63]">+ $2.500,00</td>
+<td class="px-6 py-4 text-center">
+<div class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-epos-primary/10 text-epos-primary">
+<div class="w-2 h-2 rounded-full bg-epos-primary mr-1.5"></div> Activo
+                                        </div>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-gray-400 hover:text-epos-primary p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-[18px]">more_horiz</span>
+</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-gray-50/50 transition-colors group cursor-pointer">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-epos-primary/10 text-epos-primary flex items-center justify-center font-semibold text-xs">
+                                            DS
+                                        </div>
+<div>
+<div class="font-medium text-epos-textDark">Distribuidora Sur SA</div>
+<div class="text-xs text-epos-textMuted">ventas@distsur.com.ar</div>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 text-epos-textMuted">30-65432198-1</td>
+<td class="px-6 py-4 text-epos-textMuted">Rosario</td>
+<td class="px-6 py-4 text-epos-textMuted">Resp. Inscripto</td>
+<td class="px-6 py-4 text-right font-medium text-epos-textDark">$0,00</td>
+<td class="px-6 py-4 text-center">
+<div class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-gray-100 text-gray-600">
+<div class="w-2 h-2 rounded-full bg-gray-400 mr-1.5"></div> Inactivo
+                                        </div>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-gray-400 hover:text-epos-primary p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-[18px]">more_horiz</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="p-4 border-t border-epos-border flex items-center justify-between text-sm text-epos-textMuted">
+<div>Mostrando <span class="font-medium text-epos-textDark">1</span> a <span class="font-medium text-epos-textDark">10</span> de <span class="font-medium text-epos-textDark">1,248</span> clientes</div>
+<div class="flex items-center gap-2">
+<button class="px-3 py-1.5 border border-epos-border rounded-md text-sm text-epos-textMuted hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed" disabled="">
+<span class="material-symbols-outlined text-[18px]">chevron_left</span>
+</button>
+<div class="hidden sm:flex gap-1">
+<button class="px-3 py-1.5 rounded-md text-sm font-medium bg-epos-primary/10 text-epos-primary">1</button>
+<button class="px-3 py-1.5 rounded-md text-sm font-medium text-epos-textMuted hover:bg-gray-50">2</button>
+<button class="px-3 py-1.5 rounded-md text-sm font-medium text-epos-textMuted hover:bg-gray-50">3</button>
+<span class="px-2 py-1.5 text-epos-textMuted">...</span>
+</div>
+<button class="px-3 py-1.5 border border-epos-border rounded-md text-sm text-epos-textMuted hover:bg-gray-50">
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>
