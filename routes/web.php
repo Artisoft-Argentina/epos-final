@@ -72,11 +72,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // Rutas para todos los roles
-    Route::resource('customers', \App\Http\Controllers\CustomerController::class)->except(['show', 'destroy']);
+    Route::resource('customers', \App\Http\Controllers\CustomerController::class)->except(['destroy']);
     Route::patch('customers/{customer}/toggle-active', [\App\Http\Controllers\CustomerController::class, 'toggleActive'])->name('customers.toggle-active');
-    Route::get('customers/{customer}/account-statement', [\App\Http\Controllers\CustomerController::class, 'accountStatement'])->name('customers.account-statement');
-    Route::get('customers/{customer}/account-statement/export-excel', [\App\Http\Controllers\CustomerController::class, 'exportExcel'])->name('customers.account-statement.export-excel');
-    Route::get('customers/{customer}/account-statement/export-pdf', [\App\Http\Controllers\CustomerController::class, 'exportPdf'])->name('customers.account-statement.export-pdf');
+    Route::get('customers/{customer}/export-excel', [\App\Http\Controllers\CustomerController::class, 'exportExcel'])->name('customers.export-excel');
+    Route::get('customers/{customer}/export-pdf', [\App\Http\Controllers\CustomerController::class, 'exportPdf'])->name('customers.export-pdf');
     
     // Rutas de escáner de códigos para ventas
     Route::get('scanner', [\App\Http\Controllers\CodigoController::class, 'scanner'])->name('scanner.index');

@@ -91,20 +91,20 @@ class CustomerController extends Controller
         return back()->with('success', $customer->active ? 'Cliente activado.' : 'Cliente desactivado.');
     }
 
-    public function accountStatement(Customer $customer)
+    public function show(Customer $customer)
     {
         $sales = $customer->sales()->with('payments')->orderByDesc('created_at')->get();
 
         $summary = [
-            'total_sales'   => $sales->sum('total'),
-            'total_paid'    => $sales->sum(fn($s) => $s->payments->sum('amount')),
-            'balance_due'   => 0,
-            'credit'        => $customer->credit,
+            'total_sales' => $sales->sum('total'),
+            'total_paid'  => $sales->sum(fn($s) => $s->payments->sum('amount')),
+            'balance_due' => 0,
+            'credit'      => $customer->credit,
         ];
         $summary['balance_due'] = $summary['total_sales'] - $summary['total_paid'];
 
-        return Inertia::render('Customers/AccountStatement', [
-            'customer' => $customer,
+        return Inertia::render('Customers/Show', [
+            'customer' => $customer->load(['city', 'state']),
             'sales'    => $sales,
             'summary'  => $summary,
         ]);
@@ -124,7 +124,7 @@ class CustomerController extends Controller
 
         return \Maatwebsite\Excel\Facades\Excel::download(
             new \App\Exports\EstadoCuentaExport($customer, $sales, $summary),
-            'account-statement-' . $customer->business_name . '.xlsx'
+            'estado-cuenta-' . $customer->business_name . '.xlsx'
         );
     }
 
@@ -142,7 +142,7 @@ class CustomerController extends Controller
 
         $pdf = \PDF::loadView('pdf.estado-cuenta', compact('customer', 'sales', 'summary'));
 
-        return $pdf->download('account-statement-' . $customer->business_name . '.pdf');
+        return $pdf->download('estado-cuenta-' . $customer->business_name . '.pdf');
     }
 
     private function rules(Request $request): array

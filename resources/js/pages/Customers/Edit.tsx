@@ -10,7 +10,7 @@ import { Combobox } from '@/components/ui/combobox';
 import { FormField } from '@/components/form-field';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { ChevronRight, Save, User, Building2, Phone, Receipt, SlidersHorizontal } from 'lucide-react';
+import { ChevronRight, Save, User, Building2, Phone, MapPin, Receipt, SlidersHorizontal } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
 
@@ -191,7 +191,7 @@ export default function Edit({ customer, states, cities }: Props) {
                                 </CardContent>
                             </Card>
 
-                            {/* Contact */}
+                            {/* Contacto */}
                             <Card className="gap-0 py-0">
                                 <CardHeader className="border-b border-border px-6 py-4">
                                     <CardTitle className="flex items-center gap-2 text-base font-semibold">
@@ -209,7 +209,19 @@ export default function Edit({ customer, states, cities }: Props) {
                                     <FormField label="Email" htmlFor="email" error={errors.email} className="md:col-span-2">
                                         <Input id="email" type="email" value={data.email} onChange={(e) => setData('email', e.target.value)} placeholder="correo@ejemplo.com" error={errors.email} />
                                     </FormField>
-                                    <FormField label="Domicilio" htmlFor="address" error={errors.address} className="md:col-span-2">
+                                </CardContent>
+                            </Card>
+
+                            {/* Domicilio */}
+                            <Card className="gap-0 py-0">
+                                <CardHeader className="border-b border-border px-6 py-4">
+                                    <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                                        <MapPin className="size-4 text-primary" />
+                                        Domicilio
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="px-6 py-5 grid grid-cols-1 md:grid-cols-2 gap-5">
+                                    <FormField label="Dirección" htmlFor="address" error={errors.address} className="md:col-span-2">
                                         <Input id="address" value={data.address} onChange={(e) => setData('address', e.target.value)} placeholder="Calle, Número, Piso, Depto" error={errors.address} />
                                     </FormField>
                                     <FormField label="Provincia" error={errors.state_id}>
@@ -218,7 +230,7 @@ export default function Edit({ customer, states, cities }: Props) {
                                     <FormField label="Localidad" error={errors.city_id}>
                                         <Combobox options={cityOptions} value={data.city_id} onValueChange={(v) => setData('city_id', v)} placeholder="Seleccionar localidad..." searchPlaceholder="Buscar localidad..." emptyMessage="No se encontró la localidad." disabled={!data.state_id} error={errors.city_id} />
                                     </FormField>
-                                    <FormField label="Código Postal" htmlFor="zip_code" error={errors.zip_code} className="md:col-span-2 lg:col-span-1">
+                                    <FormField label="Código Postal" htmlFor="zip_code" error={errors.zip_code}>
                                         <Input id="zip_code" value={data.zip_code} onChange={(e) => setData('zip_code', e.target.value)} placeholder="Ej. 1000" error={errors.zip_code} />
                                     </FormField>
                                 </CardContent>
