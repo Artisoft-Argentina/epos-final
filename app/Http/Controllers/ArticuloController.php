@@ -37,7 +37,7 @@ class ArticuloController extends Controller
     public function create()
     {
         return Inertia::render('Articulos/Create', [
-            'categorias' => Category::all(),
+            'categories' => Category::active()->orderBy('name')->get(),
             'brands'     => Brand::active()->orderBy('name')->get(),
             'suppliers'  => Supplier::all(),
         ]);
@@ -89,7 +89,7 @@ class ArticuloController extends Controller
     {
         return Inertia::render('Articulos/Edit', [
             'articulo'   => $articulo->load(['images', 'supplier']),
-            'categorias' => Category::all(),
+            'categories' => Category::active()->orderBy('name')->get(),
             'brands'     => Brand::active()->orderBy('name')->get(),
             'suppliers'  => Supplier::all(),
         ]);

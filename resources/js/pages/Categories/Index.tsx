@@ -15,15 +15,15 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { Plus, Edit, Search } from 'lucide-react';
 import { useState } from 'react';
 
-interface Brand {
+interface Category {
     id: number;
     name: string;
     active: boolean;
 }
 
 interface Props {
-    brands: {
-        data: Brand[];
+    categories: {
+        data: Category[];
         links: any[];
         meta: { total: number };
     };
@@ -32,9 +32,9 @@ interface Props {
     };
 }
 
-export default function Index({ brands, filters }: Props) {
+export default function Index({ categories, filters }: Props) {
     const [modalOpen, setModalOpen] = useState(false);
-    const [editing, setEditing] = useState<Brand | null>(null);
+    const [editing, setEditing] = useState<Category | null>(null);
     const [search, setSearch] = useState(filters.search || '');
 
     const { data, setData, post, put, processing, errors, reset } = useForm({
@@ -49,19 +49,19 @@ export default function Index({ brands, filters }: Props) {
         setModalOpen(true);
     };
 
-    const openEdit = (brand: Brand) => {
-        setData({ name: brand.name, active: brand.active });
-        setEditing(brand);
+    const openEdit = (category: Category) => {
+        setData({ name: category.name, active: category.active });
+        setEditing(category);
         setModalOpen(true);
     };
 
     const handleSubmit = () => {
         if (editing) {
-            put(route('brands.update', editing.id), {
+            put(route('categories.update', editing.id), {
                 onSuccess: () => setModalOpen(false),
             });
         } else {
-            post(route('brands.store'), {
+            post(route('categories.store'), {
                 onSuccess: () => setModalOpen(false),
             });
         }
@@ -69,13 +69,13 @@ export default function Index({ brands, filters }: Props) {
 
     const handleSearch = (value: string) => {
         setSearch(value);
-        router.get(route('brands.index'), { search: value }, { preserveState: true, replace: true });
+        router.get(route('categories.index'), { search: value }, { preserveState: true, replace: true });
     };
 
-    const columns: Column<Brand>[] = [
+    const columns: Column<Category>[] = [
         {
             key: 'name',
-            header: 'Marca',
+            header: 'Categoría',
             render: (row) => <span className="font-medium text-foreground">{row.name}</span>,
         },
         {
@@ -99,7 +99,7 @@ export default function Index({ brands, filters }: Props) {
                                 <Switch
                                     checked={row.active}
                                     onCheckedChange={() =>
-                                        router.patch(route('brands.toggle-active', row.id), {}, { preserveScroll: true })
+                                        router.patch(route('categories.toggle-active', row.id), {}, { preserveScroll: true })
                                     }
                                 />
                             </span>
@@ -110,9 +110,9 @@ export default function Index({ brands, filters }: Props) {
                         <Edit className="size-3.5" />
                     </ActionButton>
                     <DeleteConfirmationDialog
-                        url={route('brands.destroy', row.id)}
-                        title="Eliminar marca"
-                        description={`¿Está seguro que desea eliminar la marca "${row.name}"?`}
+                        url={route('categories.destroy', row.id)}
+                        title="Eliminar categoría"
+                        description={`¿Está seguro que desea eliminar la categoría "${row.name}"?`}
                     />
                 </div>
             ),
@@ -121,14 +121,14 @@ export default function Index({ brands, filters }: Props) {
 
     return (
         <AppLayout>
-            <Head title="Marcas" />
+            <Head title="Categorías" />
             <div className="flex flex-col gap-6 p-6">
                 <PageHeader
-                    title="Marcas"
-                    description="Administrá las marcas de los productos."
+                    title="Categorías"
+                    description="Administrá las categorías de los productos."
                     actions={
                         <Button onClick={openCreate}>
-                            <Plus className="size-4" /> Nueva Marca
+                            <Plus className="size-4" /> Nueva Categoría
                         </Button>
                     }
                 />
@@ -136,7 +136,7 @@ export default function Index({ brands, filters }: Props) {
                 <div className="max-w-sm">
                     <Input
                         startIcon={<Search className="size-4" />}
-                        placeholder="Buscar marca..."
+                        placeholder="Buscar categoría..."
                         value={search}
                         onChange={(e) => handleSearch(e.target.value)}
                     />
@@ -144,17 +144,17 @@ export default function Index({ brands, filters }: Props) {
 
                 <DataTable
                     columns={columns}
-                    data={brands.data}
+                    data={categories.data}
                     keyExtractor={(row) => row.id}
-                    emptyMessage="No hay marcas registradas."
+                    emptyMessage="No hay categorías registradas."
                 />
-                <Pagination links={brands.links} />
+                <Pagination links={categories.links} />
             </div>
 
             <Dialog open={modalOpen} onOpenChange={setModalOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>{editing ? 'Editar Marca' : 'Nueva Marca'}</DialogTitle>
+                        <DialogTitle>{editing ? 'Editar Categoría' : 'Nueva Categoría'}</DialogTitle>
                     </DialogHeader>
 
                     <div className="flex flex-col gap-4 py-2">
@@ -164,7 +164,7 @@ export default function Index({ brands, filters }: Props) {
                                 value={data.name}
                                 onChange={(e) => setData('name', e.target.value)}
                                 error={errors.name}
-                                placeholder="Ej: Samsung"
+                                placeholder="Ej: Electrónica"
                                 autoFocus
                             />
                         </FormField>
