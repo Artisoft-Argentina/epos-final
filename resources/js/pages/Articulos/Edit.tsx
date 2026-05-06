@@ -23,11 +23,11 @@ interface Supplier { id: number; business_name: string; }
 interface Props {
     articulo: Product;
     categorias: Category[];
-    marcas: Brand[];
+    brands: Brand[];
     suppliers: Supplier[];
 }
 
-export default function Edit({ articulo, categorias, marcas, suppliers }: Props) {
+export default function Edit({ articulo, categorias, brands, suppliers }: Props) {
     const { data, setData, post, processing, errors } = useForm({
         sku: articulo.sku,
         name: articulo.name,
@@ -117,7 +117,7 @@ export default function Edit({ articulo, categorias, marcas, suppliers }: Props)
                                         <Select value={data.brand_id} onValueChange={(value) => setData('brand_id', value)}>
                                             <SelectTrigger><SelectValue placeholder="Seleccionar marca" /></SelectTrigger>
                                             <SelectContent>
-                                                {marcas.map((b) => <SelectItem key={b.id} value={b.id.toString()}>{b.name}</SelectItem>)}
+                                                {brands.map((b) => <SelectItem key={b.id} value={b.id.toString()}>{b.name}</SelectItem>)}
                                             </SelectContent>
                                         </Select>
                                     </div>

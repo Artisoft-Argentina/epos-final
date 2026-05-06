@@ -38,7 +38,7 @@ const mainNavItems: NavItem[] = [
             },
             {
                 title: 'Marcas',
-                href: '/marcas',
+                href: '/brands',
             },
         ],
     },
