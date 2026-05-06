@@ -72,11 +72,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // Rutas para todos los roles
-    Route::resource('clientes', \App\Http\Controllers\ClienteController::class);
-    Route::get('clientes/{cliente}/estado-cuenta', [\App\Http\Controllers\ClienteController::class, 'estadoCuenta'])->name('clientes.estado-cuenta');
-    Route::get('clientes/{cliente}/exportar-excel', [\App\Http\Controllers\ClienteController::class, 'exportarExcel'])->name('clientes.exportar-excel');
-    Route::get('clientes/{cliente}/exportar-pdf', [\App\Http\Controllers\ClienteController::class, 'exportarPdf'])->name('clientes.exportar-pdf');
-    Route::get('estados-cuenta', [\App\Http\Controllers\ClienteController::class, 'estadosCuenta'])->name('estados-cuenta.index');
+    Route::resource('customers', \App\Http\Controllers\CustomerController::class)->except(['destroy']);
+    Route::patch('customers/{customer}/toggle-active', [\App\Http\Controllers\CustomerController::class, 'toggleActive'])->name('customers.toggle-active');
+    Route::get('customers/{customer}/export-excel', [\App\Http\Controllers\CustomerController::class, 'exportExcel'])->name('customers.export-excel');
+    Route::get('customers/{customer}/export-pdf', [\App\Http\Controllers\CustomerController::class, 'exportPdf'])->name('customers.export-pdf');
     
     // Rutas de escáner de códigos para ventas
     Route::get('scanner', [\App\Http\Controllers\CodigoController::class, 'scanner'])->name('scanner.index');
@@ -105,7 +104,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('facturas/{factura}/pdf', [\App\Http\Controllers\FacturaPdfController::class, 'generate'])->name('facturas.pdf');
 
-    Route::post('afip/consultar-cuit', [\App\Http\Controllers\ClienteController::class, 'consultarCuit'])->name('afip.consultar-cuit');
+    Route::post('afip/consultar-cuit', [\App\Http\Controllers\CustomerController::class, 'consultarCuit'])->name('afip.consultar-cuit');
 
 });
 

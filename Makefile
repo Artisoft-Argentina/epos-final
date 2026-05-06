@@ -100,6 +100,10 @@ fresh:
 	$(COMPOSE) up -d
 	$(COMPOSE) exec app php artisan migrate:fresh --seed --force
 
+fresh-ci:
+	$(COMPOSE_PROD) exec -T app php artisan migrate:fresh --seed --force
+	@echo "✓ BD recreada y seedeada (CI/CD dev)"
+
 prod-fresh:
 	@echo "⚠️  Esto borrará TODOS los datos. Escribe 'si' para confirmar:"
 	@read CONFIRM; [ "$$CONFIRM" = "si" ] || (echo "Cancelado." && exit 1)

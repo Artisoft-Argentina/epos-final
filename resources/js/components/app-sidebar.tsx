@@ -6,6 +6,7 @@ import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 import { BookOpen, Folder, LayoutGrid, Users, Package, Tag, ShoppingCart, FileText, Settings, Truck, MessageSquare, Brain, ShoppingBag, PackageCheck, Camera } from 'lucide-react';
 import AppLogo from './app-logo';
+import AppLogoIcon from './app-logo-icon';
 
 const mainNavItems: NavItem[] = [
     {
@@ -19,11 +20,7 @@ const mainNavItems: NavItem[] = [
         items: [
             {
                 title: 'Clientes',
-                href: '/clientes',
-            },
-            {
-                title: 'Estados de Cuenta',
-                href: '/estados-cuenta',
+                href: '/customers',
             },
         ],
     },
@@ -177,6 +174,7 @@ export function AppSidebar() {
                         <SidebarMenuButton size="lg" asChild>
                             <Link href="/dashboard" prefetch>
                                 <AppLogo />
+                                <AppLogoIcon className="hidden size-8 object-contain group-data-[collapsible=icon]:block" />
                             </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
