@@ -44,7 +44,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
     // Rutas para admin y superadmin
     Route::middleware(['role:admin,superadmin'])->group(function () {
-        Route::resource('categorias', \App\Http\Controllers\CategoriaController::class);
+        Route::resource('categories', \App\Http\Controllers\CategoryController::class)->except(['create', 'edit']);
+        Route::patch('categories/{category}/toggle-active', [\App\Http\Controllers\CategoryController::class, 'toggleActive'])->name('categories.toggle-active');
         Route::resource('brands', \App\Http\Controllers\BrandController::class)->except(['create', 'edit']);
         Route::patch('brands/{brand}/toggle-active', [\App\Http\Controllers\BrandController::class, 'toggleActive'])->name('brands.toggle-active');
         Route::resource('articulos', \App\Http\Controllers\ArticuloController::class);
