@@ -20,11 +20,12 @@ class CustomerController extends Controller
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('business_name', 'like', "%{$search}%")
-                  ->orWhere('tax_id', 'like', "%{$search}%")
-                  ->orWhere('dni', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('phone', 'like', "%{$search}%");
+                $q->where('business_name', 'ILIKE', "%{$search}%")
+                  ->orWhere('fantasy_name', 'ILIKE', "%{$search}%")
+                  ->orWhere('tax_id', 'ILIKE', "%{$search}%")
+                  ->orWhere('dni', 'ILIKE', "%{$search}%")
+                  ->orWhere('email', 'ILIKE', "%{$search}%")
+                  ->orWhere('phone', 'ILIKE', "%{$search}%");
             });
         }
 
