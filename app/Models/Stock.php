@@ -13,6 +13,7 @@ class Stock extends Model
     protected $fillable = [
         'quantity',
         'product_id',
+        'warehouse_id',
         'active',
     ];
 
@@ -25,9 +26,22 @@ class Stock extends Model
         return $this->belongsTo(Product::class);
     }
 
+    public function warehouse()
+    {
+        return $this->belongsTo(Warehouse::class);
+    }
+
     public function movements(): HasMany
     {
         return $this->hasMany(StockMovement::class);
+    }
+
+    public static function forProductInWarehouse(int $productId, int $warehouseId): self
+    {
+        return static::firstOrCreate(
+            ['product_id' => $productId, 'warehouse_id' => $warehouseId],
+            ['quantity' => 0, 'active' => true]
+        );
     }
 
     // Tipos de movimiento que representan transacciones de negocio reales
@@ -37,12 +51,14 @@ class Stock extends Model
         StockMovement::TYPE_ASSISTANT_ENTRY,
         StockMovement::TYPE_ADJUSTMENT_ENTRY,
         StockMovement::TYPE_RETURN,
+        StockMovement::TYPE_TRANSFER_IN,
     ];
 
     private const BUSINESS_EXIT_TYPES = [
         StockMovement::TYPE_DELIVERY_EXIT,
         StockMovement::TYPE_POS_SALE_EXIT,
         StockMovement::TYPE_ADJUSTMENT_EXIT,
+        StockMovement::TYPE_TRANSFER_OUT,
     ];
 
     public function calculatedQuantity(): int

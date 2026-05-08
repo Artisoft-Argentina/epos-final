@@ -4,7 +4,7 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, Users, Package, Tag, ShoppingCart, FileText, Settings, Truck, MessageSquare, Brain, ShoppingBag, PackageCheck, Camera } from 'lucide-react';
+import { BookOpen, Folder, LayoutGrid, Users, Package, Tag, ShoppingCart, FileText, Settings, Truck, MessageSquare, Brain, ShoppingBag, PackageCheck, Camera, Warehouse, Store, ArrowLeftRight } from 'lucide-react';
 import AppLogo from './app-logo';
 import AppLogoIcon from './app-logo-icon';
 
@@ -43,9 +43,19 @@ const mainNavItems: NavItem[] = [
         ],
     },
     {
-        title: 'Inventarios',
-        href: '/inventarios',
+        title: 'Inventario',
         icon: Package,
+        items: [
+            {
+                title: 'Stock por almacén',
+                href: '/inventarios',
+            },
+            {
+                title: 'Transferencias',
+                href: '/transferencias',
+                icon: ArrowLeftRight,
+            },
+        ],
     },
     {
         title: 'Ventas',
@@ -114,6 +124,16 @@ const mainNavItems: NavItem[] = [
             {
                 title: 'Empresa',
                 href: '/empresa',
+            },
+            {
+                title: 'Almacenes',
+                href: '/almacenes',
+                icon: Warehouse,
+            },
+            {
+                title: 'Puntos de Venta',
+                href: '/puntos-venta',
+                icon: Store,
             },
             {
                 title: 'Registro de Actividad',

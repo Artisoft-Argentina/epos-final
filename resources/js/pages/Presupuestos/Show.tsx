@@ -6,23 +6,24 @@ import { ArrowLeft } from 'lucide-react';
 
 interface Presupuesto {
     id: number;
-    numpresupuesto: number;
+    quote_number: number;
     total: number;
     subtotal: number;
-    fecha: string;
-    cliente: {
-        razonsocial: string;
+    date: string;
+    customer: {
+        business_name: string;
+        fantasy_name?: string | null;
     };
     user: {
         name: string;
     };
-    articulos: Array<{
+    products: Array<{
         id: number;
-        articulo: string;
-        codarticulo: string;
+        name: string;
+        sku: string;
         pivot: {
-            cantidad: number;
-            preciounitario: number;
+            quantity: number;
+            unit_price: number;
             subtotal: number;
         };
     }>;
@@ -35,12 +36,12 @@ interface Props {
 export default function Show({ presupuesto }: Props) {
     return (
         <AppLayout>
-            <Head title={`Presupuesto #${presupuesto.numpresupuesto}`} />
-            
+            <Head title={`Presupuesto #${presupuesto.quote_number}`} />
+
             <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
                     <div>
-                        <h1 className="text-2xl font-bold">Presupuesto #{presupuesto.numpresupuesto}</h1>
+                        <h1 className="text-2xl font-bold">Presupuesto #{presupuesto.quote_number}</h1>
                         <p className="text-gray-600">Detalles del presupuesto</p>
                     </div>
                     <div className="flex gap-2">
@@ -61,7 +62,7 @@ export default function Show({ presupuesto }: Props) {
                         <CardContent className="space-y-4">
                             <div>
                                 <label className="text-sm font-medium text-gray-500">Cliente</label>
-                                <p className="text-sm">{presupuesto.cliente.razonsocial}</p>
+                                <p className="text-sm">{presupuesto.customer.fantasy_name || presupuesto.customer.business_name}</p>
                             </div>
                             <div>
                                 <label className="text-sm font-medium text-gray-500">Vendedor</label>
@@ -69,7 +70,7 @@ export default function Show({ presupuesto }: Props) {
                             </div>
                             <div>
                                 <label className="text-sm font-medium text-gray-500">Fecha</label>
-                                <p className="text-sm">{new Date(presupuesto.fecha).toLocaleDateString()}</p>
+                                <p className="text-sm">{new Date(presupuesto.date).toLocaleDateString()}</p>
                             </div>
                         </CardContent>
                     </Card>
@@ -95,7 +96,7 @@ export default function Show({ presupuesto }: Props) {
                     <CardHeader>
                         <CardTitle>Artículos</CardTitle>
                         <CardDescription>
-                            {presupuesto.articulos.length} artículo{presupuesto.articulos.length !== 1 ? 's' : ''}
+                            {presupuesto.products.length} artículo{presupuesto.products.length !== 1 ? 's' : ''}
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -111,13 +112,13 @@ export default function Show({ presupuesto }: Props) {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {presupuesto.articulos.map((articulo) => (
-                                        <tr key={articulo.id} className="border-b">
-                                            <td className="p-2 font-mono text-sm">{articulo.codarticulo}</td>
-                                            <td className="p-2 font-medium">{articulo.articulo}</td>
-                                            <td className="p-2">{articulo.pivot.cantidad}</td>
-                                            <td className="p-2">${Number(articulo.pivot.preciounitario).toFixed(2)}</td>
-                                            <td className="p-2">${Number(articulo.pivot.subtotal).toFixed(2)}</td>
+                                    {presupuesto.products.map((p) => (
+                                        <tr key={p.id} className="border-b">
+                                            <td className="p-2 font-mono text-sm">{p.sku}</td>
+                                            <td className="p-2 font-medium">{p.name}</td>
+                                            <td className="p-2">{p.pivot.quantity}</td>
+                                            <td className="p-2">${Number(p.pivot.unit_price).toFixed(2)}</td>
+                                            <td className="p-2">${Number(p.pivot.subtotal).toFixed(2)}</td>
                                         </tr>
                                     ))}
                                 </tbody>

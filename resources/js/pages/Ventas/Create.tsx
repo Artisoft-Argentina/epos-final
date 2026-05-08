@@ -1,4 +1,4 @@
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, usePage } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,32 +7,60 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, Trash2, Save, X, Package, Camera, Search, Minus, User, ListOrdered, ScanLine } from 'lucide-react';
-import { useState, useRef } from 'react';
+import { Plus, Trash2, Save, X, Package, Camera, Search, Minus, User, ListOrdered, ScanLine, Warehouse as WarehouseIcon, AlertTriangle, ArrowRightLeft } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
 import QRScanner from '@/components/QRScanner';
 
 interface Cliente {
     id: number;
-    razonsocial: string;
+    business_name: string;
+    fantasy_name?: string | null;
+}
+
+interface ProductImage {
+    id: number;
+    path: string;
+    is_primary: boolean;
 }
 
 interface Articulo {
     id: number;
-    articulo: string;
-    codarticulo: string;
-    precio: number;
-    categoria: { categoria: string };
-    marca: { marca: string };
-    listas_precios: { id: number; pivot: { precio: number } }[];
-    imagenes: { id: number; ruta: string; principal: boolean }[];
+    name: string;
+    sku: string;
+    price: number;
+    category?: { id: number; name: string } | null;
+    brand?: { id: number; name: string } | null;
+    price_lists: { id: number; pivot: { price: number } }[];
+    images: ProductImage[];
 }
 
 interface ListaPrecio {
     id: number;
-    nombre: string;
-    porcentaje: number;
+    name: string;
+    percentage: number;
     default_pos: boolean;
     default_ecommerce: boolean;
+}
+
+interface PuntoVenta {
+    id: number;
+    name: string;
+    pos_number: number;
+    warehouse_id: number;
+    warehouse?: { id: number; name: string };
+}
+
+interface Almacen {
+    id: number;
+    name: string;
+    is_default: boolean;
+}
+
+interface WarehouseStock {
+    warehouse_id: number;
+    warehouse_name: string;
+    quantity: number;
+    is_pos_warehouse: boolean;
 }
 
 interface Props {
@@ -40,15 +68,23 @@ interface Props {
     articulos: Articulo[];
     listasPrecios: ListaPrecio[];
     listaDefaultPos: ListaPrecio | null;
+    puntosVenta?: PuntoVenta[];
+    almacenes?: Almacen[];
 }
 
 interface ArticuloVenta {
     articulo_id: string;
     cantidad: number;
     precio: number;
+    warehouse_id: string;
 }
 
-export default function Create({ clientes, articulos, listasPrecios, listaDefaultPos }: Props) {
+export default function Create({ clientes, articulos, listasPrecios, listaDefaultPos, puntosVenta = [], almacenes = [] }: Props) {
+    const page = usePage<any>();
+    const activePosId = page.props.activePointOfSaleId as number | null;
+    const activePos = puntosVenta.find((p) => p.id === activePosId) ?? puntosVenta[0];
+    const defaultWarehouseId = activePos?.warehouse_id ?? almacenes.find((a) => a.is_default)?.id ?? almacenes[0]?.id ?? null;
+    const [stockByProduct, setStockByProduct] = useState<Record<string, WarehouseStock[]>>({});
     const [articulosVenta, setArticulosVenta] = useState<ArticuloVenta[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [filteredArticulos, setFilteredArticulos] = useState<Articulo[]>([]);
@@ -58,20 +94,34 @@ export default function Create({ clientes, articulos, listasPrecios, listaDefaul
     const searchInputRef = useRef<HTMLInputElement>(null);
 
     const { data, setData, post, processing, errors } = useForm({
-        cliente_id: '',
+        customer_id: '',
         articulos: [] as ArticuloVenta[],
         total: 0,
-        recargo: 0,
-        descuento: 0,
-        metodo_pago: 'efectivo',
-        monto_pago: 0,
+        surcharge: 0,
+        additional_discount: 0,
+        payment_method: 'efectivo',
+        payment_amount: 0,
         auto_payment: true,
         auto_delivery: true,
-        lista_precio_id: listaDefaultPos?.id?.toString() || '',
+        price_list_id: listaDefaultPos?.id?.toString() || '',
     });
 
     const addArticulo = () => {
-        setArticulosVenta([...articulosVenta, { articulo_id: '', cantidad: 1, precio: 0 }]);
+        setArticulosVenta([...articulosVenta, { articulo_id: '', cantidad: 1, precio: 0, warehouse_id: defaultWarehouseId ? String(defaultWarehouseId) : '' }]);
+    };
+
+    const fetchStockForProduct = async (productId: string) => {
+        if (stockByProduct[productId]) return;
+        try {
+            const url = route('articulos.stock-by-warehouse', productId) + (activePos ? `?pos_warehouse_id=${activePos.warehouse_id}` : '');
+            const res = await fetch(url, { headers: { Accept: 'application/json' } });
+            if (res.ok) {
+                const data: WarehouseStock[] = await res.json();
+                setStockByProduct((prev) => ({ ...prev, [productId]: data }));
+            }
+        } catch (e) {
+            console.error('Error fetching stock:', e);
+        }
     };
 
     const removeArticulo = (index: number) => {
@@ -88,6 +138,7 @@ export default function Create({ clientes, articulos, listasPrecios, listaDefaul
             const articulo = articulos.find(a => a.id.toString() === value);
             if (articulo) {
                 newItems[index].precio = getPrecioArticulo(articulo);
+                fetchStockForProduct(value);
             }
         }
 
@@ -97,20 +148,20 @@ export default function Create({ clientes, articulos, listasPrecios, listaDefaul
 
     const updateTotal = (items: ArticuloVenta[]) => {
         const subtotal = items.reduce((sum, item) => sum + (item.cantidad * item.precio), 0);
-        const total = subtotal + data.recargo - data.descuento;
+        const total = subtotal + data.surcharge - data.additional_discount;
         setData('total', total);
         setData('articulos', items);
         if (data.auto_payment) {
-            setData('monto_pago', total);
+            setData('payment_amount', total);
         }
     };
 
     const updateTotalWithAdjustments = () => {
         const subtotal = articulosVenta.reduce((sum, item) => sum + (item.cantidad * item.precio), 0);
-        const total = subtotal + data.recargo - data.descuento;
+        const total = subtotal + data.surcharge - data.additional_discount;
         setData('total', total);
         if (data.auto_payment) {
-            setData('monto_pago', total);
+            setData('payment_amount', total);
         }
     };
 
@@ -118,8 +169,8 @@ export default function Create({ clientes, articulos, listasPrecios, listaDefaul
         setSearchTerm(value);
         if (value.length > 0) {
             const filtered = articulos.filter(articulo =>
-                articulo.articulo.toLowerCase().includes(value.toLowerCase()) ||
-                articulo.codarticulo.toLowerCase().includes(value.toLowerCase())
+                articulo.name.toLowerCase().includes(value.toLowerCase()) ||
+                articulo.sku.toLowerCase().includes(value.toLowerCase())
             );
             setFilteredArticulos(filtered);
             setShowDropdown(true);
@@ -129,11 +180,11 @@ export default function Create({ clientes, articulos, listasPrecios, listaDefaul
     };
 
     const getPrecioArticulo = (articulo: Articulo) => {
-        if (data.lista_precio_id) {
-            const precioLista = articulo.listasPrecios?.find(lp => lp.id.toString() === data.lista_precio_id);
-            if (precioLista) return Number(precioLista.pivot.precio);
+        if (data.price_list_id) {
+            const precioLista = articulo.price_lists?.find(lp => lp.id.toString() === data.price_list_id);
+            if (precioLista) return Number(precioLista.pivot.price);
         }
-        return Number(articulo.precio);
+        return Number(articulo.price);
     };
 
     const recalcularPrecios = (nuevaListaId: string) => {
@@ -142,8 +193,8 @@ export default function Create({ clientes, articulos, listasPrecios, listaDefaul
                 const articulo = articulos.find(a => a.id.toString() === item.articulo_id);
                 if (articulo) {
                     const nuevoPrecio = nuevaListaId
-                        ? articulo.listasPrecios?.find(lp => lp.id.toString() === nuevaListaId)?.pivot.precio || articulo.precio
-                        : articulo.precio;
+                        ? articulo.price_lists?.find(lp => lp.id.toString() === nuevaListaId)?.pivot.price || articulo.price
+                        : articulo.price;
                     return { ...item, precio: Number(nuevoPrecio) };
                 }
             }
@@ -154,7 +205,9 @@ export default function Create({ clientes, articulos, listasPrecios, listaDefaul
     };
 
     const addArticuloFromSearch = (articulo: Articulo) => {
-        const existingIndex = articulosVenta.findIndex(item => item.articulo_id === articulo.id.toString());
+        const productId = articulo.id.toString();
+        fetchStockForProduct(productId);
+        const existingIndex = articulosVenta.findIndex(item => item.articulo_id === productId);
         if (existingIndex >= 0) {
             const newItems = [...articulosVenta];
             newItems[existingIndex].cantidad += 1;
@@ -162,9 +215,10 @@ export default function Create({ clientes, articulos, listasPrecios, listaDefaul
             updateTotal(newItems);
         } else {
             const newItem: ArticuloVenta = {
-                articulo_id: articulo.id.toString(),
+                articulo_id: productId,
                 cantidad: 1,
                 precio: getPrecioArticulo(articulo),
+                warehouse_id: defaultWarehouseId ? String(defaultWarehouseId) : '',
             };
             const newItems = [...articulosVenta, newItem];
             setArticulosVenta(newItems);
@@ -214,22 +268,22 @@ export default function Create({ clientes, articulos, listasPrecios, listaDefaul
                     <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end">
                         <div className="flex-1">
                             <Label className="text-xs text-muted-foreground">Cliente</Label>
-                            <Select value={data.cliente_id} onValueChange={(value) => setData('cliente_id', value)}>
+                            <Select value={data.customer_id} onValueChange={(value) => setData('customer_id', value)}>
                                 <SelectTrigger className="mt-1">
                                     <User className="text-muted-foreground mr-2 size-4" />
                                     <SelectValue placeholder="Seleccionar cliente" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {clientes.map((c) => (
-                                        <SelectItem key={c.id} value={c.id.toString()}>{c.razonsocial}</SelectItem>
+                                        <SelectItem key={c.id} value={c.id.toString()}>{c.fantasy_name || c.business_name}</SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
-                            {errors.cliente_id && <p className="mt-1 text-xs text-destructive">{errors.cliente_id}</p>}
+                            {errors.customer_id && <p className="mt-1 text-xs text-destructive">{errors.customer_id}</p>}
                         </div>
                         <div className="flex-1">
                             <Label className="text-xs text-muted-foreground">Lista de Precios</Label>
-                            <Select value={data.lista_precio_id} onValueChange={(value) => { setData('lista_precio_id', value); recalcularPrecios(value); }}>
+                            <Select value={data.price_list_id} onValueChange={(value) => { setData('price_list_id', value); recalcularPrecios(value); }}>
                                 <SelectTrigger className="mt-1">
                                     <ListOrdered className="text-muted-foreground mr-2 size-4" />
                                     <SelectValue placeholder="Seleccionar lista" />
@@ -237,7 +291,7 @@ export default function Create({ clientes, articulos, listasPrecios, listaDefaul
                                 <SelectContent>
                                     {listasPrecios.map((l) => (
                                         <SelectItem key={l.id} value={l.id.toString()}>
-                                            {l.nombre} {l.default_pos && '(POS)'}
+                                            {l.name} {l.default_pos && '(POS)'}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -267,7 +321,7 @@ export default function Create({ clientes, articulos, listasPrecios, listaDefaul
                         {showDropdown && filteredArticulos.length > 0 && (
                             <div className="absolute z-10 mt-1 w-full overflow-auto rounded-lg border bg-card shadow-lg max-h-72">
                                 {filteredArticulos.map((articulo) => {
-                                    const img = articulo.imagenes?.find(i => i.principal) || articulo.imagenes?.[0];
+                                    const img = articulo.images?.find(i => i.is_primary) || articulo.images?.[0];
                                     return (
                                         <div
                                             key={articulo.id}
@@ -275,15 +329,15 @@ export default function Create({ clientes, articulos, listasPrecios, listaDefaul
                                             onClick={() => addArticuloFromSearch(articulo)}
                                         >
                                             {img ? (
-                                                <img src={`/storage/${img.ruta}`} alt={articulo.articulo} className="size-10 shrink-0 rounded-lg object-cover" />
+                                                <img src={`/storage/${img.path}`} alt={articulo.name} className="size-10 shrink-0 rounded-lg object-cover" />
                                             ) : (
                                                 <div className="bg-muted flex size-10 shrink-0 items-center justify-center rounded-lg">
                                                     <Package className="text-muted-foreground size-5" />
                                                 </div>
                                             )}
                                             <div className="min-w-0 flex-1">
-                                                <p className="truncate text-sm font-medium">{articulo.articulo}</p>
-                                                <p className="text-muted-foreground text-xs">{articulo.codarticulo} · {articulo.categoria?.categoria}</p>
+                                                <p className="truncate text-sm font-medium">{articulo.name}</p>
+                                                <p className="text-muted-foreground text-xs">{articulo.sku} · {articulo.category?.name}</p>
                                             </div>
                                             <span className="text-primary shrink-0 text-sm font-bold tabular-nums">
                                                 ${getPrecioArticulo(articulo).toFixed(2)}
@@ -305,41 +359,47 @@ export default function Create({ clientes, articulos, listasPrecios, listaDefaul
                         )}
                         {articulosVenta.map((item, index) => {
                             const articulo = articulos.find(a => a.id.toString() === item.articulo_id);
-                            const img = articulo?.imagenes?.find(i => i.principal) || articulo?.imagenes?.[0];
+                            const img = articulo?.images?.find(i => i.is_primary) || articulo?.images?.[0];
+                            const stocks = stockByProduct[item.articulo_id] ?? [];
+                            const selectedStock = stocks.find((s) => String(s.warehouse_id) === item.warehouse_id);
+                            const stockHere = selectedStock?.quantity ?? 0;
+                            const insufficient = item.articulo_id && item.cantidad > stockHere;
+                            const otherStock = stocks.filter((s) => String(s.warehouse_id) !== item.warehouse_id && s.quantity >= item.cantidad);
 
                             return (
-                                <div key={index} className="group flex items-center gap-3 rounded-xl border bg-card p-3 transition-colors hover:border-primary/20">
-                                    {/* Image */}
-                                    {img ? (
-                                        <img src={`/storage/${img.ruta}`} alt={articulo?.articulo} className="size-12 shrink-0 rounded-lg object-cover" />
-                                    ) : (
-                                        <div className="bg-muted flex size-12 shrink-0 items-center justify-center rounded-lg">
-                                            <Package className="text-muted-foreground size-5" />
-                                        </div>
-                                    )}
-
-                                    {/* Info + Select (if no articulo selected) */}
-                                    <div className="min-w-0 flex-1">
-                                        {articulo ? (
-                                            <>
-                                                <p className="truncate text-sm font-semibold">{articulo.articulo}</p>
-                                                <p className="text-muted-foreground text-xs">{articulo.codarticulo}</p>
-                                            </>
+                                <div key={index} className="group rounded-xl border bg-card p-3 transition-colors hover:border-primary/20">
+                                    <div className="flex items-center gap-3">
+                                        {/* Image */}
+                                        {img ? (
+                                            <img src={`/storage/${img.path}`} alt={articulo?.name} className="size-12 shrink-0 rounded-lg object-cover" />
                                         ) : (
-                                            <Select value={item.articulo_id} onValueChange={(v) => updateArticulo(index, 'articulo_id', v)}>
-                                                <SelectTrigger className="h-8 text-xs">
-                                                    <SelectValue placeholder="Seleccionar artículo" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {articulos.map((a) => (
-                                                        <SelectItem key={a.id} value={a.id.toString()}>
-                                                            {a.codarticulo} - {a.articulo}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
+                                            <div className="bg-muted flex size-12 shrink-0 items-center justify-center rounded-lg">
+                                                <Package className="text-muted-foreground size-5" />
+                                            </div>
                                         )}
-                                    </div>
+
+                                        {/* Info + Select (if no articulo selected) */}
+                                        <div className="min-w-0 flex-1">
+                                            {articulo ? (
+                                                <>
+                                                    <p className="truncate text-sm font-semibold">{articulo.name}</p>
+                                                    <p className="text-muted-foreground text-xs">{articulo.sku}</p>
+                                                </>
+                                            ) : (
+                                                <Select value={item.articulo_id} onValueChange={(v) => updateArticulo(index, 'articulo_id', v)}>
+                                                    <SelectTrigger className="h-8 text-xs">
+                                                        <SelectValue placeholder="Seleccionar artículo" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {articulos.map((a) => (
+                                                            <SelectItem key={a.id} value={a.id.toString()}>
+                                                                {a.sku} - {a.name}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            )}
+                                        </div>
 
                                     {/* Quantity Controls */}
                                     <div className="flex items-center gap-1.5">
@@ -392,6 +452,65 @@ export default function Create({ clientes, articulos, listasPrecios, listaDefaul
                                     >
                                         <Trash2 className="size-4" />
                                     </button>
+                                    </div>
+
+                                    {/* Stock + Warehouse row */}
+                                    {item.articulo_id && almacenes.length > 0 && (
+                                        <div className="mt-2 flex flex-wrap items-center gap-2 border-t pt-2">
+                                            <WarehouseIcon className="text-muted-foreground size-3.5" />
+                                            <Select value={item.warehouse_id} onValueChange={(v) => updateArticulo(index, 'warehouse_id', v)}>
+                                                <SelectTrigger className="h-7 w-auto min-w-[160px] text-xs">
+                                                    <SelectValue placeholder="Almacén" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {almacenes.map((a) => {
+                                                        const s = stocks.find((st) => st.warehouse_id === a.id);
+                                                        return (
+                                                            <SelectItem key={a.id} value={String(a.id)}>
+                                                                {a.name} {s ? `(${s.quantity})` : '(0)'}
+                                                            </SelectItem>
+                                                        );
+                                                    })}
+                                                </SelectContent>
+                                            </Select>
+                                            <Badge variant={insufficient ? 'destructive' : 'secondary'} className="text-[10px] tabular-nums">
+                                                Stock: {stockHere}
+                                            </Badge>
+                                            {insufficient && otherStock.length > 0 && (
+                                                <div className="flex items-center gap-1 text-xs">
+                                                    <AlertTriangle className="text-warning size-3.5" />
+                                                    <span className="text-warning">Disponible en:</span>
+                                                    {otherStock.slice(0, 2).map((s) => (
+                                                        <Button
+                                                            key={s.warehouse_id}
+                                                            type="button"
+                                                            variant="outline"
+                                                            size="sm"
+                                                            className="h-6 px-2 text-[10px]"
+                                                            onClick={() => updateArticulo(index, 'warehouse_id', String(s.warehouse_id))}
+                                                        >
+                                                            {s.warehouse_name} ({s.quantity})
+                                                        </Button>
+                                                    ))}
+                                                    <a
+                                                        href={route('transferencias.create')}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="text-muted-foreground hover:text-primary inline-flex items-center gap-1 text-[10px] underline"
+                                                    >
+                                                        <ArrowRightLeft className="size-3" />
+                                                        Solicitar transferencia
+                                                    </a>
+                                                </div>
+                                            )}
+                                            {insufficient && otherStock.length === 0 && (
+                                                <div className="flex items-center gap-1 text-xs text-destructive">
+                                                    <AlertTriangle className="size-3.5" />
+                                                    Sin stock suficiente en ningún almacén
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             );
                         })}
@@ -422,11 +541,11 @@ export default function Create({ clientes, articulos, listasPrecios, listaDefaul
                                 <Label className="text-muted-foreground text-sm font-normal">Recargo</Label>
                                 <Input
                                     type="text"
-                                    value={data.recargo.toString()}
+                                    value={data.surcharge.toString()}
                                     onChange={(e) => {
                                         const v = e.target.value;
                                         const n = v.includes('.') ? parseFloat(v) : parseFloat(v + '.00');
-                                        setData('recargo', isNaN(n) ? 0 : n);
+                                        setData('surcharge', isNaN(n) ? 0 : n);
                                         setTimeout(updateTotalWithAdjustments, 0);
                                     }}
                                     className="h-7 w-24 text-right text-sm tabular-nums"
@@ -436,11 +555,11 @@ export default function Create({ clientes, articulos, listasPrecios, listaDefaul
                                 <Label className="text-muted-foreground text-sm font-normal">Descuento</Label>
                                 <Input
                                     type="text"
-                                    value={data.descuento.toString()}
+                                    value={data.additional_discount.toString()}
                                     onChange={(e) => {
                                         const v = e.target.value;
                                         const n = v.includes('.') ? parseFloat(v) : parseFloat(v + '.00');
-                                        setData('descuento', isNaN(n) ? 0 : n);
+                                        setData('additional_discount', isNaN(n) ? 0 : n);
                                         setTimeout(updateTotalWithAdjustments, 0);
                                     }}
                                     className="h-7 w-24 text-right text-sm tabular-nums"
@@ -455,7 +574,7 @@ export default function Create({ clientes, articulos, listasPrecios, listaDefaul
                         {/* Payment */}
                         <div className="space-y-3">
                             <h3 className="text-sm font-semibold">Pago</h3>
-                            <Select value={data.metodo_pago} onValueChange={(v) => setData('metodo_pago', v)}>
+                            <Select value={data.payment_method} onValueChange={(v) => setData('payment_method', v)}>
                                 <SelectTrigger className="h-9">
                                     <SelectValue />
                                 </SelectTrigger>
@@ -475,17 +594,17 @@ export default function Create({ clientes, articulos, listasPrecios, listaDefaul
                                         type="text"
                                         inputMode="decimal"
                                         value={montoPagoInput}
-                                        onFocus={() => setMontoPagoInput(data.monto_pago > 0 ? data.monto_pago.toString() : '')}
+                                        onFocus={() => setMontoPagoInput(data.payment_amount > 0 ? data.payment_amount.toString() : '')}
                                         onChange={(e) => {
                                             const v = e.target.value;
                                             if (v === '' || /^\d*\.?\d{0,2}$/.test(v)) {
                                                 setMontoPagoInput(v);
                                                 const n = parseFloat(v);
-                                                if (!isNaN(n)) setData('monto_pago', n);
-                                                else if (v === '') setData('monto_pago', 0);
+                                                if (!isNaN(n)) setData('payment_amount', n);
+                                                else if (v === '') setData('payment_amount', 0);
                                             }
                                         }}
-                                        onBlur={() => setMontoPagoInput(data.monto_pago.toFixed(2))}
+                                        onBlur={() => setMontoPagoInput(data.payment_amount.toFixed(2))}
                                         placeholder="0.00"
                                         className="mt-1"
                                     />
@@ -500,8 +619,8 @@ export default function Create({ clientes, articulos, listasPrecios, listaDefaul
                                         onCheckedChange={(checked) => {
                                             const val = !!checked;
                                             setData('auto_payment', val);
-                                            if (val) setData('monto_pago', data.total);
-                                            else setData('monto_pago', 0);
+                                            if (val) setData('payment_amount', data.total);
+                                            else setData('payment_amount', 0);
                                         }}
                                     />
                                     <Label htmlFor="auto_payment" className="text-xs">Pago automático por el total</Label>
@@ -516,10 +635,10 @@ export default function Create({ clientes, articulos, listasPrecios, listaDefaul
                                 </div>
                             </div>
 
-                            {data.monto_pago < data.total && data.monto_pago > 0 && (
+                            {data.payment_amount < data.total && data.payment_amount > 0 && (
                                 <div className="rounded-lg bg-warning-soft p-3">
                                     <p className="text-warning text-xs font-medium">
-                                        Pago parcial — Saldo pendiente: ${(data.total - data.monto_pago).toFixed(2)}
+                                        Pago parcial — Saldo pendiente: ${(data.total - data.payment_amount).toFixed(2)}
                                     </p>
                                 </div>
                             )}
@@ -538,7 +657,7 @@ export default function Create({ clientes, articulos, listasPrecios, listaDefaul
                         </Button>
                         <Button
                             type="submit"
-                            disabled={processing || articulosVenta.length === 0 || data.monto_pago > data.total}
+                            disabled={processing || articulosVenta.length === 0 || data.payment_amount > data.total}
                             className="col-span-2"
                             size="lg"
                         >

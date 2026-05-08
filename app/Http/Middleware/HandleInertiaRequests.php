@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\PointOfSale;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -60,6 +61,12 @@ class HandleInertiaRequests extends Middleware
                 'success' => $request->session()->get('success'),
                 'error' => $request->session()->get('error'),
             ],
+            'pointsOfSale' => fn () => tenancy()->initialized
+                ? PointOfSale::active()->with('warehouse:id,name')->orderBy('name')->get(['id', 'name', 'pos_number', 'warehouse_id'])
+                : [],
+            'activePointOfSaleId' => fn () => tenancy()->initialized
+                ? (session('active_point_of_sale_id') ?? PointOfSale::where('is_default', true)->value('id'))
+                : null,
         ];
     }
 }

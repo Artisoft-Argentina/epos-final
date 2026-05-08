@@ -40,7 +40,7 @@ dev-shell:
 
 dev-rebuild: dev-down build-fresh dev-up
 
-.PHONY: up down build build-fresh logs shell migrate tenant-migrate fresh \
+.PHONY: up down build build-fresh logs shell migrate tenant-migrate seed demo-seed tenants-list fresh \
         rebuild rebuild-fresh prod-up prod-down prod-deploy migrate-prod backup \
         artisan tinker queue-work dev-up dev-down dev-logs dev-shell dev-rebuild postgres-shell
 
@@ -92,6 +92,24 @@ tenant-migrate:
 
 seed:
 	$(COMPOSE) exec app php artisan db:seed --force
+
+# Siembra datos demo en un tenant específico (marcas, categorías, productos, stock, clientes).
+# Uso: make demo-seed tenant=<tenant_id>
+demo-seed:
+	@if [ -z "$(tenant)" ]; then \
+		echo "✗ Falta el parámetro 'tenant'."; \
+		echo "  Uso: make demo-seed tenant=<tenant_id>"; \
+		echo ""; \
+		echo "  Tenants disponibles:"; \
+		$(COMPOSE) exec -T app php artisan tinker --execute="App\Models\Tenant::pluck('id')->each(fn(\$$id) => print('   - '.\$$id.PHP_EOL));" 2>/dev/null; \
+		exit 1; \
+	fi
+	$(COMPOSE) exec app php artisan tenants:run epos:seed-demo --tenants=$(tenant)
+	@echo "✓ Datos demo sembrados en tenant '$(tenant)'."
+
+# Lista los tenants existentes
+tenants-list:
+	@$(COMPOSE) exec -T app php artisan tinker --execute="App\Models\Tenant::pluck('id')->each(fn(\$$id) => print(' - '.\$$id.PHP_EOL));"
 
 fresh:
 	@echo "⚠️  Esto borrará TODOS los datos. Escribe 'si' para confirmar:"

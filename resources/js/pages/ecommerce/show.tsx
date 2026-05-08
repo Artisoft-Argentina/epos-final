@@ -7,15 +7,15 @@ import { useState } from 'react';
 
 interface Articulo {
     id: number;
-    articulo: string;
-    descripcion?: string;
-    precio: number;
-    stock?: number;
-    categoria?: { id: number; nombre: string };
-    marca?: { nombre: string };
-    imagenes?: Array<{
+    name: string;
+    description?: string;
+    price: number;
+    stock?: { quantity: number } | number;
+    category?: { id: number; name: string } | null;
+    brand?: { id: number; name: string } | null;
+    images?: Array<{
         id: number;
-        ruta: string;
+        path: string;
         url?: string;
     }>;
 }
@@ -51,13 +51,13 @@ function ProductShowContent({ articulo, relacionados, cartCount }: Props) {
         });
     };
 
-    const images = articulo.imagenes && articulo.imagenes.length > 0
-        ? articulo.imagenes
-        : [{ id: 0, ruta: '', url: '' }];
+    const images = articulo.images && articulo.images.length > 0
+        ? articulo.images
+        : [{ id: 0, path: '', url: '' }];
 
     return (
-        <ShopLayout title={articulo.articulo} cartCount={cartCount}>
-            <Head title={articulo.articulo} />
+        <ShopLayout title={articulo.name} cartCount={cartCount}>
+            <Head title={articulo.name} />
 
             <div className="container mx-auto px-4 py-8">
                 {/* Breadcrumb */}
@@ -79,7 +79,7 @@ function ProductShowContent({ articulo, relacionados, cartCount }: Props) {
                             {images[selectedImage]?.url ? (
                                 <img
                                     src={images[selectedImage].url}
-                                    alt={articulo.articulo}
+                                    alt={articulo.name}
                                     className="w-full h-full object-cover"
                                 />
                             ) : (
@@ -125,35 +125,35 @@ function ProductShowContent({ articulo, relacionados, cartCount }: Props) {
                     {/* Product Info */}
                     <div className="space-y-6">
                         {/* Category Badge */}
-                        {articulo.categoria && (
+                        {articulo.category && (
                             <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-violet-100 text-violet-700">
-                                {articulo.categoria.nombre}
+                                {articulo.category.name}
                             </span>
                         )}
 
                         {/* Title */}
                         <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
-                            {articulo.articulo}
+                            {articulo.name}
                         </h1>
 
                         {/* Brand */}
-                        {articulo.marca && (
+                        {articulo.brand && (
                             <p className="text-gray-500">
-                                por <span className="font-medium text-gray-700">{articulo.marca.nombre}</span>
+                                por <span className="font-medium text-gray-700">{articulo.brand.name}</span>
                             </p>
                         )}
 
                         {/* Price */}
                         <div className="flex items-baseline gap-3">
                             <span className="text-4xl font-bold bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">
-                                ${Number(articulo.precio).toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+                                ${Number(articulo.price).toLocaleString('es-AR', { minimumFractionDigits: 2 })}
                             </span>
                         </div>
 
                         {/* Description */}
-                        {articulo.descripcion && (
+                        {articulo.description && (
                             <div className="prose prose-gray max-w-none">
-                                <p className="text-gray-600 leading-relaxed">{articulo.descripcion}</p>
+                                <p className="text-gray-600 leading-relaxed">{articulo.description}</p>
                             </div>
                         )}
 
@@ -279,10 +279,10 @@ function ProductShowContent({ articulo, relacionados, cartCount }: Props) {
                                     className="group"
                                 >
                                     <div className="aspect-square bg-gradient-to-br from-gray-100 to-gray-50 mb-4 relative overflow-hidden rounded-2xl shadow-sm group-hover:shadow-xl transition-all duration-500">
-                                        {prod.imagenes && prod.imagenes.length > 0 && prod.imagenes[0].url ? (
+                                        {prod.images && prod.images.length > 0 && prod.images[0].url ? (
                                             <img
-                                                src={prod.imagenes[0].url}
-                                                alt={prod.articulo}
+                                                src={prod.images[0].url}
+                                                alt={prod.name}
                                                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                                             />
                                         ) : (
@@ -292,10 +292,10 @@ function ProductShowContent({ articulo, relacionados, cartCount }: Props) {
                                         )}
                                     </div>
                                     <h3 className="font-semibold text-gray-900 group-hover:text-violet-600 transition-colors line-clamp-2 mb-1">
-                                        {prod.articulo}
+                                        {prod.name}
                                     </h3>
                                     <p className="text-lg font-bold bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">
-                                        ${Number(prod.precio).toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+                                        ${Number(prod.price).toLocaleString('es-AR', { minimumFractionDigits: 2 })}
                                     </p>
                                 </Link>
                             ))}

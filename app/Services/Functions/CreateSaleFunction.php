@@ -4,7 +4,11 @@ namespace App\Services\Functions;
 
 use App\Models\Sale;
 use App\Models\Customer;
+use App\Models\Delivery;
 use App\Models\Product;
+use App\Models\PointOfSale;
+use App\Services\DeliveryService;
+use App\Services\InvoiceNumberService;
 use Illuminate\Support\Facades\DB;
 
 class CreateSaleFunction
@@ -56,8 +60,12 @@ class CreateSaleFunction
                 ];
             }
 
-            $invoiceNumber = Sale::where('voucher_letter', 'B')->max('invoice_number') ?? 0;
-            $invoiceNumber++;
+            $pos = PointOfSale::getDefault();
+            if (! $pos) {
+                DB::rollBack();
+                return ['success' => false, 'message' => 'No hay un punto de venta configurado.'];
+            }
+            $invoiceNumber = app(InvoiceNumberService::class)->next($pos, 'B');
 
             $sale = Sale::create([
                 'customer_id'    => $clienteId,
@@ -66,7 +74,7 @@ class CreateSaleFunction
                 'date'           => now()->format('Y-m-d'),
                 'voucher_letter' => 'B',
                 'voucher_code'   => 6,
-                'pos_number'     => 1,
+                'pos_number'     => $pos->pos_number,
                 'invoice_number' => $invoiceNumber,
                 'discount'       => 0,
                 'surcharge'      => 0,
@@ -75,9 +83,24 @@ class CreateSaleFunction
                 'total'          => $subtotal,
                 'payment_status' => 'NO',
                 'sale_condition' => 'contado',
+                'point_of_sale_id' => $pos->id,
+                'warehouse_id'     => $pos->warehouse_id,
             ]);
 
             $sale->products()->attach($productsData);
+
+            $deliveryService = app(DeliveryService::class);
+            foreach ($productsData as $productId => $data) {
+                $deliveryService->create(
+                    $sale,
+                    (int) $productId,
+                    (int) $data['quantity'],
+                    (int) $pos->warehouse_id,
+                    Delivery::STATUS_PENDING,
+                    now(),
+                    'Entrega pendiente - Venta por bot Telegram',
+                );
+            }
 
             DB::commit();
 
