@@ -61,12 +61,39 @@ class HandleInertiaRequests extends Middleware
                 'success' => $request->session()->get('success'),
                 'error' => $request->session()->get('error'),
             ],
-            'pointsOfSale' => fn () => tenancy()->initialized
-                ? PointOfSale::active()->with('warehouse:id,name')->orderBy('name')->get(['id', 'name', 'pos_number', 'warehouse_id'])
-                : [],
-            'activePointOfSaleId' => fn () => tenancy()->initialized
-                ? (session('active_point_of_sale_id') ?? PointOfSale::where('is_default', true)->value('id'))
-                : null,
+            'pointsOfSale' => fn () => $this->resolvePointsOfSaleProp($request),
+            'activePointOfSaleId' => fn () => $this->resolveActivePointOfSaleId($request),
         ];
+    }
+
+    private function resolvePointsOfSaleProp(Request $request)
+    {
+        if (! tenancy()->initialized) {
+            return [];
+        }
+
+        $user = $request->user();
+        if ($user && $user->isVendedor()) {
+            // Vendedor: solo su PV asignado (si tiene)
+            return $user->point_of_sale_id
+                ? PointOfSale::active()->with('warehouse:id,name')->where('id', $user->point_of_sale_id)->get(['id', 'name', 'pos_number', 'warehouse_id'])
+                : collect();
+        }
+
+        return PointOfSale::active()->with('warehouse:id,name')->orderBy('name')->get(['id', 'name', 'pos_number', 'warehouse_id']);
+    }
+
+    private function resolveActivePointOfSaleId(Request $request): ?int
+    {
+        if (! tenancy()->initialized) {
+            return null;
+        }
+
+        $user = $request->user();
+        if ($user && $user->isVendedor()) {
+            return $user->point_of_sale_id;
+        }
+
+        return session('active_point_of_sale_id') ?? PointOfSale::where('is_default', true)->value('id');
     }
 }

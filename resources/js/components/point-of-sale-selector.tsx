@@ -11,9 +11,27 @@ interface PointOfSale {
 }
 
 export function PointOfSaleSelector() {
-    const { pointsOfSale, activePointOfSaleId } = usePage<any>().props;
+    const { pointsOfSale, activePointOfSaleId, auth } = usePage<any>().props;
+    const isVendedor = auth?.user?.role?.role === 'vendedor';
 
-    if (!pointsOfSale || pointsOfSale.length <= 1) return null;
+    if (!pointsOfSale || pointsOfSale.length === 0) return null;
+
+    // Vendedor: badge fijo (sin selector). El admin lo asigna desde Users/Edit.
+    if (isVendedor) {
+        const myPos = (pointsOfSale as PointOfSale[]).find((p) => p.id === activePointOfSaleId);
+        if (!myPos) return null;
+        return (
+            <div className="flex items-center gap-1.5" title="PV asignado por administrador">
+                <Store className="size-4 text-muted-foreground" />
+                <span className="rounded-md bg-muted px-2 py-1 text-xs font-medium">
+                    {myPos.name} <span className="text-muted-foreground">(#{myPos.pos_number})</span>
+                </span>
+            </div>
+        );
+    }
+
+    // Admin/superadmin: dropdown editable como antes
+    if (pointsOfSale.length <= 1) return null;
 
     const handleChange = (value: string) => {
         router.post(route('puntos-venta.set-active'), { point_of_sale_id: value }, { preserveState: true });

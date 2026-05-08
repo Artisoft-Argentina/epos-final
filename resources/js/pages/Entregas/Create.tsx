@@ -33,6 +33,7 @@ interface Factura {
         id: number;
         product_id: number;
         quantity: number;
+        status: 'pending' | 'delivered' | 'cancelled';
         delivery_date: string;
     }>;
 }
@@ -62,7 +63,7 @@ export default function Create({ factura, warehouses }: Props) {
 
     const getCantidadEntregada = (productId: number) => {
         return factura.deliveries
-            .filter(d => d.product_id === productId)
+            .filter(d => d.product_id === productId && d.status === 'delivered')
             .reduce((sum, d) => sum + d.quantity, 0);
     };
 

@@ -84,6 +84,8 @@ class StockTransferController extends Controller
 
     public function dispatchTransfer(StockTransfer $transferencia)
     {
+        abort_unless(auth()->user()->isAdmin(), 403, 'Solo un administrador puede despachar transferencias.');
+
         $this->service->dispatch($transferencia);
 
         return back()->with('success', 'Transferencia despachada exitosamente.');
@@ -91,6 +93,8 @@ class StockTransferController extends Controller
 
     public function receive(Request $request, StockTransfer $transferencia)
     {
+        abort_unless(auth()->user()->isAdmin(), 403, 'Solo un administrador puede recibir transferencias.');
+
         $receivedQuantities = null;
 
         if ($request->has('received_quantities')) {
@@ -108,6 +112,8 @@ class StockTransferController extends Controller
 
     public function cancel(StockTransfer $transferencia)
     {
+        abort_unless(auth()->user()->isAdmin(), 403, 'Solo un administrador puede cancelar transferencias.');
+
         $this->service->cancel($transferencia);
 
         return back()->with('success', 'Transferencia cancelada.');

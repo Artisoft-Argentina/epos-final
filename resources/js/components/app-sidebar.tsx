@@ -177,8 +177,7 @@ export function AppSidebar() {
         
         if (userRole === 'vendedor') {
             return mainNavItems.filter(item => {
-                // Vendedor solo puede ver Ventas
-                return item.title === 'Ventas';
+                return ['Ventas', 'Clientes', 'Inventario', 'Artículos'].includes(item.title);
             });
         }
         

@@ -30,13 +30,26 @@ class VentaController extends Controller
 
     public function index()
     {
+        $query = Sale::with(['customer', 'user', 'products', 'deliveries'])->latest();
+
+        $user = auth()->user();
+        if ($user && $user->isVendedor()) {
+            $query->where('user_id', $user->id)
+                  ->where('point_of_sale_id', $user->point_of_sale_id);
+        }
+
         return Inertia::render('Ventas/Index', [
-            'facturas' => Sale::with(['customer', 'user', 'products', 'deliveries'])->latest()->paginate(5),
+            'facturas' => $query->paginate(5),
         ]);
     }
 
     public function create()
     {
+        $user = auth()->user();
+        if ($user && $user->isVendedor() && ! $user->point_of_sale_id) {
+            return redirect()->route('dashboard')->with('error', 'Tu cuenta no tiene un punto de venta asignado. Contactá al administrador.');
+        }
+
         $priceLists      = PriceList::all();
         $defaultPosList  = $priceLists->where('default_pos', true)->first();
 
@@ -186,6 +199,14 @@ class VentaController extends Controller
 
     private function resolvePointOfSale(Request $request): ?PointOfSale
     {
+        // Vendedor: SIEMPRE su PV asignado, ignorando lo que venga del request o de session.
+        $user = auth()->user();
+        if ($user && $user->isVendedor()) {
+            abort_if(! $user->point_of_sale_id, 403, 'Tu cuenta no tiene un punto de venta asignado.');
+            return PointOfSale::find($user->point_of_sale_id);
+        }
+
+        // Admin/superadmin: respetar el flujo actual.
         if ($request->filled('point_of_sale_id')) {
             return PointOfSale::find($request->input('point_of_sale_id'));
         }

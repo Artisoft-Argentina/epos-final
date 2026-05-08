@@ -9,7 +9,14 @@ import { ActionButton } from '@/components/action-button';
 import { Pagination } from '@/components/pagination';
 import { Plus, Edit } from 'lucide-react';
 
-interface User { id: number; name: string; email: string; created_at: string; role?: { role: string }; }
+interface User {
+    id: number;
+    name: string;
+    email: string;
+    created_at: string;
+    role?: { role: string };
+    point_of_sale?: { id: number; name: string; pos_number: number } | null;
+}
 interface Props { users: { data: User[]; links: any; meta: any }; }
 
 const roleVariant: Record<string, 'default' | 'info' | 'secondary'> = {
@@ -37,6 +44,13 @@ export default function Index({ users }: Props) {
                     {row.role?.role || 'Sin rol'}
                 </Badge>
             ),
+        },
+        {
+            key: 'pos',
+            header: 'Punto de venta',
+            render: (row) => row.point_of_sale
+                ? <span className="text-foreground">{row.point_of_sale.name} <span className="text-muted-foreground text-xs">(#{row.point_of_sale.pos_number})</span></span>
+                : <span className="text-muted-foreground">—</span>,
         },
         {
             key: 'actions',
