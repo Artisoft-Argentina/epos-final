@@ -99,7 +99,7 @@ export default function Index({ inventarios }: Props) {
             render: (row) => {
                 const diff = row.calculated_quantity - row.quantity;
                 return (
-                    <div className="flex items-center justify-end gap-1">
+                    <div className="flex items-center gap-1">
                         {isAdmin && diff !== 0 && (
                             <ActionButton variant="outline" title="Conciliar" className="border-warning/30 text-warning hover:bg-warning-soft" onClick={() => router.post(route('inventarios.reconcile', row.id))}>
                                 <AlertTriangle className="size-3.5" />

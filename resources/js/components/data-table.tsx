@@ -66,10 +66,7 @@ export function DataTable<T>({
                                 <th
                                     key={col.key}
                                     className={cn(
-                                        'h-12 px-4 align-middle font-semibold text-muted-foreground text-sm',
-                                        col.align === 'right' && 'text-right',
-                                        col.align === 'center' && 'text-center',
-                                        !col.align && 'text-left',
+                                        'h-12 px-4 align-middle font-semibold text-muted-foreground text-sm text-left',
                                         col.className
                                     )}
                                 >

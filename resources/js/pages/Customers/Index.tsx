@@ -138,9 +138,8 @@ export default function Index({ customers, filters, kpis }: Props) {
         {
             key: 'actions',
             header: 'Acciones',
-            align: 'right',
             render: (row) => (
-                <div className="flex items-center justify-end gap-1">
+                <div className="flex items-center gap-1">
                     <Link href={route('customers.show', row.id)}>
                         <ActionButton title="Ver Detalle">
                             <FileText className="size-3.5" />

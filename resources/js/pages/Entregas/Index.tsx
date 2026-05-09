@@ -101,7 +101,7 @@ export default function Index({ entregas }: Props) {
             header: 'Acciones',
             align: 'right',
             render: (row) => row.estado !== 'pendiente' ? null : (
-                <div className="flex items-center justify-end gap-1">
+                <div className="flex items-center gap-1">
                     <ActionButton variant="outline" title="Completar entrega" className="border-success/30 text-success hover:bg-success-soft" onClick={() => marcarEntregada(row.id)}>
                         <CheckCircle className="size-3.5" />
                     </ActionButton>

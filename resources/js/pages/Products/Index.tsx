@@ -11,7 +11,7 @@ import { DataTable, type Column } from '@/components/data-table';
 import { ActionButton } from '@/components/action-button';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
 import { Pagination } from '@/components/pagination';
-import { Plus, Search, Printer, Eye, Edit, Power, Package, PackageCheck } from 'lucide-react';
+import { Plus, Search, Printer, Eye, Edit, Power, Package, PackageCheck, AlertTriangle } from 'lucide-react';
 import { useState, useRef } from 'react';
 
 interface Category { id: number; name: string; }
@@ -22,12 +22,16 @@ interface PrimaryImage { url_thumb: string | null; url: string; }
 interface Product {
     id: number;
     sku: string;
+    ean: string | null;
     name: string;
+    unit: string;
     price: string;
+    min_stock: number;
     active: boolean;
     category: { name: string } | null;
     brand: { name: string } | null;
     primary_image: PrimaryImage | null;
+    stock: { quantity: number } | null;
 }
 
 interface Props {
@@ -102,7 +106,17 @@ export default function Index({ products, filters, categories, brands, suppliers
         {
             key: 'name',
             header: 'Producto',
-            align: 'right',
+            render: (row) => (
+                <div>
+                    <p className="font-medium text-foreground">{row.name}</p>
+                    <p className="text-xs text-muted-foreground font-mono">{row.sku}</p>
+                    {row.ean && <p className="text-xs text-muted-foreground font-mono">{row.ean}</p>}
+                </div>
+            ),
+        },
+        {
+            key: 'price',
+            header: 'Precio',
             render: (row) => (
                 <span className="font-medium tabular-nums text-foreground">{fmt(row.price)}</span>
             ),
@@ -122,6 +136,25 @@ export default function Index({ products, filters, categories, brands, suppliers
             ),
         },
         {
+            key: 'stock',
+            header: 'Stock',
+            render: (row) => {
+                if (!row.stock) return <span className="text-muted-foreground">Sin stock</span>;
+                const qty = row.stock.quantity;
+                const min = row.min_stock;
+                const variant = qty === 0 ? 'secondary' : qty < min ? 'destructive' : qty === min ? 'warning' : 'success';
+                const showAlert = qty > 0 && qty <= min;
+                const PLURALS: Record<string, string> = { Unidad: 'Unidades', Litro: 'Litros', Metro: 'Metros', Caja: 'Cajas', Rollo: 'Rollos' };
+                const label = qty === 1 ? row.unit : (PLURALS[row.unit] ?? row.unit);
+                return (
+                    <Badge variant={variant} className="gap-1">
+                        {showAlert && <AlertTriangle className="size-3" />}
+                        {qty} {label}
+                    </Badge>
+                );
+            },
+        },
+        {
             key: 'active',
             header: 'Estado',
             render: (row) => (
@@ -133,9 +166,8 @@ export default function Index({ products, filters, categories, brands, suppliers
         {
             key: 'actions',
             header: 'Acciones',
-            align: 'right',
             render: (row) => (
-                <div className="flex items-center justify-end gap-1">
+                <div className="flex items-center gap-1">
                     <Link href={route('products.show', row.id)}>
                         <ActionButton title="Ver detalle"><Eye className="size-3.5" /></ActionButton>
                     </Link>
@@ -221,20 +253,20 @@ export default function Index({ products, filters, categories, brands, suppliers
                         value={filters.active ?? 'all'}
                         onValueChange={(v) => applyFilter({ active: v === 'all' ? '' : v })}
                     >
-                        <SelectTrigger className="w-full sm:w-36">
-                            <SelectValue placeholder="Tipo" />
+                        <SelectTrigger className="w-full sm:w-40">
+                            <SelectValue placeholder="Estado" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="all">Todos los tipos</SelectItem>
-                            <SelectItem value="product">Producto</SelectItem>
-                            <SelectItem value="service">Servicio</SelectItem>
+                            <SelectItem value="all">Todos los estados</SelectItem>
+                            <SelectItem value="1">Activo</SelectItem>
+                            <SelectItem value="0">Inactivo</SelectItem>
                         </SelectContent>
                     </Select>
                     <Select
                         value={filters.category_id ?? 'all'}
                         onValueChange={(v) => applyFilter({ category_id: v === 'all' ? '' : v })}
                     >
-                        <SelectTrigger className="w-full sm:w-44">
+                        <SelectTrigger className="w-full sm:w-48">
                             <SelectValue placeholder="Categoría" />
                         </SelectTrigger>
                         <SelectContent>
@@ -248,7 +280,7 @@ export default function Index({ products, filters, categories, brands, suppliers
                         value={filters.brand_id ?? 'all'}
                         onValueChange={(v) => applyFilter({ brand_id: v === 'all' ? '' : v })}
                     >
-                        <SelectTrigger className="w-full sm:w-40">
+                        <SelectTrigger className="w-full sm:w-44">
                             <SelectValue placeholder="Marca" />
                         </SelectTrigger>
                         <SelectContent>
