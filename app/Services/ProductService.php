@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\PriceList;
 use App\Models\Product;
 use App\Models\ProductImage;
 use App\Models\Stock;
@@ -21,23 +22,32 @@ class ProductService
             $data['sku'] = $this->generateSku();
         }
 
-        $initialStock = $data['initial_stock'] ?? null;
-        $data = Arr::except($data, ['initial_stock']);
+        $trackStock   = ! empty($data['track_stock']);
+        $initialStock = (int) ($data['initial_stock'] ?? 0);
+        $data = Arr::except($data, ['initial_stock', 'track_stock']);
 
         $product = Product::create($data);
 
-        if ($initialStock !== null && $initialStock >= 0) {
-            $this->initStock($product, (int) $initialStock);
+        if ($trackStock) {
+            $this->initStock($product, $initialStock);
         }
 
         $this->storeImages($product, $images);
+        $this->syncPriceLists($product);
 
         return $product;
     }
 
     public function update(Product $product, array $data, array $images = []): void
     {
+        $previousPrice = (float) $product->price;
+
         $product->update($data);
+
+        // Recalcular listas solo si cambió el precio base
+        if ((float) $product->fresh()->price !== $previousPrice) {
+            $this->syncPriceLists($product->fresh());
+        }
 
         $this->storeImages($product, $images);
     }
@@ -69,6 +79,18 @@ class ProductService
     }
 
     // ─── Private ──────────────────────────────────────────────────────────────
+
+    private function syncPriceLists(Product $product): void
+    {
+        $lists = PriceList::where('active', true)->get();
+
+        foreach ($lists as $list) {
+            $price = round((float) $product->price * (1 + ($list->percentage / 100)), 2);
+            $list->products()->syncWithoutDetaching([
+                $product->id => ['price' => $price],
+            ]);
+        }
+    }
 
     private function initStock(Product $product, int $quantity): void
     {

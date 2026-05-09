@@ -110,7 +110,7 @@ export default function Index({ inventarios }: Props) {
                                 <SlidersHorizontal className="size-3.5" />
                             </ActionButton>
                         )}
-                        <Link href={route('movimientos.index', row.product_id) + '?from=inventarios'}>
+                        <Link href={route('products.movements', row.product_id) + '?from=inventarios'}>
                             <ActionButton title="Movimientos"><History className="size-3.5" /></ActionButton>
                         </Link>
                         <Link href={route('inventarios.edit', row.id)}>

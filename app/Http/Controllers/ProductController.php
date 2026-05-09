@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Brand;
 use App\Models\Category;
+use App\Models\PriceList;
 use App\Models\Product;
 use App\Models\Supplier;
 use App\Services\ProductService;
@@ -62,6 +63,7 @@ class ProductController extends Controller
             'categories' => Category::active()->orderBy('name')->get(['id', 'name']),
             'brands'     => Brand::active()->orderBy('name')->get(['id', 'name']),
             'suppliers'  => Supplier::orderBy('business_name')->get(['id', 'business_name']),
+            'priceLists' => PriceList::where('active', true)->orderBy('name')->get(['id', 'name', 'percentage']),
         ]);
     }
 
@@ -88,10 +90,11 @@ class ProductController extends Controller
     public function edit(Product $product): Response
     {
         return Inertia::render('Products/Edit', [
-            'product'    => $product->load(['images', 'supplier']),
+            'product'    => $product->load(['images', 'supplier', 'priceLists']),
             'categories' => Category::active()->orderBy('name')->get(['id', 'name']),
             'brands'     => Brand::active()->orderBy('name')->get(['id', 'name']),
             'suppliers'  => Supplier::orderBy('business_name')->get(['id', 'business_name']),
+            'priceLists' => PriceList::where('active', true)->orderBy('name')->get(['id', 'name', 'percentage']),
         ]);
     }
 
@@ -127,16 +130,12 @@ class ProductController extends Controller
         );
     }
 
-    public function generateSku(): \Illuminate\Http\JsonResponse
-    {
-        return response()->json(['sku' => $this->productService->generateSku()]);
-    }
-
     // ─── Private ──────────────────────────────────────────────────────────────
 
     private function storeRules(): array
     {
         return array_merge($this->rules(), [
+            'track_stock'   => 'boolean',
             'initial_stock' => 'nullable|integer|min:0',
         ]);
     }
@@ -153,7 +152,7 @@ class ProductController extends Controller
             'cost'          => 'nullable|numeric|min:0',
             'tax_rate'      => 'required|numeric|min:0',
             'min_stock'     => 'required|integer|min:0',
-            'brand_id'      => 'required|exists:brands,id',
+            'brand_id'      => 'nullable|exists:brands,id',
             'category_id'   => 'required|exists:categories,id',
             'supplier_id'   => 'nullable|exists:suppliers,id',
             'supplier_code' => 'nullable|string|max:100',

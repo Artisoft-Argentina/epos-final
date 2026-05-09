@@ -8,13 +8,14 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FormField } from '@/components/form-field';
-import { ChevronRight, Save, Package, DollarSign, QrCode, ImagePlus, X, Star } from 'lucide-react';
+import { ChevronRight, Save, Package, DollarSign, QrCode, ImagePlus, X, Star, Tag } from 'lucide-react';
 import { useState } from 'react';
 
 interface ProductImage { id: number; url: string; url_thumb: string | null; is_primary: boolean; }
 interface Category { id: number; name: string; }
 interface Brand { id: number; name: string; }
 interface Supplier { id: number; business_name: string; }
+interface PriceList { id: number; name: string; percentage: string; pivot?: { price: number }; }
 
 interface Product {
     id: number;
@@ -41,11 +42,14 @@ interface Props {
     categories: Category[];
     brands: Brand[];
     suppliers: Supplier[];
+    priceLists: PriceList[];
 }
 
 const UNITS = ['Unidad', 'Kg', 'Litro', 'Metro', 'Caja', 'Pack', 'Par', 'Rollo'];
 
-export default function Edit({ product, categories, brands, suppliers }: Props) {
+const fmt = (n: number) => `$${n.toLocaleString('es-AR', { minimumFractionDigits: 2 })}`;
+
+export default function Edit({ product, categories, brands, suppliers, priceLists }: Props) {
     const { data, setData, post, processing, errors } = useForm({
         sku: product.sku,
         ean: product.ean ?? '',
@@ -124,6 +128,7 @@ export default function Edit({ product, categories, brands, suppliers }: Props) 
                         {/* Columna izquierda */}
                         <div className="lg:col-span-2 flex flex-col gap-6">
 
+                            {/* Datos Generales */}
                             <Card className="gap-0 py-0">
                                 <CardHeader className="border-b border-border px-6 py-4">
                                     <CardTitle className="flex items-center gap-2 text-base font-semibold">
@@ -173,6 +178,7 @@ export default function Edit({ product, categories, brands, suppliers }: Props) 
                                 </CardContent>
                             </Card>
 
+                            {/* Datos Comerciales */}
                             <Card className="gap-0 py-0">
                                 <CardHeader className="border-b border-border px-6 py-4">
                                     <CardTitle className="flex items-center gap-2 text-base font-semibold">
@@ -212,10 +218,11 @@ export default function Edit({ product, categories, brands, suppliers }: Props) 
                                         </Select>
                                     </FormField>
 
-                                    <FormField label="Marca" error={errors.brand_id} required>
-                                        <Select value={data.brand_id} onValueChange={(v) => setData('brand_id', v)}>
-                                            <SelectTrigger error={errors.brand_id}><SelectValue placeholder="Seleccionar marca..." /></SelectTrigger>
+                                    <FormField label="Marca" error={errors.brand_id}>
+                                        <Select value={data.brand_id || 'none'} onValueChange={(v) => setData('brand_id', v === 'none' ? '' : v)}>
+                                            <SelectTrigger error={errors.brand_id}><SelectValue placeholder="Sin marca" /></SelectTrigger>
                                             <SelectContent>
+                                                <SelectItem value="none">Sin marca</SelectItem>
                                                 {brands.map((b) => <SelectItem key={b.id} value={b.id.toString()}>{b.name}</SelectItem>)}
                                             </SelectContent>
                                         </Select>
@@ -239,6 +246,53 @@ export default function Edit({ product, categories, brands, suppliers }: Props) 
                                     </FormField>
                                 </CardContent>
                             </Card>
+
+                            {/* Listas de Precios */}
+                            <Card className="gap-0 py-0">
+                                <CardHeader className="border-b border-border px-6 py-4">
+                                    <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                                        <Tag className="size-4 text-primary" />
+                                        Listas de Precios
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="px-6 py-5">
+                                    {priceLists.length === 0 ? (
+                                        <div className="rounded-lg border border-dashed border-border bg-muted/30 p-4">
+                                            <p className="text-sm text-muted-foreground">
+                                                No hay listas de precios configuradas. El precio base se usará directamente en ventas.
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col gap-1">
+                                            <div className="grid grid-cols-3 px-2 pb-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                                                <span>Lista</span>
+                                                <span className="text-right">Porcentaje</span>
+                                                <span className="text-right">Precio final</span>
+                                            </div>
+                                            {priceLists.map((list) => {
+                                                const base  = parseFloat(data.price) || 0;
+                                                const pct   = parseFloat(list.percentage);
+                                                const final = base * (1 + pct / 100);
+                                                return (
+                                                    <div key={list.id} className="grid grid-cols-3 px-2 py-2.5 rounded-md hover:bg-muted/40 transition-colors">
+                                                        <span className="text-sm font-medium text-foreground">{list.name}</span>
+                                                        <span className="text-sm tabular-nums text-muted-foreground text-right">
+                                                            {pct >= 0 ? '+' : ''}{pct}%
+                                                        </span>
+                                                        <span className="text-sm font-semibold tabular-nums text-foreground text-right">
+                                                            {base > 0 ? fmt(final) : <span className="text-muted-foreground">—</span>}
+                                                        </span>
+                                                    </div>
+                                                );
+                                            })}
+                                            <p className="text-xs text-muted-foreground mt-2 px-2">
+                                                Si modificás el precio base, los precios se recalcularán automáticamente al guardar.
+                                            </p>
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+
                         </div>
 
                         {/* Columna derecha */}
