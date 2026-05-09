@@ -9,6 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FormField } from '@/components/form-field';
 import { ChevronRight, Save, Package, DollarSign, QrCode, ImagePlus, X, Star, Tag } from 'lucide-react';
+import { QuickCreateDialog } from '@/components/quick-create-dialog';
+import { Combobox } from '@/components/ui/combobox';
 import { useState } from 'react';
 
 interface ProductImage { id: number; url: string; url_thumb: string | null; is_primary: boolean; }
@@ -71,6 +73,15 @@ export default function Edit({ product, categories, brands, suppliers, priceList
     });
 
     const [newPreviews, setNewPreviews] = useState<string[]>([]);
+    const [categoryList, setCategoryList] = useState(categories);
+    const [brandList, setBrandList] = useState(brands);
+
+    const categoryOptions = categoryList.map((c) => ({ value: c.id.toString(), label: c.name }));
+    const brandOptions    = [
+        { value: '', label: 'Sin marca' },
+        ...brandList.map((b) => ({ value: b.id.toString(), label: b.name })),
+    ];
+    const supplierOptions = suppliers.map((s) => ({ value: s.id.toString(), label: s.business_name }));
 
     const handleImages = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files ?? []);
@@ -139,15 +150,15 @@ export default function Edit({ product, categories, brands, suppliers, priceList
                                 <CardContent className="px-6 py-5 grid grid-cols-1 md:grid-cols-2 gap-5">
 
                                     <FormField label="Nombre" htmlFor="name" error={errors.name} required className="md:col-span-2">
-                                        <Input id="name" value={data.name} onChange={(e) => setData('name', e.target.value)} error={errors.name} />
+                                        <Input id="name" value={data.name} onChange={(e) => setData('name', e.target.value)} placeholder={product.name} error={errors.name} />
                                     </FormField>
 
-                                    <FormField label="SKU" htmlFor="sku" error={errors.sku} required hint="Código interno único del producto">
-                                        <Input id="sku" value={data.sku} onChange={(e) => setData('sku', e.target.value)} error={errors.sku} />
+                                    <FormField label="SKU" htmlFor="sku" hint="El SKU no puede modificarse una vez creado el producto.">
+                                        <Input id="sku" value={data.sku} placeholder={product.sku} disabled className="bg-muted text-muted-foreground" />
                                     </FormField>
 
                                     <FormField label="Descripción" htmlFor="description" error={errors.description} className="md:col-span-2">
-                                        <Textarea id="description" value={data.description} onChange={(e) => setData('description', e.target.value)} rows={3} />
+                                        <Textarea id="description" value={data.description} onChange={(e) => setData('description', e.target.value)} placeholder={product.description ?? 'Descripción del producto...'} rows={3} />
                                     </FormField>
 
                                     <div className="md:col-span-2 flex items-center justify-between p-4 rounded-lg border border-border bg-muted/30">
@@ -189,15 +200,15 @@ export default function Edit({ product, categories, brands, suppliers, priceList
                                 <CardContent className="px-6 py-5 grid grid-cols-1 md:grid-cols-2 gap-5">
 
                                     <FormField label="Precio" htmlFor="price" error={errors.price} required>
-                                        <Input id="price" type="number" step="0.01" min="0" value={data.price} onChange={(e) => setData('price', e.target.value)} error={errors.price} />
+                                        <Input id="price" type="number" step="0.01" min="0" value={data.price} onChange={(e) => setData('price', e.target.value)} placeholder={product.price} error={errors.price} />
                                     </FormField>
 
-                                    <FormField label="Costo" htmlFor="cost" error={errors.cost} hint="Opcional">
-                                        <Input id="cost" type="number" step="0.01" min="0" value={data.cost} onChange={(e) => setData('cost', e.target.value)} error={errors.cost} />
+                                    <FormField label="Costo" htmlFor="cost" error={errors.cost}>
+                                        <Input id="cost" type="number" step="0.01" min="0" value={data.cost} onChange={(e) => setData('cost', e.target.value)} placeholder={product.cost ?? '0.00'} error={errors.cost} />
                                     </FormField>
 
                                     <FormField label="Alícuota IVA (%)" htmlFor="tax_rate" error={errors.tax_rate} required>
-                                        <Input id="tax_rate" type="number" step="0.01" min="0" value={data.tax_rate} onChange={(e) => setData('tax_rate', e.target.value)} error={errors.tax_rate} />
+                                        <Input id="tax_rate" type="number" step="0.01" min="0" value={data.tax_rate} onChange={(e) => setData('tax_rate', e.target.value)} placeholder={product.tax_rate} error={errors.tax_rate} />
                                     </FormField>
 
                                     <FormField label="Unidad" error={errors.unit} required>
@@ -210,39 +221,69 @@ export default function Edit({ product, categories, brands, suppliers, priceList
                                     </FormField>
 
                                     <FormField label="Categoría" error={errors.category_id} required>
-                                        <Select value={data.category_id} onValueChange={(v) => setData('category_id', v)}>
-                                            <SelectTrigger error={errors.category_id}><SelectValue placeholder="Seleccionar categoría..." /></SelectTrigger>
-                                            <SelectContent>
-                                                {categories.map((c) => <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>)}
-                                            </SelectContent>
-                                        </Select>
+                                        <div className="flex gap-2">
+                                            <Combobox
+                                                options={categoryOptions}
+                                                value={data.category_id}
+                                                onValueChange={(v) => setData('category_id', v)}
+                                                placeholder="Seleccionar categoría..."
+                                                searchPlaceholder="Buscar categoría..."
+                                                emptyMessage="No se encontró la categoría."
+                                                error={errors.category_id}
+                                            />
+                                            <QuickCreateDialog
+                                                title="Nueva Categoría"
+                                                placeholder="Ej. Electrónica"
+                                                routeName="categories.store"
+                                                onSuccess={(item) => {
+                                                    setCategoryList((prev) => [...prev, item].sort((a, b) => a.name.localeCompare(b.name)));
+                                                    setData('category_id', item.id.toString());
+                                                }}
+                                            />
+                                        </div>
                                     </FormField>
 
                                     <FormField label="Marca" error={errors.brand_id}>
-                                        <Select value={data.brand_id || 'none'} onValueChange={(v) => setData('brand_id', v === 'none' ? '' : v)}>
-                                            <SelectTrigger error={errors.brand_id}><SelectValue placeholder="Sin marca" /></SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="none">Sin marca</SelectItem>
-                                                {brands.map((b) => <SelectItem key={b.id} value={b.id.toString()}>{b.name}</SelectItem>)}
-                                            </SelectContent>
-                                        </Select>
+                                        <div className="flex gap-2">
+                                            <Combobox
+                                                options={brandOptions}
+                                                value={data.brand_id || ''}
+                                                onValueChange={(v) => setData('brand_id', v)}
+                                                placeholder="Sin marca"
+                                                searchPlaceholder="Buscar marca..."
+                                                emptyMessage="No se encontró la marca."
+                                                error={errors.brand_id}
+                                            />
+                                            <QuickCreateDialog
+                                                title="Nueva Marca"
+                                                placeholder="Ej. Samsung"
+                                                routeName="brands.store"
+                                                onSuccess={(item) => {
+                                                    setBrandList((prev) => [...prev, item].sort((a, b) => a.name.localeCompare(b.name)));
+                                                    setData('brand_id', item.id.toString());
+                                                }}
+                                            />
+                                        </div>
                                     </FormField>
 
                                     <FormField label="Proveedor" error={errors.supplier_id}>
-                                        <Select value={data.supplier_id} onValueChange={(v) => setData('supplier_id', v)}>
-                                            <SelectTrigger><SelectValue placeholder="Seleccionar proveedor..." /></SelectTrigger>
-                                            <SelectContent>
-                                                {suppliers.map((s) => <SelectItem key={s.id} value={s.id.toString()}>{s.business_name}</SelectItem>)}
-                                            </SelectContent>
-                                        </Select>
+                                        <Combobox
+                                            options={supplierOptions}
+                                            value={data.supplier_id}
+                                            onValueChange={(v) => setData('supplier_id', v)}
+                                            placeholder="Seleccionar proveedor..."
+                                            searchPlaceholder="Buscar proveedor..."
+                                            emptyMessage="No se encontró el proveedor."
+                                            error={errors.supplier_id}
+                                        />
                                     </FormField>
 
                                     <FormField label="Código de proveedor" htmlFor="supplier_code" error={errors.supplier_code}>
-                                        <Input id="supplier_code" value={data.supplier_code} onChange={(e) => setData('supplier_code', e.target.value)} error={errors.supplier_code} />
+                                        <Input id="supplier_code" value={data.supplier_code} onChange={(e) => setData('supplier_code', e.target.value)} placeholder={product.supplier_code ?? 'Ej. PROV-123'} error={errors.supplier_code} />
                                     </FormField>
 
                                     <FormField label="Stock mínimo" htmlFor="min_stock" error={errors.min_stock} required>
-                                        <Input id="min_stock" type="number" min="0" value={data.min_stock} onChange={(e) => setData('min_stock', e.target.value)} error={errors.min_stock} />
+                                        <Input id="min_stock" type="number" min="0" value={data.min_stock} onChange={(e) => setData('min_stock', e.target.value)} placeholder={product.min_stock.toString()} error={errors.min_stock} />
                                     </FormField>
                                 </CardContent>
                             </Card>
@@ -306,8 +347,8 @@ export default function Edit({ product, categories, brands, suppliers, priceList
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="px-6 py-5 flex flex-col gap-5">
-                                    <FormField label="EAN / GTIN" htmlFor="ean" error={errors.ean} hint="Código comercial estándar del fabricante. Opcional.">
-                                        <Input id="ean" value={data.ean} onChange={(e) => setData('ean', e.target.value)} placeholder="Ej. 7791234567890" error={errors.ean} />
+                                    <FormField label="EAN / GTIN" htmlFor="ean" error={errors.ean} hint="Código comercial estándar del fabricante.">
+                                        <Input id="ean" value={data.ean} onChange={(e) => setData('ean', e.target.value)} placeholder={product.ean ?? 'Ej. 7791234567890'} error={errors.ean} />
                                     </FormField>
                                     <div className="rounded-lg border border-dashed border-border bg-muted/30 p-4 text-center">
                                         <p className="text-xs text-muted-foreground leading-relaxed">

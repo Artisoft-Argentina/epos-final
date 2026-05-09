@@ -33,11 +33,14 @@ class BrandController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): RedirectResponse|\Illuminate\Http\JsonResponse
     {
         $validated = $request->validate($this->rules());
+        $brand = $this->brandService->create($validated);
 
-        $this->brandService->create($validated);
+        if ($request->wantsJson()) {
+            return response()->json(['id' => $brand->id, 'name' => $brand->name]);
+        }
 
         return back()->with('success', 'Marca creada correctamente.');
     }

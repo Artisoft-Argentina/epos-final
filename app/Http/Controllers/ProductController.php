@@ -104,7 +104,7 @@ class ProductController extends Controller
 
         $this->productService->update(
             $product,
-            Arr::except($validated, ['images']),
+            Arr::except($validated, ['images', 'sku']),
             $request->file('images', [])
         );
 
