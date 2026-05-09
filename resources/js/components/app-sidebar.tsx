@@ -34,11 +34,11 @@ const mainNavItems: NavItem[] = [
             },
             {
                 title: 'Categorías',
-                href: '/categorias',
+                href: '/categories',
             },
             {
                 title: 'Marcas',
-                href: '/marcas',
+                href: '/brands',
             },
         ],
     },
