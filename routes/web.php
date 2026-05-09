@@ -81,7 +81,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Rutas para todos los roles
     // Transferencias: vendedor puede crear/listar/ver (queda en draft); admin maneja dispatch/receive/cancel arriba
-    Route::get('transferencias/available-stock', [\App\Http\Controllers\StockTransferController::class, 'availableStock'])->name('transferencias.available-stock');
     Route::resource('transferencias', \App\Http\Controllers\StockTransferController::class)->except(['edit', 'update']);
 
     Route::resource('customers', \App\Http\Controllers\CustomerController::class)->except(['destroy']);

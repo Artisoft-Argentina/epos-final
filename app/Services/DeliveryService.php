@@ -117,8 +117,11 @@ class DeliveryService
         }
 
         if ($stock->quantity < $delivery->quantity) {
+            $productName   = $delivery->product?->name   ?? "ID {$delivery->product_id}";
+            $warehouseName = $delivery->warehouse?->name ?? "ID {$warehouseId}";
+
             throw new RuntimeException(
-                "Stock insuficiente en el almacén seleccionado para entregar el producto ID {$delivery->product_id}. Disponible: {$stock->quantity}, requerido: {$delivery->quantity}."
+                "Stock insuficiente para entregar \"{$productName}\" desde el almacén \"{$warehouseName}\". Disponible: {$stock->quantity}, requerido: {$delivery->quantity}."
             );
         }
 
