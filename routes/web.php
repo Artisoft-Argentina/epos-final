@@ -48,17 +48,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::patch('categories/{category}/toggle-active', [\App\Http\Controllers\CategoryController::class, 'toggleActive'])->name('categories.toggle-active');
         Route::resource('brands', \App\Http\Controllers\BrandController::class)->except(['create', 'edit']);
         Route::patch('brands/{brand}/toggle-active', [\App\Http\Controllers\BrandController::class, 'toggleActive'])->name('brands.toggle-active');
-        Route::resource('articulos', \App\Http\Controllers\ArticuloController::class);
-        Route::post('articulos/{articulo}/imagenes', [\App\Http\Controllers\ArticuloImagenController::class, 'store'])->name('articulos.imagenes.store');
-        Route::delete('articulos/imagenes/{imagen}', [\App\Http\Controllers\ArticuloImagenController::class, 'destroy'])->name('articulos.imagenes.destroy');
-        Route::post('articulos/imagenes/{imagen}/principal', [\App\Http\Controllers\ArticuloImagenController::class, 'setPrincipal'])->name('articulos.imagenes.setPrincipal');
-        Route::post('articulos/{articulo}/imagenes/order', [\App\Http\Controllers\ArticuloImagenController::class, 'updateOrder'])->name('articulos.imagenes.updateOrder');
-        
+        Route::resource('products', \App\Http\Controllers\ProductController::class);
+        Route::patch('products/{product}/toggle-active', [\App\Http\Controllers\ProductController::class, 'toggleActive'])->name('products.toggle-active');
+        Route::post('products/{product}/images', [\App\Http\Controllers\ProductImageController::class, 'store'])->name('products.images.store');
+        Route::delete('products/images/{image}', [\App\Http\Controllers\ProductImageController::class, 'destroy'])->name('products.images.destroy');
+        Route::post('products/images/{image}/set-primary', [\App\Http\Controllers\ProductImageController::class, 'setPrimary'])->name('products.images.set-primary');
+        Route::post('products/{product}/images/order', [\App\Http\Controllers\ProductImageController::class, 'updateOrder'])->name('products.images.order');
+
         // Rutas de códigos QR y de barras
-        Route::get('articulos/{articulo}/codigo-barras', [\App\Http\Controllers\CodigoController::class, 'generarCodigoBarras'])->name('articulos.codigo-barras');
-        Route::get('articulos/{articulo}/codigo-qr', [\App\Http\Controllers\CodigoController::class, 'generarCodigoQR'])->name('articulos.codigo-qr');
-        Route::get('articulos/{articulo}/codigos', [\App\Http\Controllers\CodigoController::class, 'generarCodigos'])->name('articulos.codigos');
-        Route::post('codigos/imprimir-etiquetas', [\App\Http\Controllers\CodigoController::class, 'imprimirEtiquetas'])->name('codigos.imprimir-etiquetas');
+        Route::get('products/{product}/barcode', [\App\Http\Controllers\CodigoController::class, 'generarCodigoBarras'])->name('products.barcode');
+        Route::get('products/{product}/qr', [\App\Http\Controllers\CodigoController::class, 'generarCodigoQR'])->name('products.qr');
+        Route::get('products/{product}/codes', [\App\Http\Controllers\CodigoController::class, 'generarCodigos'])->name('products.codes');
+        Route::post('products/print-labels', [\App\Http\Controllers\CodigoController::class, 'imprimirEtiquetas'])->name('products.print-labels');
         
         Route::resource('suppliers', \App\Http\Controllers\SupplierController::class);
         Route::get('orders/products/{supplier}', [\App\Http\Controllers\OrderController::class, 'getProductsBySupplier'])->name('orders.products');
@@ -68,7 +69,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('inventarios/{inventario}/reconcile', [\App\Http\Controllers\InventarioController::class, 'reconcile'])->name('inventarios.reconcile');
         Route::post('inventarios/{inventario}/adjust', [\App\Http\Controllers\InventarioController::class, 'adjust'])->name('inventarios.adjust');
         Route::resource('inventarios', \App\Http\Controllers\InventarioController::class);
-        Route::get('articulos/{articulo}/movimientos', [\App\Http\Controllers\MovimientoController::class, 'index'])->name('movimientos.index');
+        Route::get('products/{product}/movements', [\App\Http\Controllers\MovimientoController::class, 'index'])->name('products.movements');
         Route::resource('listas-precios', \App\Http\Controllers\ListaPrecioController::class);
         Route::post('listas-precios/{listas_precio}/regenerar', [\App\Http\Controllers\ListaPrecioController::class, 'regenerarPrecios'])->name('listas-precios.regenerar');
     });

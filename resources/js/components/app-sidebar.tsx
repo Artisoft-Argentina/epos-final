@@ -25,12 +25,12 @@ const mainNavItems: NavItem[] = [
         ],
     },
     {
-        title: 'Artículos',
-        icon: ShoppingCart,
+        title: 'Productos',
+        icon: Package,
         items: [
             {
-                title: 'Artículos',
-                href: '/articulos',
+                title: 'Productos',
+                href: '/products',
             },
             {
                 title: 'Categorías',

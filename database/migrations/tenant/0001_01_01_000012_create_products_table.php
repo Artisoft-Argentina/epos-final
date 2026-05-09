@@ -21,9 +21,12 @@ return new class extends Migration
             $table->foreignId('brand_id')->constrained('brands');
             $table->foreignId('category_id')->constrained('categories');
             $table->foreignId('supplier_id')->nullable()->constrained('suppliers')->nullOnDelete();
-            $table->string('barcode')->nullable()->unique();  // codigo_barras → barcode
-            $table->string('qr_code')->nullable()->unique();  // codigo_qr → qr_code
+            $table->string('ean')->nullable()->unique();       // EAN/GTIN comercial opcional
+            $table->decimal('cost', 12, 2)->nullable();         // costo unitario
+            $table->string('barcode')->nullable()->unique();    // codigo_barras → barcode
+            $table->string('qr_code')->nullable()->unique();    // codigo_qr → qr_code
             $table->boolean('active')->default(true);
+            $table->boolean('published')->default(true); // visible en catálogo/ecommerce
             $table->softDeletes();
             $table->timestamps();
         });
