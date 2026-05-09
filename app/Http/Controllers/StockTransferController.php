@@ -39,8 +39,21 @@ class StockTransferController extends Controller
     {
         $warehouses = Warehouse::active()->orderBy('name')->get();
 
+        $stocks = Stock::with('product:id,sku,name')
+            ->where('quantity', '>', 0)
+            ->get()
+            ->map(fn ($s) => [
+                'product_id'   => $s->product_id,
+                'product_name' => $s->product->name,
+                'product_sku'  => $s->product->sku,
+                'warehouse_id' => $s->warehouse_id,
+                'available'    => (int) $s->quantity,
+            ])
+            ->values();
+
         return Inertia::render('Inventario/Transferencias/Create', [
             'warehouses' => $warehouses,
+            'stocks'     => $stocks,
         ]);
     }
 
@@ -117,34 +130,5 @@ class StockTransferController extends Controller
         $this->service->cancel($transferencia);
 
         return back()->with('success', 'Transferencia cancelada.');
-    }
-
-    /**
-     * API: stock disponible en un almacén para el buscador de productos.
-     */
-    public function availableStock(Request $request)
-    {
-        $request->validate([
-            'warehouse_id' => 'required|exists:warehouses,id',
-            'search'       => 'nullable|string|min:1',
-        ]);
-
-        $stocks = Stock::where('warehouse_id', $request->warehouse_id)
-            ->where('quantity', '>', 0)
-            ->with('product')
-            ->when($request->search, function ($q, $search) {
-                $q->whereHas('product', fn ($pq) => $pq->where('name', 'like', "%{$search}%")
-                    ->orWhere('code', 'like', "%{$search}%"));
-            })
-            ->limit(20)
-            ->get()
-            ->map(fn ($s) => [
-                'product_id'   => $s->product_id,
-                'product_name' => $s->product->name,
-                'product_code' => $s->product->code ?? '',
-                'available'    => $s->quantity,
-            ]);
-
-        return response()->json($stocks);
     }
 }
