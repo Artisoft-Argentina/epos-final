@@ -11,7 +11,7 @@ import { DataTable, type Column } from '@/components/data-table';
 import { ActionButton } from '@/components/action-button';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
 import { Pagination } from '@/components/pagination';
-import { Plus, Search, Printer, Eye, Edit, Power, Package, PackageCheck, AlertTriangle } from 'lucide-react';
+import { Plus, Search, Printer, Eye, Edit, Power, Package, PackageCheck, AlertTriangle, PackageX } from 'lucide-react';
 import { useState, useRef } from 'react';
 
 interface Category { id: number; name: string; }
@@ -36,11 +36,11 @@ interface Product {
 
 interface Props {
     products: { data: Product[]; links: any[]; meta: any };
-    filters: { search?: string; active?: string; category_id?: string; brand_id?: string; supplier_id?: string };
+    filters: { search?: string; active?: string; category_id?: string; brand_id?: string; supplier_id?: string; stock_status?: string };
     categories: Category[];
     brands: Brand[];
     suppliers: Supplier[];
-    kpis: { total: number; active: number };
+    kpis: { total: number; active: number; low_stock: number; no_stock: number };
 }
 
 const fmt = (n: string | number) =>
@@ -142,7 +142,7 @@ export default function Index({ products, filters, categories, brands, suppliers
                 if (!row.stock) return <span className="text-muted-foreground">Sin stock</span>;
                 const qty = row.stock.quantity;
                 const min = row.min_stock;
-                const variant = qty === 0 ? 'secondary' : qty < min ? 'destructive' : qty === min ? 'warning' : 'success';
+                const variant = qty === 0 ? 'destructive' : qty <= min ? 'warning' : 'success';
                 const showAlert = qty > 0 && qty <= min;
                 const PLURALS: Record<string, string> = { Unidad: 'Unidades', Litro: 'Litros', Metro: 'Metros', Caja: 'Cajas', Rollo: 'Rollos' };
                 const label = qty === 1 ? row.unit : (PLURALS[row.unit] ?? row.unit);
@@ -192,8 +192,10 @@ export default function Index({ products, filters, categories, brands, suppliers
     ];
 
     const kpiCards = [
-        { label: 'Total Productos', value: kpis.total,  icon: Package,      sub: 'en el catálogo' },
-        { label: 'Activos',         value: kpis.active, icon: PackageCheck, sub: 'disponibles para operar' },
+        { label: 'Total Productos', value: kpis.total,     icon: Package,      sub: 'en el catálogo',           iconBg: 'bg-primary/5',        iconColor: 'text-primary' },
+        { label: 'Activos',         value: kpis.active,    icon: PackageCheck, sub: 'disponibles para operar',  iconBg: 'bg-success-soft',     iconColor: 'text-success' },
+        { label: 'Stock bajo',      value: kpis.low_stock, icon: AlertTriangle, sub: 'iguales o por debajo del mínimo', iconBg: 'bg-warning-soft',  iconColor: 'text-warning' },
+        { label: 'Sin stock',       value: kpis.no_stock,  icon: PackageX,     sub: 'con 0 unidades disponibles',     iconBg: 'bg-destructive-soft', iconColor: 'text-destructive' },
     ];
 
     return (
@@ -220,13 +222,13 @@ export default function Index({ products, filters, categories, brands, suppliers
                 />
 
                 {/* KPIs */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     {kpiCards.map((kpi) => (
                         <Card key={kpi.label} className="gap-0 py-0">
                             <CardContent className="px-4 py-4 flex flex-col gap-3">
                                 <div className="flex items-center gap-2.5">
-                                    <div className="size-8 rounded-full bg-primary/5 flex items-center justify-center">
-                                        <kpi.icon className="size-4 text-primary" />
+                                    <div className={`size-8 rounded-full ${kpi.iconBg} flex items-center justify-center`}>
+                                        <kpi.icon className={`size-4 ${kpi.iconColor}`} />
                                     </div>
                                     <span className="text-sm font-medium text-foreground">{kpi.label}</span>
                                 </div>
@@ -260,6 +262,19 @@ export default function Index({ products, filters, categories, brands, suppliers
                             <SelectItem value="all">Todos los estados</SelectItem>
                             <SelectItem value="1">Activo</SelectItem>
                             <SelectItem value="0">Inactivo</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <Select
+                        value={filters.stock_status ?? 'all'}
+                        onValueChange={(v) => applyFilter({ stock_status: v === 'all' ? '' : v })}
+                    >
+                        <SelectTrigger className="w-full sm:w-40">
+                            <SelectValue placeholder="Stock" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Todo el stock</SelectItem>
+                            <SelectItem value="low">Stock bajo</SelectItem>
+                            <SelectItem value="none">Sin stock</SelectItem>
                         </SelectContent>
                     </Select>
                     <Select

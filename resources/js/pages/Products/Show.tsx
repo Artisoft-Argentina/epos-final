@@ -1,3 +1,4 @@
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Head, Link, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
@@ -9,7 +10,7 @@ import { PageHeader } from '@/components/page-header';
 import {
     ChevronRight, Edit, Power, Package, DollarSign, Tag,
     Barcode, QrCode, Printer, Warehouse, TrendingUp, TrendingDown,
-    ArrowLeftRight, Star,
+    ArrowLeftRight, Star, AlertTriangle, PackageX,
 } from 'lucide-react';
 
 interface ProductImage { id: number; url: string; url_thumb: string | null; is_primary: boolean; }
@@ -58,6 +59,16 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 }
 
 export default function Show({ product }: Props) {
+    const qty = product.stock?.quantity ?? null;
+    const min = product.min_stock;
+    const stockAlert = qty === null ? null
+        : qty === 0  ? 'none'
+        : qty <= min ? 'low'
+        : null;
+
+    const PLURALS: Record<string, string> = { Unidad: 'Unidades', Litro: 'Litros', Metro: 'Metros', Caja: 'Cajas', Rollo: 'Rollos' };
+    const unitLabel = (n: number) => n === 1 ? product.unit : (PLURALS[product.unit] ?? product.unit);
+
     const handleToggleActive = () =>
         router.patch(route('products.toggle-active', product.id));
 
@@ -87,7 +98,6 @@ export default function Show({ product }: Props) {
         {
             key: 'quantity',
             header: 'Cantidad',
-            align: 'right',
             render: (row) => (
                 <span className="font-medium tabular-nums text-foreground">
                     {row.quantity} {product.unit}
@@ -101,11 +111,14 @@ export default function Show({ product }: Props) {
         },
     ];
 
+    const stockIconBg    = stockAlert === 'none' ? 'bg-destructive-soft' : stockAlert === 'low' ? 'bg-warning-soft' : 'bg-success-soft';
+    const stockIconColor = stockAlert === 'none' ? 'text-destructive'    : stockAlert === 'low' ? 'text-warning'    : 'text-success';
+
     const kpiCards = [
-        { label: 'Precio',        value: fmt(product.price),                                          icon: DollarSign,    iconBg: 'bg-primary/10',      iconColor: 'text-primary' },
-        { label: 'Costo',         value: product.cost ? fmt(product.cost) : '—',                      icon: Tag,           iconBg: 'bg-info-soft',       iconColor: 'text-info' },
-        { label: 'Stock actual',  value: product.stock ? `${product.stock.quantity} ${product.unit}` : '—', icon: Warehouse, iconBg: 'bg-success-soft', iconColor: 'text-success' },
-        { label: 'Stock mínimo',  value: `${product.min_stock} ${product.unit}`,                       icon: ArrowLeftRight, iconBg: 'bg-warning-soft',  iconColor: 'text-warning' },
+        { label: 'Precio',       value: fmt(product.price),                                           icon: DollarSign,    iconBg: 'bg-primary/10',   iconColor: 'text-primary' },
+        { label: 'Costo',        value: product.cost ? fmt(product.cost) : '—',                       icon: Tag,           iconBg: 'bg-info-soft',    iconColor: 'text-info' },
+        { label: 'Stock actual', value: qty !== null ? `${qty} ${unitLabel(qty)}` : '—',                icon: Warehouse,     iconBg: stockIconBg,       iconColor: stockIconColor },
+        { label: 'Stock mínimo', value: `${product.min_stock} ${product.unit}`,                       icon: ArrowLeftRight, iconBg: 'bg-warning-soft', iconColor: 'text-warning' },
     ];
 
     return (
@@ -138,6 +151,7 @@ export default function Show({ product }: Props) {
                     }
                 />
 
+                {/* KPIs */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     {kpiCards.map((kpi) => (
                         <Card key={kpi.label} className="gap-0 py-0">
@@ -154,6 +168,27 @@ export default function Show({ product }: Props) {
                     ))}
                 </div>
 
+                {/* Alerta de stock */}
+                {stockAlert === 'none' && (
+                    <Alert variant="destructive">
+                        <PackageX className="size-4" />
+                        <AlertTitle>Sin stock disponible</AlertTitle>
+                        <AlertDescription>
+                            Este producto no tiene unidades disponibles. Registrá un ingreso de stock para poder operarlo.
+                        </AlertDescription>
+                    </Alert>
+                )}
+                {stockAlert === 'low' && (
+                    <Alert variant="warning">
+                        <AlertTriangle className="size-4" />
+                        <AlertTitle>Stock bajo</AlertTitle>
+                        <AlertDescription>
+                            El stock actual ({qty} {unitLabel(qty ?? 0)}) es igual o inferior al mínimo configurado ({min} {unitLabel(min)}). Considerá reponer mercadería.
+                        </AlertDescription>
+                    </Alert>
+                )}
+
+                {/* Tabs */}
                 <Tabs defaultValue="general" variant="underline">
                     <TabsList>
                         <TabsTrigger value="general">General</TabsTrigger>

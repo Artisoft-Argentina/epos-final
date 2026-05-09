@@ -44,15 +44,25 @@ class ProductController extends Controller
             $query->bySupplier((int) $request->supplier_id);
         }
 
+        if ($request->filled('stock_status')) {
+            match ($request->stock_status) {
+                'low'  => $query->whereHas('stock', fn($q) => $q->whereColumn('quantity', '<=', 'products.min_stock')->where('quantity', '>', 0)),
+                'none' => $query->where(fn($q) => $q->whereHas('stock', fn($s) => $s->where('quantity', 0))->orWhereDoesntHave('stock')),
+                default => null,
+            };
+        }
+
         return Inertia::render('Products/Index', [
             'products'   => $query->orderBy('name')->paginate(15)->withQueryString(),
-            'filters'    => $request->only(['search', 'active', 'category_id', 'brand_id', 'supplier_id']),
+            'filters'    => $request->only(['search', 'active', 'category_id', 'brand_id', 'supplier_id', 'stock_status']),
             'categories' => Category::active()->orderBy('name')->get(['id', 'name']),
             'brands'     => Brand::active()->orderBy('name')->get(['id', 'name']),
             'suppliers'  => Supplier::orderBy('business_name')->get(['id', 'business_name']),
             'kpis'       => [
-                'total'  => Product::count(),
-                'active' => Product::where('active', true)->count(),
+                'total'     => Product::count(),
+                'active'    => Product::where('active', true)->count(),
+                'low_stock' => Product::whereHas('stock', fn($q) => $q->whereColumn('quantity', '<=', 'products.min_stock')->where('quantity', '>', 0))->count(),
+                'no_stock'  => Product::where(fn($q) => $q->whereHas('stock', fn($s) => $s->where('quantity', 0))->orWhereDoesntHave('stock'))->count(),
             ],
         ]);
     }
