@@ -24,6 +24,7 @@ export function ActionButton({ title, onClick, disabled, className, children, va
                     className={cn('size-8', className)}
                     onClick={onClick}
                     disabled={disabled}
+                    aria-label={title}
                 >
                     {children}
                 </Button>

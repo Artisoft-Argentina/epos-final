@@ -9,11 +9,18 @@
         "format:check": "prettier --check resources/",
         "lint": "eslint . --fix",
         "types": "tsc --noEmit",
-        "sonar": "sonar-scanner"
+        "sonar": "sonar-scanner",
+        "test:e2e": "playwright test",
+        "test:e2e:ui": "playwright test --ui",
+        "test:e2e:debug": "playwright test --debug",
+        "test:e2e:report": "playwright show-report",
+        "test:e2e:reset": "${E2E_ARTISAN_CMD:-docker exec local-epos-app php artisan} tenants:e2e-reset"
     },
     "devDependencies": {
         "@eslint/js": "^9.19.0",
+        "@playwright/test": "^1.59.1",
         "@types/node": "^22.13.5",
+        "dotenv": "^17.4.2",
         "eslint": "^9.17.0",
         "eslint-config-prettier": "^10.0.1",
         "eslint-plugin-react": "^7.37.3",
