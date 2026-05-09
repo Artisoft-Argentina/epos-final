@@ -7,17 +7,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { FormField } from '@/components/form-field';
-import { ChevronRight, Save, Package, DollarSign, QrCode, ImagePlus, X, Star, Tag } from 'lucide-react';
-import { QuickCreateDialog } from '@/components/quick-create-dialog';
 import { Combobox } from '@/components/ui/combobox';
+import { FormField } from '@/components/form-field';
+import { QuickCreateDialog } from '@/components/quick-create-dialog';
+import { ChevronRight, Save, Package, DollarSign, QrCode, ImagePlus, X, Star, Tag, Layers, SlidersHorizontal, Warehouse } from 'lucide-react';
 import { useState } from 'react';
 
 interface ProductImage { id: number; url: string; url_thumb: string | null; is_primary: boolean; }
 interface Category { id: number; name: string; }
 interface Brand { id: number; name: string; }
 interface Supplier { id: number; business_name: string; }
-interface PriceList { id: number; name: string; percentage: string; pivot?: { price: number }; }
+interface PriceList { id: number; name: string; percentage: string; }
 
 interface Product {
     id: number;
@@ -30,7 +30,7 @@ interface Product {
     cost: string | null;
     tax_rate: string;
     min_stock: number;
-    brand_id: number;
+    brand_id: number | null;
     category_id: number;
     supplier_id: number | null;
     supplier_code: string | null;
@@ -48,7 +48,6 @@ interface Props {
 }
 
 const UNITS = ['Unidad', 'Kg', 'Litro', 'Metro', 'Caja', 'Pack', 'Par', 'Rollo'];
-
 const fmt = (n: number) => `$${n.toLocaleString('es-AR', { minimumFractionDigits: 2 })}`;
 
 export default function Edit({ product, categories, brands, suppliers, priceLists }: Props) {
@@ -62,7 +61,7 @@ export default function Edit({ product, categories, brands, suppliers, priceList
         cost: product.cost ?? '',
         tax_rate: product.tax_rate,
         min_stock: product.min_stock.toString(),
-        brand_id: product.brand_id.toString(),
+        brand_id: product.brand_id?.toString() ?? '',
         category_id: product.category_id.toString(),
         supplier_id: product.supplier_id?.toString() ?? '',
         supplier_code: product.supplier_code ?? '',
@@ -77,10 +76,7 @@ export default function Edit({ product, categories, brands, suppliers, priceList
     const [brandList, setBrandList] = useState(brands);
 
     const categoryOptions = categoryList.map((c) => ({ value: c.id.toString(), label: c.name }));
-    const brandOptions    = [
-        { value: '', label: 'Sin marca' },
-        ...brandList.map((b) => ({ value: b.id.toString(), label: b.name })),
-    ];
+    const brandOptions    = [{ value: '', label: 'Sin marca' }, ...brandList.map((b) => ({ value: b.id.toString(), label: b.name }))];
     const supplierOptions = suppliers.map((s) => ({ value: s.id.toString(), label: s.business_name }));
 
     const handleImages = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -110,6 +106,7 @@ export default function Edit({ product, categories, brands, suppliers, priceList
             <Head title={`Editar: ${product.name}`} />
             <div className="flex flex-col gap-6 p-6">
 
+                {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                         <div className="flex items-center gap-1.5 text-sm text-muted-foreground mb-1">
@@ -123,12 +120,9 @@ export default function Edit({ product, categories, brands, suppliers, priceList
                         <p className="text-sm text-muted-foreground mt-0.5">{product.name}</p>
                     </div>
                     <div className="flex items-center gap-2">
-                        <Link href={route('products.show', product.id)}>
-                            <Button variant="outline">Cancelar</Button>
-                        </Link>
+                        <Link href={route('products.show', product.id)}><Button variant="outline">Cancelar</Button></Link>
                         <Button onClick={submit} disabled={processing}>
-                            <Save className="size-4" />
-                            {processing ? 'Guardando...' : 'Guardar Cambios'}
+                            <Save className="size-4" />{processing ? 'Guardando...' : 'Guardar Cambios'}
                         </Button>
                     </div>
                 </div>
@@ -136,56 +130,23 @@ export default function Edit({ product, categories, brands, suppliers, priceList
                 <form onSubmit={submit}>
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-                        {/* Columna izquierda */}
+                        {/* ── Columna izquierda ── */}
                         <div className="lg:col-span-2 flex flex-col gap-6">
 
                             {/* Datos Generales */}
                             <Card className="gap-0 py-0">
                                 <CardHeader className="border-b border-border px-6 py-4">
                                     <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                                        <Package className="size-4 text-primary" />
-                                        Datos Generales
+                                        <Package className="size-4 text-primary" />Datos Generales
                                     </CardTitle>
                                 </CardHeader>
-                                <CardContent className="px-6 py-5 grid grid-cols-1 md:grid-cols-2 gap-5">
-
-                                    <FormField label="Nombre" htmlFor="name" error={errors.name} required className="md:col-span-2">
+                                <CardContent className="px-6 py-5 flex flex-col gap-5">
+                                    <FormField label="Nombre" htmlFor="name" error={errors.name} required>
                                         <Input id="name" value={data.name} onChange={(e) => setData('name', e.target.value)} placeholder={product.name} error={errors.name} />
                                     </FormField>
-
-                                    <FormField label="SKU" htmlFor="sku" hint="El SKU no puede modificarse una vez creado el producto.">
-                                        <Input id="sku" value={data.sku} placeholder={product.sku} disabled className="bg-muted text-muted-foreground" />
-                                    </FormField>
-
-                                    <FormField label="Descripción" htmlFor="description" error={errors.description} className="md:col-span-2">
+                                    <FormField label="Descripción" htmlFor="description" error={errors.description}>
                                         <Textarea id="description" value={data.description} onChange={(e) => setData('description', e.target.value)} placeholder={product.description ?? 'Descripción del producto...'} rows={3} />
                                     </FormField>
-
-                                    <div className="md:col-span-2 flex items-center justify-between p-4 rounded-lg border border-border bg-muted/30">
-                                        <div>
-                                            <p className="text-sm font-medium text-foreground">Estado</p>
-                                            <p className="text-xs text-muted-foreground mt-0.5">Habilita el producto para operar</p>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <Badge variant={data.active ? 'success' : 'secondary'} dot>
-                                                {data.active ? 'Activo' : 'Inactivo'}
-                                            </Badge>
-                                            <Switch checked={data.active} onCheckedChange={(v) => setData('active', v)} />
-                                        </div>
-                                    </div>
-
-                                    <div className="md:col-span-2 flex items-center justify-between p-4 rounded-lg border border-border bg-muted/30">
-                                        <div>
-                                            <p className="text-sm font-medium text-foreground">Publicar en catálogo</p>
-                                            <p className="text-xs text-muted-foreground mt-0.5">Hace visible el producto en la tienda en línea</p>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <Badge variant={data.published ? 'info' : 'secondary'} dot>
-                                                {data.published ? 'Publicado' : 'No publicado'}
-                                            </Badge>
-                                            <Switch checked={data.published} onCheckedChange={(v) => setData('published', v)} />
-                                        </div>
-                                    </div>
                                 </CardContent>
                             </Card>
 
@@ -193,97 +154,24 @@ export default function Edit({ product, categories, brands, suppliers, priceList
                             <Card className="gap-0 py-0">
                                 <CardHeader className="border-b border-border px-6 py-4">
                                     <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                                        <DollarSign className="size-4 text-primary" />
-                                        Datos Comerciales
+                                        <DollarSign className="size-4 text-primary" />Datos Comerciales
                                     </CardTitle>
                                 </CardHeader>
-                                <CardContent className="px-6 py-5 grid grid-cols-1 md:grid-cols-2 gap-5">
-
+                                <CardContent className="px-6 py-5 grid grid-cols-2 gap-5">
                                     <FormField label="Precio" htmlFor="price" error={errors.price} required>
                                         <Input id="price" type="number" step="0.01" min="0" value={data.price} onChange={(e) => setData('price', e.target.value)} placeholder={product.price} error={errors.price} />
                                     </FormField>
-
                                     <FormField label="Costo" htmlFor="cost" error={errors.cost}>
                                         <Input id="cost" type="number" step="0.01" min="0" value={data.cost} onChange={(e) => setData('cost', e.target.value)} placeholder={product.cost ?? '0.00'} error={errors.cost} />
                                     </FormField>
-
                                     <FormField label="Alícuota IVA (%)" htmlFor="tax_rate" error={errors.tax_rate} required>
                                         <Input id="tax_rate" type="number" step="0.01" min="0" value={data.tax_rate} onChange={(e) => setData('tax_rate', e.target.value)} placeholder={product.tax_rate} error={errors.tax_rate} />
                                     </FormField>
-
                                     <FormField label="Unidad" error={errors.unit} required>
                                         <Select value={data.unit} onValueChange={(v) => setData('unit', v)}>
                                             <SelectTrigger><SelectValue /></SelectTrigger>
-                                            <SelectContent>
-                                                {UNITS.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}
-                                            </SelectContent>
+                                            <SelectContent>{UNITS.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
                                         </Select>
-                                    </FormField>
-
-                                    <FormField label="Categoría" error={errors.category_id} required>
-                                        <div className="flex gap-2">
-                                            <Combobox
-                                                options={categoryOptions}
-                                                value={data.category_id}
-                                                onValueChange={(v) => setData('category_id', v)}
-                                                placeholder="Seleccionar categoría..."
-                                                searchPlaceholder="Buscar categoría..."
-                                                emptyMessage="No se encontró la categoría."
-                                                error={errors.category_id}
-                                            />
-                                            <QuickCreateDialog
-                                                title="Nueva Categoría"
-                                                placeholder="Ej. Electrónica"
-                                                routeName="categories.store"
-                                                onSuccess={(item) => {
-                                                    setCategoryList((prev) => [...prev, item].sort((a, b) => a.name.localeCompare(b.name)));
-                                                    setData('category_id', item.id.toString());
-                                                }}
-                                            />
-                                        </div>
-                                    </FormField>
-
-                                    <FormField label="Marca" error={errors.brand_id}>
-                                        <div className="flex gap-2">
-                                            <Combobox
-                                                options={brandOptions}
-                                                value={data.brand_id || ''}
-                                                onValueChange={(v) => setData('brand_id', v)}
-                                                placeholder="Sin marca"
-                                                searchPlaceholder="Buscar marca..."
-                                                emptyMessage="No se encontró la marca."
-                                                error={errors.brand_id}
-                                            />
-                                            <QuickCreateDialog
-                                                title="Nueva Marca"
-                                                placeholder="Ej. Samsung"
-                                                routeName="brands.store"
-                                                onSuccess={(item) => {
-                                                    setBrandList((prev) => [...prev, item].sort((a, b) => a.name.localeCompare(b.name)));
-                                                    setData('brand_id', item.id.toString());
-                                                }}
-                                            />
-                                        </div>
-                                    </FormField>
-
-                                    <FormField label="Proveedor" error={errors.supplier_id}>
-                                        <Combobox
-                                            options={supplierOptions}
-                                            value={data.supplier_id}
-                                            onValueChange={(v) => setData('supplier_id', v)}
-                                            placeholder="Seleccionar proveedor..."
-                                            searchPlaceholder="Buscar proveedor..."
-                                            emptyMessage="No se encontró el proveedor."
-                                            error={errors.supplier_id}
-                                        />
-                                    </FormField>
-
-                                    <FormField label="Código de proveedor" htmlFor="supplier_code" error={errors.supplier_code}>
-                                        <Input id="supplier_code" value={data.supplier_code} onChange={(e) => setData('supplier_code', e.target.value)} placeholder={product.supplier_code ?? 'Ej. PROV-123'} error={errors.supplier_code} />
-                                    </FormField>
-
-                                    <FormField label="Stock mínimo" htmlFor="min_stock" error={errors.min_stock} required>
-                                        <Input id="min_stock" type="number" min="0" value={data.min_stock} onChange={(e) => setData('min_stock', e.target.value)} placeholder={product.min_stock.toString()} error={errors.min_stock} />
                                     </FormField>
                                 </CardContent>
                             </Card>
@@ -292,16 +180,13 @@ export default function Edit({ product, categories, brands, suppliers, priceList
                             <Card className="gap-0 py-0">
                                 <CardHeader className="border-b border-border px-6 py-4">
                                     <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                                        <Tag className="size-4 text-primary" />
-                                        Listas de Precios
+                                        <Tag className="size-4 text-primary" />Listas de Precios
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="px-6 py-5">
                                     {priceLists.length === 0 ? (
                                         <div className="rounded-lg border border-dashed border-border bg-muted/30 p-4">
-                                            <p className="text-sm text-muted-foreground">
-                                                No hay listas de precios configuradas. El precio base se usará directamente en ventas.
-                                            </p>
+                                            <p className="text-sm text-muted-foreground">No hay listas de precios configuradas. El precio base se usará directamente en ventas.</p>
                                         </div>
                                     ) : (
                                         <div className="flex flex-col gap-1">
@@ -317,56 +202,41 @@ export default function Edit({ product, categories, brands, suppliers, priceList
                                                 return (
                                                     <div key={list.id} className="grid grid-cols-3 px-2 py-2.5 rounded-md hover:bg-muted/40 transition-colors">
                                                         <span className="text-sm font-medium text-foreground">{list.name}</span>
-                                                        <span className="text-sm tabular-nums text-muted-foreground text-right">
-                                                            {pct >= 0 ? '+' : ''}{pct}%
-                                                        </span>
+                                                        <span className="text-sm tabular-nums text-muted-foreground text-right">{pct >= 0 ? '+' : ''}{pct}%</span>
                                                         <span className="text-sm font-semibold tabular-nums text-foreground text-right">
                                                             {base > 0 ? fmt(final) : <span className="text-muted-foreground">—</span>}
                                                         </span>
                                                     </div>
                                                 );
                                             })}
-                                            <p className="text-xs text-muted-foreground mt-2 px-2">
-                                                Si modificás el precio base, los precios se recalcularán automáticamente al guardar.
-                                            </p>
+                                            <p className="text-xs text-muted-foreground mt-2 px-2">Si modificás el precio base, los precios se recalcularán automáticamente al guardar.</p>
                                         </div>
                                     )}
                                 </CardContent>
                             </Card>
 
-                        </div>
-
-                        {/* Columna derecha */}
-                        <div className="flex flex-col gap-6">
-
+                            {/* Stock */}
                             <Card className="gap-0 py-0">
                                 <CardHeader className="border-b border-border px-6 py-4">
                                     <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                                        <QrCode className="size-4 text-primary" />
-                                        Identificación
+                                        <Warehouse className="size-4 text-primary" />Stock
                                     </CardTitle>
                                 </CardHeader>
-                                <CardContent className="px-6 py-5 flex flex-col gap-5">
-                                    <FormField label="EAN / GTIN" htmlFor="ean" error={errors.ean} hint="Código comercial estándar del fabricante.">
-                                        <Input id="ean" value={data.ean} onChange={(e) => setData('ean', e.target.value)} placeholder={product.ean ?? 'Ej. 7791234567890'} error={errors.ean} />
+                                <CardContent className="px-6 py-5">
+                                    <FormField label="Stock mínimo" htmlFor="min_stock" error={errors.min_stock} required>
+                                        <Input id="min_stock" type="number" min="0" value={data.min_stock} onChange={(e) => setData('min_stock', e.target.value)} placeholder={product.min_stock.toString()} error={errors.min_stock} />
                                     </FormField>
-                                    <div className="rounded-lg border border-dashed border-border bg-muted/30 p-4 text-center">
-                                        <p className="text-xs text-muted-foreground leading-relaxed">
-                                            El código de barras se genera usando el EAN si existe, o el SKU en caso contrario.
-                                        </p>
-                                    </div>
                                 </CardContent>
                             </Card>
 
+                            {/* Imágenes */}
                             <Card className="gap-0 py-0">
                                 <CardHeader className="border-b border-border px-6 py-4">
                                     <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                                        <ImagePlus className="size-4 text-primary" />
-                                        Imágenes
+                                        <ImagePlus className="size-4 text-primary" />Imágenes
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="px-6 py-5 flex flex-col gap-4">
-
                                     {product.images.length > 0 && (
                                         <div className="flex flex-col gap-2">
                                             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Imágenes actuales</p>
@@ -374,11 +244,7 @@ export default function Edit({ product, categories, brands, suppliers, priceList
                                                 {product.images.map((img) => (
                                                     <div key={img.id} className="relative group aspect-square rounded-md overflow-hidden border border-border">
                                                         <img src={img.url_thumb ?? img.url} alt="" className="size-full object-cover" />
-                                                        {img.is_primary && (
-                                                            <span className="absolute top-1 left-1 text-[10px] font-semibold bg-primary text-primary-foreground px-1.5 py-0.5 rounded">
-                                                                Principal
-                                                            </span>
-                                                        )}
+                                                        {img.is_primary && <span className="absolute top-1 left-1 text-[10px] font-semibold bg-primary text-primary-foreground px-1.5 py-0.5 rounded">Principal</span>}
                                                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
                                                             {!img.is_primary && (
                                                                 <button type="button" onClick={() => setPrimary(img.id)} className="size-7 rounded-md bg-white text-foreground flex items-center justify-center hover:bg-muted transition-colors" title="Hacer principal">
@@ -394,7 +260,6 @@ export default function Edit({ product, categories, brands, suppliers, priceList
                                             </div>
                                         </div>
                                     )}
-
                                     <label htmlFor="images" className="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border bg-muted/30 p-5 text-center cursor-pointer hover:bg-muted/50 transition-colors">
                                         <ImagePlus className="size-5 text-muted-foreground" />
                                         <div>
@@ -403,7 +268,6 @@ export default function Edit({ product, categories, brands, suppliers, priceList
                                         </div>
                                         <input id="images" type="file" multiple accept="image/jpeg,image/png,image/gif,image/webp" className="sr-only" onChange={handleImages} />
                                     </label>
-
                                     {newPreviews.length > 0 && (
                                         <div className="grid grid-cols-3 gap-2">
                                             {newPreviews.map((src, i) => (
@@ -419,15 +283,97 @@ export default function Edit({ product, categories, brands, suppliers, priceList
                                 </CardContent>
                             </Card>
                         </div>
+
+                        {/* ── Columna derecha ── */}
+                        <div className="flex flex-col gap-6">
+
+                            {/* Clasificación */}
+                            <Card className="gap-0 py-0">
+                                <CardHeader className="border-b border-border px-6 py-4">
+                                    <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                                        <Layers className="size-4 text-primary" />Clasificación
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="px-6 py-5 flex flex-col gap-5">
+                                    <FormField label="Categoría" error={errors.category_id} required>
+                                        <div className="flex gap-2">
+                                            <Combobox options={categoryOptions} value={data.category_id} onValueChange={(v) => setData('category_id', v)} placeholder="Seleccionar..." searchPlaceholder="Buscar categoría..." emptyMessage="No se encontró." error={errors.category_id} />
+                                            <QuickCreateDialog title="Nueva Categoría" placeholder="Ej. Electrónica" routeName="categories.store" onSuccess={(item) => { setCategoryList((prev) => [...prev, item].sort((a, b) => a.name.localeCompare(b.name))); setData('category_id', item.id.toString()); }} />
+                                        </div>
+                                    </FormField>
+                                    <FormField label="Marca" error={errors.brand_id}>
+                                        <div className="flex gap-2">
+                                            <Combobox options={brandOptions} value={data.brand_id || ''} onValueChange={(v) => setData('brand_id', v)} placeholder="Sin marca" searchPlaceholder="Buscar marca..." emptyMessage="No se encontró." error={errors.brand_id} />
+                                            <QuickCreateDialog title="Nueva Marca" placeholder="Ej. Samsung" routeName="brands.store" onSuccess={(item) => { setBrandList((prev) => [...prev, item].sort((a, b) => a.name.localeCompare(b.name))); setData('brand_id', item.id.toString()); }} />
+                                        </div>
+                                    </FormField>
+                                    <FormField label="Proveedor" error={errors.supplier_id}>
+                                        <Combobox options={supplierOptions} value={data.supplier_id} onValueChange={(v) => setData('supplier_id', v)} placeholder="Seleccionar..." searchPlaceholder="Buscar proveedor..." emptyMessage="No se encontró." error={errors.supplier_id} />
+                                    </FormField>
+                                    <FormField label="Código de proveedor" htmlFor="supplier_code" error={errors.supplier_code}>
+                                        <Input id="supplier_code" value={data.supplier_code} onChange={(e) => setData('supplier_code', e.target.value)} placeholder={product.supplier_code ?? 'Ej. PROV-123'} error={errors.supplier_code} />
+                                    </FormField>
+                                </CardContent>
+                            </Card>
+
+                            {/* Identificación */}
+                            <Card className="gap-0 py-0">
+                                <CardHeader className="border-b border-border px-6 py-4">
+                                    <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                                        <QrCode className="size-4 text-primary" />Identificación
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="px-6 py-5 flex flex-col gap-5">
+                                    <FormField label="SKU" hint="El SKU no puede modificarse una vez creado el producto.">
+                                        <Input value={data.sku} placeholder={product.sku} disabled className="bg-muted text-muted-foreground" />
+                                    </FormField>
+                                    <FormField label="EAN / GTIN" htmlFor="ean" error={errors.ean} hint="Código comercial estándar del fabricante.">
+                                        <Input id="ean" value={data.ean} onChange={(e) => setData('ean', e.target.value)} placeholder={product.ean ?? 'Ej. 7791234567890'} error={errors.ean} />
+                                    </FormField>
+                                    <div className="rounded-lg border border-dashed border-border bg-muted/30 p-3 text-center">
+                                        <p className="text-xs text-muted-foreground leading-relaxed">El código de barras se genera usando el EAN si existe, o el SKU en caso contrario.</p>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            {/* Estado */}
+                            <Card className="gap-0 py-0">
+                                <CardHeader className="border-b border-border px-6 py-4">
+                                    <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                                        <SlidersHorizontal className="size-4 text-primary" />Estado
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="px-6 py-5 flex flex-col gap-4">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="text-sm font-medium text-foreground">Activo</p>
+                                            <p className="text-xs text-muted-foreground mt-0.5">Habilita el producto para operar</p>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <Badge variant={data.active ? 'success' : 'secondary'} dot>{data.active ? 'Activo' : 'Inactivo'}</Badge>
+                                            <Switch checked={data.active} onCheckedChange={(v) => setData('active', v)} />
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="text-sm font-medium text-foreground">Publicar en catálogo</p>
+                                            <p className="text-xs text-muted-foreground mt-0.5">Visible en la tienda en línea</p>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <Badge variant={data.published ? 'info' : 'secondary'} dot>{data.published ? 'Publicado' : 'No publicado'}</Badge>
+                                            <Switch checked={data.published} onCheckedChange={(v) => setData('published', v)} />
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                        </div>
                     </div>
 
                     <div className="flex items-center justify-end gap-2 pt-4">
-                        <Link href={route('products.show', product.id)}>
-                            <Button variant="outline">Cancelar</Button>
-                        </Link>
+                        <Link href={route('products.show', product.id)}><Button variant="outline">Cancelar</Button></Link>
                         <Button type="submit" disabled={processing}>
-                            <Save className="size-4" />
-                            {processing ? 'Guardando...' : 'Guardar Cambios'}
+                            <Save className="size-4" />{processing ? 'Guardando...' : 'Guardar Cambios'}
                         </Button>
                     </div>
                 </form>
