@@ -85,105 +85,109 @@ class VentaController extends Controller
             'voucher_letter'               => 'nullable|in:A,B,C',
         ]);
 
-        $sale = DB::transaction(function () use ($request) {
-            $customer  = Customer::find($request->customer_id);
-            $subtotal  = 0;
-            $saleType  = $request->sale_type ?? $this->determineSaleType($request);
+        try {
+            $sale = DB::transaction(function () use ($request) {
+                $customer  = Customer::find($request->customer_id);
+                $subtotal  = 0;
+                $saleType  = $request->sale_type ?? $this->determineSaleType($request);
 
-            $pos = $this->resolvePointOfSale($request);
-            if (! $pos) {
-                throw new \RuntimeException('No hay un punto de venta configurado.');
-            }
-
-            $letter         = strtoupper($request->voucher_letter ?? $pos->voucher_letter_default ?? 'B');
-            $invoiceNumber  = $this->invoiceNumberService->next($pos, $letter);
-            $warehouseId    = $this->resolveSaleWarehouseId($request, $pos);
-
-            $sale = Sale::create([
-                'pos_number'          => $pos->pos_number,
-                'voucher_letter'      => $letter,
-                'invoice_number'      => $invoiceNumber,
-                'tax_id'              => $customer->tax_id ?? $customer->dni,
-                'date'                => now()->format('Y-m-d'),
-                'discount'            => 0,
-                'surcharge'           => $request->surcharge ?? 0,
-                'additional_discount' => $request->additional_discount ?? 0,
-                'subtotal'            => 0,
-                'total'               => 0,
-                'payment_status'      => 'SI',
-                'sale_condition'      => 'CONTADO',
-                'customer_id'         => $request->customer_id,
-                'user_id'             => auth()->id(),
-                'price_list_id'       => $request->price_list_id,
-                'sale_type'           => $saleType,
-                'point_of_sale_id'    => $pos->id,
-                'warehouse_id'        => $warehouseId,
-            ]);
-
-            foreach ($request->articulos as $item) {
-                $product      = Product::find($item['articulo_id']);
-                $quantity     = $item['cantidad'];
-                $price        = $item['precio'];
-                $itemSubtotal = $quantity * $price;
-
-                $sale->products()->attach($product->id, [
-                    'supplier_code' => $product->supplier_code,
-                    'sku'           => $product->sku,
-                    'name'          => $product->name,
-                    'unit'          => $product->unit,
-                    'quantity'      => $quantity,
-                    'discount'      => 0,
-                    'tax_rate'      => $product->tax_rate,
-                    'unit_price'    => $price,
-                    'subtotal'      => $itemSubtotal,
-                ]);
-
-                $subtotal += $itemSubtotal;
-
-                $itemWarehouseId = isset($item['warehouse_id']) && $item['warehouse_id']
-                    ? (int) $item['warehouse_id']
-                    : $warehouseId;
-
-                if ($saleType === 'ecommerce') {
-                    $this->deliveryService->create(
-                        $sale, $product->id, $quantity, $itemWarehouseId,
-                        Delivery::STATUS_PENDING,
-                        now()->addDays(3),
-                        'Entrega pendiente - Venta e-commerce',
-                    );
-                } else {
-                    $isImmediate = (bool) $request->auto_delivery;
-                    $this->deliveryService->create(
-                        $sale, $product->id, $quantity, $itemWarehouseId,
-                        $isImmediate ? Delivery::STATUS_DELIVERED : Delivery::STATUS_PENDING,
-                        now(),
-                        $isImmediate ? 'Entrega inmediata - Venta POS' : 'Entrega pendiente - Venta POS',
-                        auth()->id(),
-                    );
+                $pos = $this->resolvePointOfSale($request);
+                if (! $pos) {
+                    throw new \RuntimeException('No hay un punto de venta configurado.');
                 }
-            }
 
-            $surcharge           = $request->surcharge ?? 0;
-            $additionalDiscount  = $request->additional_discount ?? 0;
-            $total               = $subtotal + $surcharge - $additionalDiscount;
+                $letter         = strtoupper($request->voucher_letter ?? $pos->voucher_letter_default ?? 'B');
+                $invoiceNumber  = $this->invoiceNumberService->next($pos, $letter);
+                $warehouseId    = $this->resolveSaleWarehouseId($request, $pos);
 
-            $sale->update([
-                'subtotal'       => $subtotal,
-                'total'          => $total,
-                'payment_status' => $request->payment_amount >= $total ? 'SI' : 'NO',
-            ]);
-
-            if ($request->payment_amount > 0) {
-                SalePayment::create([
-                    'sale_id'        => $sale->id,
-                    'amount'         => $request->payment_amount,
-                    'payment_method' => $request->payment_method,
-                    'payment_date'   => now(),
+                $sale = Sale::create([
+                    'pos_number'          => $pos->pos_number,
+                    'voucher_letter'      => $letter,
+                    'invoice_number'      => $invoiceNumber,
+                    'tax_id'              => $customer->tax_id ?? $customer->dni,
+                    'date'                => now()->format('Y-m-d'),
+                    'discount'            => 0,
+                    'surcharge'           => $request->surcharge ?? 0,
+                    'additional_discount' => $request->additional_discount ?? 0,
+                    'subtotal'            => 0,
+                    'total'               => 0,
+                    'payment_status'      => 'SI',
+                    'sale_condition'      => 'CONTADO',
+                    'customer_id'         => $request->customer_id,
+                    'user_id'             => auth()->id(),
+                    'price_list_id'       => $request->price_list_id,
+                    'sale_type'           => $saleType,
+                    'point_of_sale_id'    => $pos->id,
+                    'warehouse_id'        => $warehouseId,
                 ]);
-            }
 
-            return $sale;
-        });
+                foreach ($request->articulos as $item) {
+                    $product      = Product::find($item['articulo_id']);
+                    $quantity     = $item['cantidad'];
+                    $price        = $item['precio'];
+                    $itemSubtotal = $quantity * $price;
+
+                    $sale->products()->attach($product->id, [
+                        'supplier_code' => $product->supplier_code,
+                        'sku'           => $product->sku,
+                        'name'          => $product->name,
+                        'unit'          => $product->unit,
+                        'quantity'      => $quantity,
+                        'discount'      => 0,
+                        'tax_rate'      => $product->tax_rate,
+                        'unit_price'    => $price,
+                        'subtotal'      => $itemSubtotal,
+                    ]);
+
+                    $subtotal += $itemSubtotal;
+
+                    $itemWarehouseId = isset($item['warehouse_id']) && $item['warehouse_id']
+                        ? (int) $item['warehouse_id']
+                        : $warehouseId;
+
+                    if ($saleType === 'ecommerce') {
+                        $this->deliveryService->create(
+                            $sale, $product->id, $quantity, $itemWarehouseId,
+                            Delivery::STATUS_PENDING,
+                            now()->addDays(3),
+                            'Entrega pendiente - Venta e-commerce',
+                        );
+                    } else {
+                        $isImmediate = (bool) $request->auto_delivery;
+                        $this->deliveryService->create(
+                            $sale, $product->id, $quantity, $itemWarehouseId,
+                            $isImmediate ? Delivery::STATUS_DELIVERED : Delivery::STATUS_PENDING,
+                            now(),
+                            $isImmediate ? 'Entrega inmediata - Venta POS' : 'Entrega pendiente - Venta POS',
+                            auth()->id(),
+                        );
+                    }
+                }
+
+                $surcharge           = $request->surcharge ?? 0;
+                $additionalDiscount  = $request->additional_discount ?? 0;
+                $total               = $subtotal + $surcharge - $additionalDiscount;
+
+                $sale->update([
+                    'subtotal'       => $subtotal,
+                    'total'          => $total,
+                    'payment_status' => $request->payment_amount >= $total ? 'SI' : 'NO',
+                ]);
+
+                if ($request->payment_amount > 0) {
+                    SalePayment::create([
+                        'sale_id'        => $sale->id,
+                        'amount'         => $request->payment_amount,
+                        'payment_method' => $request->payment_method,
+                        'payment_date'   => now(),
+                    ]);
+                }
+
+                return $sale;
+            });
+        } catch (\RuntimeException $e) {
+            return back()->withInput()->with('error', $e->getMessage());
+        }
 
         return redirect()->route('ventas.index')->with('success', 'Venta realizada exitosamente');
     }
