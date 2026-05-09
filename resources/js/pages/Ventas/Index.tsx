@@ -18,10 +18,10 @@ interface Sale {
     total: number;
     payment_status: string;
     cae?: string;
-    customer: { business_name: string };
+    customer: { business_name: string; fantasy_name?: string | null };
     user: { name: string };
     products: Array<{ pivot: { quantity: number } }>;
-    deliveries: Array<{ quantity: number }>;
+    deliveries: Array<{ quantity: number; status: 'pending' | 'delivered' | 'cancelled' }>;
 }
 
 interface Props {
@@ -38,10 +38,8 @@ function formatDate(dateStr: string) {
     return `${f[2]}/${f[1]}/${f[0]}`;
 }
 
-function tieneEntregasPendientes(sale: Sale) {
-    const totalVendido = sale.products?.reduce((sum, p) => sum + p.pivot.quantity, 0) ?? 0;
-    const totalEntregado = sale.deliveries?.reduce((sum, d) => sum + d.quantity, 0) ?? 0;
-    return totalEntregado < totalVendido;
+function entregasPendientes(sale: Sale): number {
+    return sale.deliveries?.filter((d) => d.status === 'pending').length ?? 0;
 }
 
 export default function Index({ facturas }: Props) {
@@ -105,9 +103,15 @@ export default function Index({ facturas }: Props) {
                             <ActionButton title="Editar"><Edit className="size-3.5" /></ActionButton>
                         </Link>
                     )}
-                    {tieneEntregasPendientes(row) && (
-                        <Link href={route('entregas.create', row.id)}>
-                            <ActionButton title="Crear entrega"><Package className="size-3.5" /></ActionButton>
+                    {entregasPendientes(row) > 0 && (
+                        <Link href={route('entregas.index') + `?status=pending&sale_id=${row.id}`}>
+                            <ActionButton
+                                title={`Marcar entregas (${entregasPendientes(row)} pendiente${entregasPendientes(row) !== 1 ? 's' : ''})`}
+                                className="border-warning/30 text-warning hover:bg-warning-soft"
+                                variant="outline"
+                            >
+                                <Package className="size-3.5" />
+                            </ActionButton>
                         </Link>
                     )}
                     {!row.cae && (

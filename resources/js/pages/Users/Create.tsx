@@ -7,12 +7,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FormField } from '@/components/form-field';
 
 interface Role { id: number; role: string; }
-interface Props { roles: Role[]; }
+interface PuntoVenta { id: number; name: string; pos_number: number; is_default: boolean; }
+interface Props { roles: Role[]; puntosVenta: PuntoVenta[]; }
 
-export default function Create({ roles }: Props) {
+export default function Create({ roles, puntosVenta }: Props) {
     const { data, setData, post, processing, errors } = useForm({
-        name: '', email: '', password: '', role_id: '',
+        name: '', email: '', password: '', role_id: '', point_of_sale_id: '',
     });
+
+    const selectedRole = roles.find((r) => r.id.toString() === data.role_id);
+    const isVendedor = selectedRole?.role === 'vendedor';
 
     const submit = (e: React.FormEvent) => { e.preventDefault(); post(route('users.store')); };
 
@@ -35,11 +39,25 @@ export default function Create({ roles }: Props) {
                                     <Input id="password" type="password" value={data.password} onChange={(e) => setData('password', e.target.value)} placeholder="Mínimo 8 caracteres" error={errors.password} />
                                 </FormField>
                                 <FormField label="Rol" error={errors.role_id}>
-                                    <Select value={data.role_id} onValueChange={(v) => setData('role_id', v)}>
+                                    <Select value={data.role_id} onValueChange={(v) => { setData('role_id', v); setData('point_of_sale_id', ''); }}>
                                         <SelectTrigger error={errors.role_id}><SelectValue placeholder="Seleccionar rol" /></SelectTrigger>
                                         <SelectContent>{roles.map((r) => <SelectItem key={r.id} value={r.id.toString()}>{r.role}</SelectItem>)}</SelectContent>
                                     </Select>
                                 </FormField>
+                                {isVendedor && (
+                                    <FormField label="Punto de venta asignado *" error={errors.point_of_sale_id}>
+                                        <Select value={data.point_of_sale_id} onValueChange={(v) => setData('point_of_sale_id', v)}>
+                                            <SelectTrigger error={errors.point_of_sale_id}><SelectValue placeholder="Seleccionar PV" /></SelectTrigger>
+                                            <SelectContent>
+                                                {puntosVenta.map((p) => (
+                                                    <SelectItem key={p.id} value={p.id.toString()}>
+                                                        {p.name} (#{p.pos_number}){p.is_default ? ' — default' : ''}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </FormField>
+                                )}
                             </div>
                             <div className="flex gap-2">
                                 <Button type="submit" disabled={processing}>{processing ? 'Creando...' : 'Crear'}</Button>

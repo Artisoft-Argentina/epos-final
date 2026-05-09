@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Models\Stock;
 use App\Models\StockMovement;
+use App\Models\Warehouse;
 use App\Services\MovimientoService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -13,37 +14,46 @@ class InventarioController extends Controller
 {
     public function __construct(private MovimientoService $movimientoService) {}
 
-    public function index()
+    public function index(Request $request)
     {
-        $inventarios = Stock::with('product')->get()->map(function ($stock) {
+        $warehouseId = $request->input('warehouse_id');
+
+        $query = Stock::with(['product', 'warehouse']);
+        if ($warehouseId) {
+            $query->where('warehouse_id', $warehouseId);
+        }
+
+        $inventarios = $query->get()->map(function ($stock) {
             $stock->calculated_quantity = $stock->calculatedQuantity();
             return $stock;
         });
 
         return Inertia::render('Inventarios/Index', [
-            'inventarios' => $inventarios,
+            'inventarios'           => $inventarios,
+            'warehouses'            => Warehouse::active()->orderBy('is_default', 'desc')->orderBy('name')->get(),
+            'selected_warehouse_id' => $warehouseId,
         ]);
     }
 
     public function create()
     {
         return Inertia::render('Inventarios/Create', [
-            'articulos' => Product::all(),
+            'articulos'  => Product::all(),
+            'warehouses' => Warehouse::active()->orderBy('is_default', 'desc')->orderBy('name')->get(),
         ]);
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'quantity'   => 'required|integer|min:0',
-            'product_id' => 'required|exists:products,id',
+            'quantity'     => 'required|integer|min:0',
+            'product_id'   => 'required|exists:products,id',
+            'warehouse_id' => 'nullable|exists:warehouses,id',
         ]);
 
-        // Crear stock con quantity 0 — el servicio aplica el increment
-        $stock = Stock::create([
-            'product_id' => $request->product_id,
-            'quantity'   => 0,
-        ]);
+        $warehouseId = $request->warehouse_id ?? Warehouse::isDefault()->value('id');
+
+        $stock = Stock::forProductInWarehouse($request->product_id, $warehouseId);
 
         if ($request->quantity > 0) {
             $this->movimientoService->registrar(

@@ -7,13 +7,13 @@ import { useState } from 'react';
 
 interface Articulo {
     id: number;
-    articulo: string;
-    precio: number;
-    categoria?: { nombre: string };
-    marca?: { nombre: string };
-    imagenes?: Array<{
+    name: string;
+    price: number;
+    category?: { id: number; name: string } | null;
+    brand?: { id: number; name: string } | null;
+    images?: Array<{
         id: number;
-        ruta: string;
+        path: string;
         url?: string;
     }>;
 }
@@ -48,10 +48,10 @@ function ProductCard({ articulo, onAddToCart }: { articulo: Articulo; onAddToCar
             <Link href={`/shop/${articulo.id}`} className="block">
                 {/* Image Container */}
                 <div className="aspect-square bg-gradient-to-br from-gray-100 to-gray-50 rounded-2xl mb-4 relative overflow-hidden shadow-sm group-hover:shadow-xl transition-all duration-500">
-                    {articulo.imagenes && articulo.imagenes.length > 0 ? (
+                    {articulo.images && articulo.images.length > 0 ? (
                         <img
-                            src={articulo.imagenes[0].url || `/storage/${articulo.imagenes[0].ruta}`}
-                            alt={articulo.articulo}
+                            src={articulo.images[0].url || `/storage/${articulo.images[0].path}`}
+                            alt={articulo.name}
                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
                         />
                     ) : (
@@ -79,9 +79,9 @@ function ProductCard({ articulo, onAddToCart }: { articulo: Articulo; onAddToCar
                     </button>
 
                     {/* Category badge */}
-                    {articulo.categoria && (
+                    {articulo.category && (
                         <span className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm text-gray-700 text-xs font-medium px-3 py-1.5 rounded-full shadow-sm">
-                            {articulo.categoria.nombre}
+                            {articulo.category.name}
                         </span>
                     )}
                 </div>
@@ -89,16 +89,16 @@ function ProductCard({ articulo, onAddToCart }: { articulo: Articulo; onAddToCar
                 {/* Product Info */}
                 <div className="space-y-2 px-1">
                     <h3 className="font-semibold text-gray-900 group-hover:text-violet-600 transition-colors line-clamp-2">
-                        {articulo.articulo}
+                        {articulo.name}
                     </h3>
-                    {articulo.marca && (
+                    {articulo.brand && (
                         <p className="text-xs text-gray-500 uppercase tracking-wide">
-                            {articulo.marca.nombre}
+                            {articulo.brand.name}
                         </p>
                     )}
                     <div className="flex items-center justify-between pt-1">
                         <span className="text-xl font-bold bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">
-                            ${Number(articulo.precio).toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+                            ${Number(articulo.price).toLocaleString('es-AR', { minimumFractionDigits: 2 })}
                         </span>
                     </div>
                 </div>

@@ -9,7 +9,8 @@ import { PageHeader } from '@/components/page-header';
 import { DataTable, type Column } from '@/components/data-table';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
 import { ActionButton } from '@/components/action-button';
-import { Plus, Edit, Package, AlertTriangle, SlidersHorizontal, History } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Plus, Edit, Package, AlertTriangle, SlidersHorizontal, History, Warehouse as WarehouseIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { useEffect, useState } from 'react';
 
@@ -18,10 +19,23 @@ interface Stock {
     quantity: number;
     calculated_quantity: number;
     product_id: number;
+    warehouse_id: number;
     product?: { name: string; sku: string };
+    warehouse?: { id: number; name: string; code: string };
 }
 
-interface Props { inventarios: Stock[]; }
+interface WarehouseOption {
+    id: number;
+    name: string;
+    code: string;
+    is_default: boolean;
+}
+
+interface Props {
+    inventarios: Stock[];
+    warehouses: WarehouseOption[];
+    selected_warehouse_id: number | null;
+}
 
 interface AdjustState {
     stockId: number;
@@ -31,7 +45,7 @@ interface AdjustState {
     reason: string;
 }
 
-export default function Index({ inventarios }: Props) {
+export default function Index({ inventarios, warehouses, selected_warehouse_id }: Props) {
     const page = usePage<any>();
     const userRole = page.props.auth?.user?.role?.role;
     const isAdmin = userRole === 'admin' || userRole === 'superadmin';
@@ -57,6 +71,11 @@ export default function Index({ inventarios }: Props) {
         });
     };
 
+    const handleWarehouseChange = (value: string) => {
+        const params = value === 'all' ? {} : { warehouse_id: value };
+        router.get(route('inventarios.index'), params, { preserveState: true, preserveScroll: true });
+    };
+
     const columns: Column<Stock>[] = [
         {
             key: 'product',
@@ -65,6 +84,16 @@ export default function Index({ inventarios }: Props) {
                 <div>
                     <p className="font-medium text-foreground">{row.product?.name ?? '-'}</p>
                     <p className="text-xs text-muted-foreground">{row.product?.sku}</p>
+                </div>
+            ),
+        },
+        {
+            key: 'warehouse',
+            header: 'Almacén',
+            render: (row) => (
+                <div className="flex items-center gap-2">
+                    <WarehouseIcon className="size-4 text-muted-foreground" />
+                    <span className="text-foreground">{row.warehouse?.name ?? '-'}</span>
                 </div>
             ),
         },
@@ -146,6 +175,23 @@ export default function Index({ inventarios }: Props) {
                         </>
                     }
                 />
+
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                    <Label htmlFor="warehouse-filter" className="sm:min-w-[120px]">Filtrar por almacén</Label>
+                    <Select value={selected_warehouse_id ? String(selected_warehouse_id) : 'all'} onValueChange={handleWarehouseChange}>
+                        <SelectTrigger id="warehouse-filter" className="sm:max-w-xs">
+                            <SelectValue placeholder="Todos los almacenes" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Todos los almacenes</SelectItem>
+                            {warehouses.map((w) => (
+                                <SelectItem key={w.id} value={String(w.id)}>
+                                    {w.name}{w.is_default ? ' (default)' : ''}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
 
                 <DataTable
                     columns={columns}

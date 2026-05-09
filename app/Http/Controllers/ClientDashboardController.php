@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Factura;
+use App\Models\Customer;
+use App\Models\Sale;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -11,31 +12,19 @@ class ClientDashboardController extends Controller
     public function index()
     {
         $user = auth()->user();
-        $cliente = \App\Models\Cliente::where('email', $user->email)->first();
-        
+        $cliente = Customer::where('email', $user->email)->first();
+
         if (!$cliente) {
             return Inertia::render('Client/Dashboard', [
                 'compras' => [],
                 'cliente' => null,
             ]);
         }
-        
-        $compras = Factura::with(['articulos', 'pagos', 'entregas'])
-            ->where('cliente_id', $cliente->id)
-            ->orderBy('fecha', 'desc')
-            ->paginate(10);
 
-        // Convertir valores a float
-        $compras->getCollection()->transform(function ($factura) {
-            $factura->total = (float) $factura->total;
-            $factura->articulos->transform(function ($articulo) {
-                $articulo->pivot->cantidad = (int) $articulo->pivot->cantidad;
-                $articulo->pivot->preciounitario = (float) $articulo->pivot->preciounitario;
-                $articulo->pivot->subtotal = (float) $articulo->pivot->subtotal;
-                return $articulo;
-            });
-            return $factura;
-        });
+        $compras = Sale::with(['products', 'payments', 'deliveries'])
+            ->where('customer_id', $cliente->id)
+            ->orderBy('date', 'desc')
+            ->paginate(10);
 
         return Inertia::render('Client/Dashboard', [
             'compras' => $compras,
@@ -46,7 +35,7 @@ class ClientDashboardController extends Controller
     public function profile()
     {
         $user = auth()->user();
-        $cliente = \App\Models\Cliente::where('email', $user->email)->first();
+        $cliente = Customer::where('email', $user->email)->first();
 
         return Inertia::render('Client/Profile', [
             'user' => $user,
@@ -57,21 +46,21 @@ class ClientDashboardController extends Controller
     public function updateProfile(Request $request)
     {
         $user = auth()->user();
-        $cliente = \App\Models\Cliente::where('email', $user->email)->first();
+        $cliente = Customer::where('email', $user->email)->first();
 
         $request->validate([
-            'name' => 'required|string|max:255',
-            'telefono' => 'nullable|string|max:50',
-            'direccion' => 'nullable|string|max:255',
+            'name'    => 'required|string|max:255',
+            'phone'   => 'nullable|string|max:50',
+            'address' => 'nullable|string|max:255',
         ]);
 
         $user->update(['name' => $request->name]);
-        
+
         if ($cliente) {
             $cliente->update([
-                'razonsocial' => $request->name,
-                'telefono' => $request->telefono,
-                'direccion' => $request->direccion,
+                'business_name' => $request->name,
+                'phone'         => $request->phone,
+                'address'       => $request->address,
             ]);
         }
 

@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Models\Category;
 use App\Models\Brand;
+use App\Models\Stock;
 use App\Models\Supplier;
+use App\Models\Warehouse;
 use App\Services\ImageService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -141,5 +143,31 @@ class ArticuloController extends Controller
         $articulo->delete();
 
         return redirect()->route('articulos.index')->with('success', 'Artículo eliminado exitosamente');
+    }
+
+    /**
+     * Devuelve el stock disponible de un producto desglosado por almacén.
+     * Usado por el POS y por el modal de "marcar entregada" para mostrar disponibilidad cross-warehouse.
+     */
+    public function stockByWarehouse(Request $request, Product $articulo)
+    {
+        $posWarehouseId = $request->integer('pos_warehouse_id') ?: null;
+
+        $warehouses = Warehouse::active()
+            ->orderBy('is_default', 'desc')
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        $stocks = Stock::where('product_id', $articulo->id)
+            ->pluck('quantity', 'warehouse_id');
+
+        return response()->json(
+            $warehouses->map(fn ($w) => [
+                'warehouse_id'      => $w->id,
+                'warehouse_name'    => $w->name,
+                'quantity'          => (int) ($stocks[$w->id] ?? 0),
+                'is_pos_warehouse'  => $posWarehouseId === $w->id,
+            ])->values()
+        );
     }
 }

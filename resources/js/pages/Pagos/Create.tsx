@@ -10,18 +10,17 @@ import { Save, X } from 'lucide-react';
 
 interface Factura {
     id: number;
-    numfactura: number;
+    invoice_number: number;
     total: number;
-    total_pagado: number;
-    saldo_pendiente: number;
-    cliente: {
-        razonsocial: string;
+    customer: {
+        business_name: string;
+        fantasy_name?: string | null;
     };
-    pagos: Array<{
+    payments: Array<{
         id: number;
-        monto: number;
-        metodo_pago: string;
-        fecha_pago: string;
+        amount: number;
+        payment_method: string;
+        payment_date: string;
     }>;
 }
 
@@ -30,14 +29,14 @@ interface Props {
 }
 
 export default function Create({ factura }: Props) {
-    const totalPagado = factura.pagos?.reduce((sum, pago) => sum + Number(pago.monto), 0) || 0;
+    const totalPagado = factura.payments?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
     const saldoPendiente = Number(factura.total) - totalPagado;
 
     const { data, setData, post, processing, errors } = useForm({
-        monto: saldoPendiente.toString(),
-        metodo_pago: '',
-        fecha_pago: new Date().toISOString().split('T')[0],
-        observaciones: '',
+        amount: saldoPendiente.toString(),
+        payment_method: '',
+        payment_date: new Date().toISOString().split('T')[0],
+        notes: '',
     });
 
     const submit = (e: React.FormEvent) => {
@@ -48,11 +47,11 @@ export default function Create({ factura }: Props) {
     return (
         <AppLayout>
             <Head title="Registrar Pago" />
-            
+
             <div className="p-6">
                 <div className="mb-6">
                     <h1 className="text-2xl font-semibold text-gray-900">Registrar Pago</h1>
-                    <p className="text-gray-600">Factura #{factura.numfactura} - {factura.cliente.razonsocial}</p>
+                    <p className="text-gray-600">Factura #{factura.invoice_number} - {factura.customer.fantasy_name || factura.customer.business_name}</p>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -76,15 +75,15 @@ export default function Create({ factura }: Props) {
                                 <Label className="text-sm font-medium text-gray-500">Saldo Pendiente</Label>
                                 <p className="text-xl font-bold text-red-600">${saldoPendiente.toFixed(2)}</p>
                             </div>
-                            
-                            {factura.pagos.length > 0 && (
+
+                            {factura.payments.length > 0 && (
                                 <div>
                                     <Label className="text-sm font-medium text-gray-500 mb-2 block">Pagos Anteriores</Label>
                                     <div className="space-y-2">
-                                        {factura.pagos.map((pago) => (
+                                        {factura.payments.map((pago) => (
                                             <div key={pago.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                                                <span className="text-sm">{pago.metodo_pago}</span>
-                                                <span className="font-medium">${Number(pago.monto).toFixed(2)}</span>
+                                                <span className="text-sm">{pago.payment_method}</span>
+                                                <span className="font-medium">${Number(pago.amount).toFixed(2)}</span>
                                             </div>
                                         ))}
                                     </div>
@@ -101,30 +100,30 @@ export default function Create({ factura }: Props) {
                         <CardContent>
                             <form onSubmit={submit} className="space-y-4">
                                 <div>
-                                    <Label htmlFor="monto">Monto *</Label>
+                                    <Label htmlFor="amount">Monto *</Label>
                                     <Input
-                                        id="monto"
+                                        id="amount"
                                         type="text"
-                                        value={data.monto}
+                                        value={data.amount}
                                         onChange={(e) => {
                                             const value = e.target.value.replace(/[^0-9.]/g, '');
                                             const parts = value.split('.');
                                             if (parts.length > 2) return;
                                             if (parts[1] && parts[1].length > 2) return;
-                                            setData('monto', value);
+                                            setData('amount', value);
                                         }}
                                         onBlur={(e) => {
                                             const num = parseFloat(e.target.value) || 0;
-                                            setData('monto', num.toFixed(2));
+                                            setData('amount', num.toFixed(2));
                                         }}
-                                        error={errors.monto}
+                                        error={errors.amount}
                                         placeholder={`Máximo: $${saldoPendiente.toFixed(2)}`}
                                     />
                                 </div>
 
                                 <div>
-                                    <Label htmlFor="metodo_pago">Método de Pago *</Label>
-                                    <Select value={data.metodo_pago} onValueChange={(value) => setData('metodo_pago', value)}>
+                                    <Label htmlFor="payment_method">Método de Pago *</Label>
+                                    <Select value={data.payment_method} onValueChange={(value) => setData('payment_method', value)}>
                                         <SelectTrigger>
                                             <SelectValue placeholder="Seleccionar método" />
                                         </SelectTrigger>
@@ -137,26 +136,26 @@ export default function Create({ factura }: Props) {
                                             <SelectItem value="cheque">Cheque</SelectItem>
                                         </SelectContent>
                                     </Select>
-                                    {errors.metodo_pago && <p className="text-sm text-red-600 mt-1">{errors.metodo_pago}</p>}
+                                    {errors.payment_method && <p className="text-sm text-red-600 mt-1">{errors.payment_method}</p>}
                                 </div>
 
                                 <div>
-                                    <Label htmlFor="fecha_pago">Fecha de Pago *</Label>
+                                    <Label htmlFor="payment_date">Fecha de Pago *</Label>
                                     <Input
-                                        id="fecha_pago"
+                                        id="payment_date"
                                         type="date"
-                                        value={data.fecha_pago}
-                                        onChange={(e) => setData('fecha_pago', e.target.value)}
-                                        error={errors.fecha_pago}
+                                        value={data.payment_date}
+                                        onChange={(e) => setData('payment_date', e.target.value)}
+                                        error={errors.payment_date}
                                     />
                                 </div>
 
                                 <div>
-                                    <Label htmlFor="observaciones">Observaciones</Label>
+                                    <Label htmlFor="notes">Observaciones</Label>
                                     <Input
-                                        id="observaciones"
-                                        value={data.observaciones}
-                                        onChange={(e) => setData('observaciones', e.target.value)}
+                                        id="notes"
+                                        value={data.notes}
+                                        onChange={(e) => setData('notes', e.target.value)}
                                         placeholder="Observaciones adicionales..."
                                     />
                                 </div>

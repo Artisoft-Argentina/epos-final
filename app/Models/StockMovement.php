@@ -20,6 +20,8 @@ class StockMovement extends Model
     const TYPE_RETURN                = 'return';
     const TYPE_RECONCILIATION_ENTRY  = 'reconciliation_entry';
     const TYPE_RECONCILIATION_EXIT   = 'reconciliation_exit';
+    const TYPE_TRANSFER_OUT          = 'transfer_out';
+    const TYPE_TRANSFER_IN           = 'transfer_in';
 
     const TYPES = [
         self::TYPE_PURCHASE_ENTRY          => 'Ingreso por orden de compra',
@@ -31,6 +33,8 @@ class StockMovement extends Model
         self::TYPE_RETURN                  => 'Devolución / reversión',
         self::TYPE_RECONCILIATION_ENTRY    => 'Conciliación positiva',
         self::TYPE_RECONCILIATION_EXIT     => 'Conciliación negativa',
+        self::TYPE_TRANSFER_OUT            => 'Egreso por transferencia',
+        self::TYPE_TRANSFER_IN             => 'Ingreso por transferencia',
     ];
 
     const ENTRY_TYPES = [
@@ -39,6 +43,7 @@ class StockMovement extends Model
         self::TYPE_ADJUSTMENT_ENTRY,
         self::TYPE_RETURN,
         self::TYPE_RECONCILIATION_ENTRY,
+        self::TYPE_TRANSFER_IN,
     ];
 
     const EXIT_TYPES = [
@@ -46,6 +51,7 @@ class StockMovement extends Model
         self::TYPE_POS_SALE_EXIT,
         self::TYPE_ADJUSTMENT_EXIT,
         self::TYPE_RECONCILIATION_EXIT,
+        self::TYPE_TRANSFER_OUT,
     ];
 
     protected $fillable = [

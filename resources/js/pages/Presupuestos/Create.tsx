@@ -10,16 +10,17 @@ import { useState, useRef } from 'react';
 
 interface Cliente {
     id: number;
-    razonsocial: string;
+    business_name: string;
+    fantasy_name?: string | null;
 }
 
 interface Articulo {
     id: number;
-    articulo: string;
-    codarticulo: string;
-    precio: number;
-    categoria: { categoria: string };
-    marca: { marca: string };
+    name: string;
+    sku: string;
+    price: number;
+    category?: { id: number; name: string } | null;
+    brand?: { id: number; name: string } | null;
 }
 
 interface Props {
@@ -63,7 +64,7 @@ export default function Create({ clientes, articulos }: Props) {
         if (field === 'articulo_id') {
             const articulo = articulos.find(a => a.id.toString() === value);
             if (articulo) {
-                newItems[index].precio = Number(articulo.precio);
+                newItems[index].precio = Number(articulo.price);
             }
         }
         
@@ -84,9 +85,9 @@ export default function Create({ clientes, articulos }: Props) {
     const handleSearch = (value: string) => {
         setSearchTerm(value);
         if (value.length > 0) {
-            const filtered = articulos.filter(articulo => 
-                articulo.articulo.toLowerCase().includes(value.toLowerCase()) ||
-                articulo.codarticulo.toLowerCase().includes(value.toLowerCase())
+            const filtered = articulos.filter(articulo =>
+                articulo.name.toLowerCase().includes(value.toLowerCase()) ||
+                articulo.sku.toLowerCase().includes(value.toLowerCase())
             );
             setFilteredArticulos(filtered);
             setShowDropdown(true);
@@ -99,7 +100,7 @@ export default function Create({ clientes, articulos }: Props) {
         const newItem: ArticuloPresupuesto = {
             articulo_id: articulo.id.toString(),
             cantidad: 1,
-            precio: Number(articulo.precio)
+            precio: Number(articulo.price)
         };
         const newItems = [...articulosPresupuesto, newItem];
         setArticulosPresupuesto(newItems);
@@ -139,7 +140,7 @@ export default function Create({ clientes, articulos }: Props) {
                                     <SelectContent>
                                         {clientes.map((cliente) => (
                                             <SelectItem key={cliente.id} value={cliente.id.toString()}>
-                                                {cliente.razonsocial}
+                                                {cliente.fantasy_name || cliente.business_name}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
@@ -177,8 +178,8 @@ export default function Create({ clientes, articulos }: Props) {
                                                 className="px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer flex justify-between items-center text-gray-900 dark:text-white"
                                                 onClick={() => addArticuloFromSearch(articulo)}
                                             >
-                                                <span>{articulo.codarticulo} - {articulo.articulo}</span>
-                                                <span className="text-sm text-gray-500">${Number(articulo.precio).toFixed(2)}</span>
+                                                <span>{articulo.sku} - {articulo.name}</span>
+                                                <span className="text-sm text-gray-500">${Number(articulo.price).toFixed(2)}</span>
                                             </div>
                                         ))}
                                     </div>
@@ -191,8 +192,8 @@ export default function Create({ clientes, articulos }: Props) {
                                     <div key={index} className="grid grid-cols-1 md:grid-cols-7 gap-4 p-4 border rounded-lg">
                                         <div>
                                             <Label>Código</Label>
-                                            <Input 
-                                                value={item.articulo_id ? articulos.find(a => a.id.toString() === item.articulo_id)?.codarticulo || '' : ''}
+                                            <Input
+                                                value={item.articulo_id ? articulos.find(a => a.id.toString() === item.articulo_id)?.sku || '' : ''}
                                                 readOnly
                                                 className="bg-gray-50"
                                             />
@@ -209,7 +210,7 @@ export default function Create({ clientes, articulos }: Props) {
                                                 <SelectContent>
                                                     {articulos.map((articulo) => (
                                                         <SelectItem key={articulo.id} value={articulo.id.toString()}>
-                                                            {articulo.codarticulo} - {articulo.articulo}
+                                                            {articulo.sku} - {articulo.name}
                                                         </SelectItem>
                                                     ))}
                                                 </SelectContent>
