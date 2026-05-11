@@ -68,13 +68,17 @@ class CodigoController extends Controller
 
     public function imprimirEtiquetas(Request $request)
     {
-        $etiquetas = collect($request->input('articulos', []))
+        $products = collect($request->input('articulos', []))
             ->map(fn($id) => Product::find($id))
-            ->filter()
-            ->map(fn($product) => $this->codigoService->generarEtiquetaCompleta($product))
-            ->values();
+            ->filter();
 
-        return Inertia::render('Codigos/ImprimirEtiquetas', ['etiquetas' => $etiquetas]);
+        $etiquetas = $products->map(fn($product) => $this->codigoService->generarEtiquetaCompleta($product))->values();
+
+        $pdf = Pdf::loadView('pdf.etiquetas-multiple', [
+            'etiquetas' => $etiquetas,
+        ])->setPaper('a4');
+
+        return $pdf->stream('etiquetas.pdf');
     }
 
     public function scanner()

@@ -70,8 +70,31 @@ export default function Index({ products, filters, categories, brands, suppliers
     const handleToggleActive = (product: Product) =>
         router.patch(route('products.toggle-active', product.id));
 
-    const handlePrintLabels = () =>
-        router.post(route('products.print-labels'), { articulos: selectedIds });
+    const handlePrintLabels = () => {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = route('products.print-labels');
+        form.target = '_blank';
+
+        const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = '_token';
+        csrfInput.value = csrf;
+        form.appendChild(csrfInput);
+
+        selectedIds.forEach((id) => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'articulos[]';
+            input.value = id.toString();
+            form.appendChild(input);
+        });
+
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
+    };
 
     const columns: Column<Product>[] = [
         {
