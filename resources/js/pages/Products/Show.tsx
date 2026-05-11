@@ -22,6 +22,15 @@ interface StockMovement {
     created_at: string;
 }
 
+interface PriceListItem {
+    id: number;
+    name: string;
+    percentage: string;
+    default_pos: boolean;
+    default_ecommerce: boolean;
+    pivot: { price: string };
+}
+
 interface Product {
     id: number;
     sku: string;
@@ -42,6 +51,7 @@ interface Product {
     supplier: { business_name: string } | null;
     stock: { quantity: number } | null;
     images: ProductImage[];
+    price_lists: PriceListItem[];
 }
 
 interface Props { product: Product; }
@@ -296,6 +306,7 @@ export default function Show({ product }: Props) {
                 <Tabs defaultValue="general" variant="underline">
                     <TabsList>
                         <TabsTrigger value="general">General</TabsTrigger>
+                        <TabsTrigger value="prices">Listas de Precios</TabsTrigger>
                         <TabsTrigger value="identification">Identificación</TabsTrigger>
                         <TabsTrigger value="movements">Movimientos</TabsTrigger>
                     </TabsList>
@@ -335,6 +346,39 @@ export default function Show({ product }: Props) {
                                 </CardContent>
                             </Card>
                         </div>
+                    </TabsContent>
+
+                    {/* Tab: Listas de Precios */}
+                    <TabsContent value="prices">
+                        <Card className="gap-0 py-0">
+                            <CardHeader className="border-b border-border px-6 py-4">
+                                <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                                    <DollarSign className="size-4 text-primary" />
+                                    Precios por Lista
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-0">
+                                {product.price_lists.length > 0 ? (
+                                    <div className="divide-y divide-border">
+                                        {product.price_lists.map((list) => (
+                                            <div key={list.id} className="flex items-center justify-between px-6 py-3">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-sm font-medium text-foreground">{list.name}</span>
+                                                    {list.default_pos && <Badge variant="info">POS</Badge>}
+                                                    {list.default_ecommerce && <Badge variant="pending">E-commerce</Badge>}
+                                                </div>
+                                                <div className="flex items-center gap-4">
+                                                    <span className="text-xs text-muted-foreground">+{list.percentage}%</span>
+                                                    <span className="text-sm font-semibold tabular-nums text-foreground">{fmt(list.pivot.price)}</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="px-6 py-5 text-sm text-muted-foreground">Este producto no está asignado a ninguna lista de precios.</p>
+                                )}
+                            </CardContent>
+                        </Card>
                     </TabsContent>
 
                     {/* Tab: Identificación */}

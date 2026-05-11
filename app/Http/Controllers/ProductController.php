@@ -93,7 +93,7 @@ class ProductController extends Controller
     public function show(Product $product): Response
     {
         return Inertia::render('Products/Show', [
-            'product' => $product->load(['category', 'brand', 'supplier', 'images', 'stock']),
+            'product' => $product->load(['category', 'brand', 'supplier', 'images', 'stock', 'priceLists']),
         ]);
     }
 
