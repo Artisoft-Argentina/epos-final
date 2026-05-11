@@ -10,7 +10,7 @@ import { PageHeader } from '@/components/page-header';
 import {
     ChevronRight, Edit, Power, Package, DollarSign, Tag,
     Barcode, QrCode, Printer, Warehouse, TrendingUp, TrendingDown,
-    ArrowLeftRight, Star, AlertTriangle, PackageX,
+    ArrowLeftRight, AlertTriangle, PackageX,
 } from 'lucide-react';
 
 interface ProductImage { id: number; url: string; url_thumb: string | null; is_primary: boolean; }
@@ -49,9 +49,9 @@ interface Props { product: Product; }
 const fmt = (n: string | number) =>
     `$${Number(n).toLocaleString('es-AR', { minimumFractionDigits: 2 })}`;
 
-function InfoRow({ label, value }: { label: string; value: string }) {
+function DataRow({ label, value }: { label: string; value: React.ReactNode }) {
     return (
-        <div className="flex justify-between items-center py-2.5 border-b border-border last:border-0">
+        <div className="flex items-center justify-between px-4 py-2.5 border-b border-border last:border-0">
             <span className="text-sm text-muted-foreground">{label}</span>
             <span className="text-sm font-medium text-foreground">{value}</span>
         </div>
@@ -71,6 +71,9 @@ export default function Show({ product }: Props) {
 
     const handleToggleActive = () =>
         router.patch(route('products.toggle-active', product.id));
+
+    const primaryImage = product.images.find((i) => i.is_primary) ?? product.images[0] ?? null;
+    const otherImages  = product.images.filter((i) => i.id !== primaryImage?.id);
 
     const movementColumns: Column<StockMovement>[] = [
         {
@@ -111,64 +114,165 @@ export default function Show({ product }: Props) {
         },
     ];
 
-    const stockIconBg    = stockAlert === 'none' ? 'bg-destructive-soft' : stockAlert === 'low' ? 'bg-warning-soft' : 'bg-success-soft';
-    const stockIconColor = stockAlert === 'none' ? 'text-destructive'    : stockAlert === 'low' ? 'text-warning'    : 'text-success';
-
-    const kpiCards = [
-        { label: 'Precio',       value: fmt(product.price),                                           icon: DollarSign,    iconBg: 'bg-primary/10',   iconColor: 'text-primary' },
-        { label: 'Costo',        value: product.cost ? fmt(product.cost) : '—',                       icon: Tag,           iconBg: 'bg-info-soft',    iconColor: 'text-info' },
-        { label: 'Stock actual', value: qty !== null ? `${qty} ${unitLabel(qty)}` : '—',                icon: Warehouse,     iconBg: stockIconBg,       iconColor: stockIconColor },
-        { label: 'Stock mínimo', value: `${product.min_stock} ${product.unit}`,                       icon: ArrowLeftRight, iconBg: 'bg-warning-soft', iconColor: 'text-warning' },
-    ];
+    const stockVariant = stockAlert === 'none' ? 'destructive' : stockAlert === 'low' ? 'warning' : 'success';
+    const stockValue   = qty !== null ? `${qty} ${unitLabel(qty)}` : '—';
 
     return (
         <AppLayout>
             <Head title={product.name} />
             <div className="flex flex-col gap-6 p-6">
 
+                {/* Breadcrumb */}
                 <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                     <Link href={route('products.index')} className="hover:text-primary transition-colors">Productos</Link>
                     <ChevronRight className="size-3.5" />
                     <span className="text-foreground font-medium">{product.name}</span>
                 </div>
 
-                <PageHeader
-                    title={product.name}
-                    description={`SKU: ${product.sku}${product.ean ? ` · EAN: ${product.ean}` : ''}`}
-                    actions={
-                        <div className="flex items-center gap-2">
-                            <Badge variant={product.active ? 'success' : 'secondary'} dot>
-                                {product.active ? 'Activo' : 'Inactivo'}
-                            </Badge>
-                            <Button variant={product.active ? 'destructive-soft' : 'outline'} size="sm" onClick={handleToggleActive}>
-                                <Power className="size-4" />
-                                {product.active ? 'Desactivar' : 'Activar'}
-                            </Button>
-                            <Link href={route('products.edit', product.id)}>
-                                <Button size="sm"><Edit className="size-4" /> Editar</Button>
-                            </Link>
-                        </div>
-                    }
-                />
+                {/* Hero */}
+                <Card className="gap-0 py-0">
+                    <CardContent className="p-0">
+                        <div className="grid grid-cols-1 lg:grid-cols-2">
 
-                {/* KPIs */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    {kpiCards.map((kpi) => (
-                        <Card key={kpi.label} className="gap-0 py-0">
-                            <CardContent className="px-4 py-4 flex flex-col gap-3">
-                                <div className="flex items-center gap-2.5">
-                                    <div className={`size-8 rounded-full ${kpi.iconBg} flex items-center justify-center`}>
-                                        <kpi.icon className={`size-4 ${kpi.iconColor}`} />
-                                    </div>
-                                    <span className="text-sm font-medium text-muted-foreground">{kpi.label}</span>
+                            {/* Columna imagen */}
+                            <div className="flex flex-col gap-3 p-6 border-b lg:border-b-0 lg:border-r border-border">
+                                {/* Imagen principal */}
+                                <div className="aspect-square max-h-72 w-full rounded-xl overflow-hidden bg-muted flex items-center justify-center border border-border">
+                                    {primaryImage ? (
+                                        <img
+                                            src={primaryImage.url}
+                                            alt={product.name}
+                                            className="size-full object-cover"
+                                        />
+                                    ) : (
+                                        <div className="flex flex-col items-center gap-3 text-muted-foreground">
+                                            <Package className="size-12 opacity-30" />
+                                            <span className="text-sm">Sin imágenes</span>
+                                        </div>
+                                    )}
                                 </div>
-                                <p className="text-xl font-bold tabular-nums tracking-tight text-foreground">{kpi.value}</p>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
 
-                {/* Alerta de stock */}
+                                {/* Miniaturas */}
+                                {otherImages.length > 0 && (
+                                    <div className="flex gap-2 overflow-x-auto pb-1">
+                                        {otherImages.map((img) => (
+                                            <div
+                                                key={img.id}
+                                                className="size-16 shrink-0 rounded-lg overflow-hidden border border-border bg-muted"
+                                            >
+                                                <img
+                                                    src={img.url_thumb ?? img.url}
+                                                    alt={product.name}
+                                                    className="size-full object-cover"
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Columna datos */}
+                            <div className="flex flex-col gap-5 p-6">
+
+                                {/* Nombre y badges */}
+                                <div className="flex flex-col gap-2">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <Badge variant={product.active ? 'success' : 'secondary'} dot>
+                                            {product.active ? 'Activo' : 'Inactivo'}
+                                        </Badge>
+                                        {product.published && (
+                                            <Badge variant="info">Publicado</Badge>
+                                        )}
+                                    </div>
+                                    <h1 className="text-2xl font-bold tracking-tight text-foreground">{product.name}</h1>
+                                    <div className="flex items-center gap-3 text-sm text-muted-foreground font-mono">
+                                        <span>{product.sku}</span>
+                                        {product.ean && <><span>·</span><span>{product.ean}</span></>}
+                                    </div>
+                                </div>
+
+                                {/* Precio y stock */}
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="rounded-lg bg-muted/40 border border-border px-4 py-3">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <div className="size-6 rounded-full bg-primary/10 flex items-center justify-center">
+                                                <DollarSign className="size-3.5 text-primary" />
+                                            </div>
+                                            <p className="text-xs text-muted-foreground">Precio</p>
+                                        </div>
+                                        <p className="text-lg font-bold tabular-nums text-foreground">{fmt(product.price)}</p>
+                                    </div>
+                                    <div className="rounded-lg bg-muted/40 border border-border px-4 py-3">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <div className="size-6 rounded-full bg-info-soft flex items-center justify-center">
+                                                <Tag className="size-3.5 text-info" />
+                                            </div>
+                                            <p className="text-xs text-muted-foreground">Costo</p>
+                                        </div>
+                                        <p className="text-lg font-bold tabular-nums text-foreground">{product.cost ? fmt(product.cost) : '—'}</p>
+                                    </div>
+                                    <div className="rounded-lg bg-muted/40 border border-border px-4 py-3">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <div className={`size-6 rounded-full flex items-center justify-center ${stockAlert === 'none' ? 'bg-destructive-soft' : stockAlert === 'low' ? 'bg-warning-soft' : 'bg-success-soft'}`}>
+                                                <Warehouse className={`size-3.5 ${stockAlert === 'none' ? 'text-destructive' : stockAlert === 'low' ? 'text-warning' : 'text-success'}`} />
+                                            </div>
+                                            <p className="text-xs text-muted-foreground">Stock actual</p>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <p className="text-lg font-bold tabular-nums text-foreground">{stockValue}</p>
+                                            {stockAlert && (
+                                                <Badge variant={stockVariant} className="gap-1">
+                                                    {stockAlert === 'none'
+                                                        ? <PackageX className="size-3" />
+                                                        : <AlertTriangle className="size-3" />
+                                                    }
+                                                    {stockAlert === 'none' ? 'Sin stock' : 'Bajo'}
+                                                </Badge>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="rounded-lg bg-muted/40 border border-border px-4 py-3">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <div className="size-6 rounded-full bg-warning-soft flex items-center justify-center">
+                                                <ArrowLeftRight className="size-3.5 text-warning" />
+                                            </div>
+                                            <p className="text-xs text-muted-foreground">Stock mínimo</p>
+                                        </div>
+                                        <p className="text-lg font-bold tabular-nums text-foreground">{min} {unitLabel(min)}</p>
+                                    </div>
+                                </div>
+
+                                {/* Clasificación */}
+                                <div className="rounded-lg border border-border overflow-hidden">
+                                    {product.category && <DataRow label="Categoría" value={product.category.name} />}
+                                    {product.brand    && <DataRow label="Marca"     value={product.brand.name} />}
+                                    {product.supplier && <DataRow label="Proveedor" value={product.supplier.business_name} />}
+                                    <DataRow label="Alícuota IVA" value={`${product.tax_rate}%`} />
+                                    <DataRow label="Unidad" value={product.unit} />
+                                </div>
+
+                                {/* Acciones */}
+                                <div className="flex items-center gap-2 pt-1">
+                                    <Button
+                                        variant={product.active ? 'destructive-soft' : 'outline'}
+                                        size="sm"
+                                        onClick={handleToggleActive}
+                                    >
+                                        <Power className="size-4" />
+                                        {product.active ? 'Desactivar' : 'Activar'}
+                                    </Button>
+                                    <Link href={route('products.edit', product.id)}>
+                                        <Button size="sm">
+                                            <Edit className="size-4" /> Editar
+                                        </Button>
+                                    </Link>
+                                </div>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Alertas de stock */}
                 {stockAlert === 'none' && (
                     <Alert variant="destructive">
                         <PackageX className="size-4" />
@@ -193,14 +297,13 @@ export default function Show({ product }: Props) {
                     <TabsList>
                         <TabsTrigger value="general">General</TabsTrigger>
                         <TabsTrigger value="identification">Identificación</TabsTrigger>
-                        <TabsTrigger value="images">
-                            Imágenes {product.images.length > 0 && `(${product.images.length})`}
-                        </TabsTrigger>
                         <TabsTrigger value="movements">Movimientos</TabsTrigger>
                     </TabsList>
 
+                    {/* Tab: General */}
                     <TabsContent value="general">
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
                             <Card className="gap-0 py-0">
                                 <CardHeader className="border-b border-border px-6 py-4">
                                     <CardTitle className="flex items-center gap-2 text-base font-semibold">
@@ -209,27 +312,11 @@ export default function Show({ product }: Props) {
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="px-6 py-4">
-                                    <InfoRow label="Precio" value={fmt(product.price)} />
-                                    <InfoRow label="Costo" value={product.cost ? fmt(product.cost) : '—'} />
-                                    <InfoRow label="Alícuota IVA" value={`${product.tax_rate}%`} />
-                                    <InfoRow label="Unidad" value={product.unit} />
-                                    {product.supplier && <InfoRow label="Proveedor" value={product.supplier.business_name} />}
-                                    {product.supplier_code && <InfoRow label="Cód. proveedor" value={product.supplier_code} />}
-                                </CardContent>
-                            </Card>
-
-                            <Card className="gap-0 py-0">
-                                <CardHeader className="border-b border-border px-6 py-4">
-                                    <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                                        <Tag className="size-4 text-primary" />
-                                        Clasificación
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent className="px-6 py-4">
-                                    <InfoRow label="Categoría" value={product.category?.name ?? '—'} />
-                                    <InfoRow label="Marca" value={product.brand?.name ?? '—'} />
-                                    <InfoRow label="Stock mínimo" value={`${product.min_stock} ${product.unit}`} />
-                                    <InfoRow label="Catálogo" value={product.published ? 'Publicado' : 'No publicado'} />
+                                    <DataRow label="Precio base" value={fmt(product.price)} />
+                                    <DataRow label="Costo" value={product.cost ? fmt(product.cost) : '—'} />
+                                    <DataRow label="Alícuota IVA" value={`${product.tax_rate}%`} />
+                                    <DataRow label="Unidad" value={product.unit} />
+                                    {product.supplier_code && <DataRow label="Cód. proveedor" value={product.supplier_code} />}
                                 </CardContent>
                             </Card>
 
@@ -250,6 +337,7 @@ export default function Show({ product }: Props) {
                         </div>
                     </TabsContent>
 
+                    {/* Tab: Identificación */}
                     <TabsContent value="identification">
                         <div className="max-w-sm mx-auto">
                             <Card className="gap-0 py-0">
@@ -260,10 +348,10 @@ export default function Show({ product }: Props) {
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="px-6 py-6 flex flex-col items-center gap-6">
-                                    <div className="w-full flex flex-col gap-3">
-                                        <InfoRow label="SKU" value={product.sku} />
-                                        <InfoRow label="EAN / GTIN" value={product.ean ?? '—'} />
-                                        <InfoRow label="Código para barras" value={product.barcode_value} />
+                                    <div className="w-full flex flex-col gap-0">
+                                        <DataRow label="SKU" value={product.sku} />
+                                        <DataRow label="EAN / GTIN" value={product.ean ?? '—'} />
+                                        <DataRow label="Código para barras" value={product.barcode_value} />
                                     </div>
                                     <div className="flex flex-col items-center gap-2 w-full">
                                         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
@@ -288,33 +376,7 @@ export default function Show({ product }: Props) {
                         </div>
                     </TabsContent>
 
-                    <TabsContent value="images">
-                        {product.images.length === 0 ? (
-                            <Card className="gap-0 py-0">
-                                <CardContent className="px-6 py-12 flex flex-col items-center gap-3 text-center">
-                                    <Package className="size-10 text-muted-foreground/40" />
-                                    <p className="text-sm text-muted-foreground">Este producto no tiene imágenes.</p>
-                                    <Link href={route('products.edit', product.id)}>
-                                        <Button variant="outline" size="sm">Agregar imágenes</Button>
-                                    </Link>
-                                </CardContent>
-                            </Card>
-                        ) : (
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                                {product.images.map((img) => (
-                                    <div key={img.id} className={`relative aspect-square rounded-xl overflow-hidden border-2 ${img.is_primary ? 'border-primary' : 'border-border'}`}>
-                                        <img src={img.url_thumb ?? img.url} alt={product.name} className="size-full object-cover" />
-                                        {img.is_primary && (
-                                            <div className="absolute top-2 left-2 flex items-center gap-1 bg-primary text-primary-foreground text-[10px] font-semibold px-2 py-0.5 rounded-full">
-                                                <Star className="size-2.5" /> Principal
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </TabsContent>
-
+                    {/* Tab: Movimientos */}
                     <TabsContent value="movements">
                         <DataTable
                             columns={movementColumns}
