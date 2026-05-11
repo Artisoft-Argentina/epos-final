@@ -5,18 +5,19 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FormField } from '@/components/form-field';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Trash2, Plus, Search } from 'lucide-react';
-import { useState, useCallback } from 'react';
+import { Trash2, Search } from 'lucide-react';
+import { useMemo, useState } from 'react';
 
 interface Warehouse {
     id: number;
     name: string;
 }
 
-interface ProductResult {
+interface StockEntry {
     product_id: number;
     product_name: string;
-    product_code: string;
+    product_sku: string;
+    warehouse_id: number;
     available: number;
 }
 
@@ -29,9 +30,10 @@ interface TransferItem {
 
 interface Props {
     warehouses: Warehouse[];
+    stocks: StockEntry[];
 }
 
-export default function Create({ warehouses }: Props) {
+export default function Create({ warehouses, stocks }: Props) {
     const { data, setData, post, processing, errors } = useForm<{
         origin_warehouse_id: string;
         destination_warehouse_id: string;
@@ -45,32 +47,35 @@ export default function Create({ warehouses }: Props) {
     });
 
     const [search, setSearch] = useState('');
-    const [results, setResults] = useState<ProductResult[]>([]);
-    const [searching, setSearching] = useState(false);
+    const [showResults, setShowResults] = useState(false);
 
-    const searchProducts = useCallback(async () => {
-        if (!data.origin_warehouse_id || !search.trim()) return;
-        setSearching(true);
-        try {
-            const res = await fetch(
-                route('transferencias.available-stock') + `?warehouse_id=${data.origin_warehouse_id}&search=${encodeURIComponent(search)}`
-            );
-            setResults(await res.json());
-        } finally {
-            setSearching(false);
-        }
-    }, [data.origin_warehouse_id, search]);
+    const filteredStocks = useMemo(() => {
+        if (!data.origin_warehouse_id || !search.trim()) return [];
+        const term = search.toLowerCase();
+        return stocks
+            .filter((s) =>
+                String(s.warehouse_id) === data.origin_warehouse_id &&
+                (s.product_name.toLowerCase().includes(term) ||
+                 s.product_sku.toLowerCase().includes(term))
+            )
+            .slice(0, 20);
+    }, [stocks, data.origin_warehouse_id, search]);
 
-    const addItem = (product: ProductResult) => {
-        if (data.items.some((i) => i.product_id === product.product_id)) return;
+    const handleSearch = (value: string) => {
+        setSearch(value);
+        setShowResults(value.length > 0 && !!data.origin_warehouse_id);
+    };
+
+    const addItem = (entry: StockEntry) => {
+        if (data.items.some((i) => i.product_id === entry.product_id)) return;
         setData('items', [...data.items, {
-            product_id: product.product_id,
-            product_name: product.product_name,
+            product_id: entry.product_id,
+            product_name: entry.product_name,
             quantity: 1,
-            available: product.available,
+            available: entry.available,
         }]);
-        setResults([]);
         setSearch('');
+        setShowResults(false);
     };
 
     const updateQuantity = (index: number, qty: number) => {
@@ -98,7 +103,7 @@ export default function Create({ warehouses }: Props) {
                         <form onSubmit={submit} className="space-y-6">
                             <div className="grid grid-cols-2 gap-4">
                                 <FormField label="Almacén Origen" htmlFor="origin" error={errors.origin_warehouse_id} required>
-                                    <Select value={data.origin_warehouse_id} onValueChange={(v) => { setData('origin_warehouse_id', v); setResults([]); }}>
+                                    <Select value={data.origin_warehouse_id} onValueChange={(v) => { setData('origin_warehouse_id', v); setSearch(''); setShowResults(false); }}>
                                         <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
                                         <SelectContent>
                                             {warehouses.map((w) => (
@@ -126,31 +131,44 @@ export default function Create({ warehouses }: Props) {
                             {/* Buscador de productos */}
                             <div className="space-y-2">
                                 <label className="text-sm font-medium">Agregar productos</label>
-                                <div className="flex gap-2">
+                                <div className="relative">
+                                    <Search className="text-muted-foreground absolute left-3 top-1/2 size-4 -translate-y-1/2" />
                                     <Input
                                         value={search}
-                                        onChange={(e) => setSearch(e.target.value)}
-                                        onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), searchProducts())}
-                                        placeholder={data.origin_warehouse_id ? 'Buscar por nombre o código...' : 'Seleccioná un almacén origen primero'}
+                                        onChange={(e) => handleSearch(e.target.value)}
+                                        onFocus={() => setShowResults(search.length > 0 && !!data.origin_warehouse_id)}
+                                        onBlur={() => setTimeout(() => setShowResults(false), 150)}
+                                        placeholder={data.origin_warehouse_id ? 'Buscar por nombre o SKU...' : 'Seleccioná un almacén origen primero'}
                                         disabled={!data.origin_warehouse_id}
+                                        className="pl-10"
                                     />
-                                    <Button type="button" variant="outline" onClick={searchProducts} disabled={!data.origin_warehouse_id || searching}>
-                                        <Search className="size-4" />
-                                    </Button>
-                                </div>
-                                {results.length > 0 && (
-                                    <div className="border rounded-md divide-y max-h-48 overflow-y-auto">
-                                        {results.map((r) => (
-                                            <div key={r.product_id} className="flex items-center justify-between px-3 py-2 hover:bg-muted/50 cursor-pointer" onClick={() => addItem(r)}>
-                                                <div>
-                                                    <span className="text-sm font-medium">{r.product_name}</span>
-                                                    {r.product_code && <span className="ml-2 text-xs text-muted-foreground font-mono">{r.product_code}</span>}
+                                    {showResults && (
+                                        <div className="absolute z-10 mt-1 w-full overflow-auto rounded-lg border bg-card shadow-lg max-h-72">
+                                            {filteredStocks.length === 0 ? (
+                                                <div className="px-4 py-3 text-sm text-muted-foreground">
+                                                    Sin resultados con stock en este almacén.
                                                 </div>
-                                                <span className="text-xs text-muted-foreground">Disp: {r.available}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
+                                            ) : (
+                                                filteredStocks.map((s) => (
+                                                    <div
+                                                        key={s.product_id}
+                                                        className="flex cursor-pointer items-center justify-between gap-3 px-4 py-2.5 transition-colors hover:bg-accent"
+                                                        onMouseDown={(e) => e.preventDefault()}
+                                                        onClick={() => addItem(s)}
+                                                    >
+                                                        <div className="min-w-0 flex-1">
+                                                            <p className="truncate text-sm font-medium">{s.product_name}</p>
+                                                            <p className="text-muted-foreground text-xs font-mono">{s.product_sku}</p>
+                                                        </div>
+                                                        <span className="text-muted-foreground shrink-0 text-xs tabular-nums">
+                                                            Disp: {s.available}
+                                                        </span>
+                                                    </div>
+                                                ))
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
 
                             {/* Items */}

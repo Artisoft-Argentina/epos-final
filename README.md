@@ -270,6 +270,18 @@ php artisan route:cache
 
 ## 🤝 Contribución
 
+Antes de contribuir, leer la **[Guía de Contribución](./CONTRIBUTING.md)** que define los estándares del proyecto:
+
+- Convenciones de naming (backend y frontend)
+- Arquitectura: controllers delgados, services, validaciones
+- Buenas prácticas Laravel (eager loading, paginación, scopes, etc.)
+- Design system y componentes UI
+- Layouts estándar por tipo de pantalla
+- TypeScript: tipado, interfaces, nullabilidad
+- Cuándo usar modales vs. páginas completas
+
+> Los archivos de reglas en `.amazonq/rules/` son leídos automáticamente por Amazon Q Developer.
+
 1. Fork del proyecto
 2. Crear rama feature (`git checkout -b feature/nueva-funcionalidad`)
 3. Commit cambios (`git commit -am 'Agregar nueva funcionalidad'`)

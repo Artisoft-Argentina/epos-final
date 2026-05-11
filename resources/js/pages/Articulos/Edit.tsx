@@ -22,12 +22,12 @@ interface Supplier { id: number; business_name: string; }
 
 interface Props {
     articulo: Product;
-    categorias: Category[];
-    marcas: Brand[];
+    categories: Category[];
+    brands: Brand[];
     suppliers: Supplier[];
 }
 
-export default function Edit({ articulo, categorias, marcas, suppliers }: Props) {
+export default function Edit({ articulo, categories, brands, suppliers }: Props) {
     const { data, setData, post, processing, errors } = useForm({
         sku: articulo.sku,
         name: articulo.name,
@@ -108,7 +108,7 @@ export default function Edit({ articulo, categorias, marcas, suppliers }: Props)
                                         <Select value={data.category_id} onValueChange={(value) => setData('category_id', value)}>
                                             <SelectTrigger><SelectValue placeholder="Seleccionar categoría" /></SelectTrigger>
                                             <SelectContent>
-                                                {categorias.map((c) => <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>)}
+                                                {categories.map((c) => <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>)}
                                             </SelectContent>
                                         </Select>
                                     </div>
@@ -117,7 +117,7 @@ export default function Edit({ articulo, categorias, marcas, suppliers }: Props)
                                         <Select value={data.brand_id} onValueChange={(value) => setData('brand_id', value)}>
                                             <SelectTrigger><SelectValue placeholder="Seleccionar marca" /></SelectTrigger>
                                             <SelectContent>
-                                                {marcas.map((b) => <SelectItem key={b.id} value={b.id.toString()}>{b.name}</SelectItem>)}
+                                                {brands.map((b) => <SelectItem key={b.id} value={b.id.toString()}>{b.name}</SelectItem>)}
                                             </SelectContent>
                                         </Select>
                                     </div>

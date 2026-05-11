@@ -38,7 +38,8 @@ const statusLabels: Record<string, { label: string; variant: 'default' | 'second
 
 export default function Index({ transfers, warehouses, filters }: Props) {
     const applyFilter = (key: string, value: string) => {
-        router.get(route('transferencias.index'), { ...filters, [key]: value || undefined }, { preserveState: true });
+        const next = value === 'all' ? undefined : value || undefined;
+        router.get(route('transferencias.index'), { ...filters, [key]: next }, { preserveState: true });
     };
 
     const columns: Column<Transfer>[] = [
@@ -98,20 +99,20 @@ export default function Index({ transfers, warehouses, filters }: Props) {
                     }
                 />
                 <div className="flex gap-3">
-                    <Select value={filters.status ?? ''} onValueChange={(v) => applyFilter('status', v)}>
+                    <Select value={filters.status ?? 'all'} onValueChange={(v) => applyFilter('status', v)}>
                         <SelectTrigger className="w-40"><SelectValue placeholder="Estado" /></SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="">Todos</SelectItem>
+                            <SelectItem value="all">Todos</SelectItem>
                             <SelectItem value="draft">Borrador</SelectItem>
                             <SelectItem value="in_transit">En tránsito</SelectItem>
                             <SelectItem value="received">Recibida</SelectItem>
                             <SelectItem value="cancelled">Cancelada</SelectItem>
                         </SelectContent>
                     </Select>
-                    <Select value={filters.warehouse_id ?? ''} onValueChange={(v) => applyFilter('warehouse_id', v)}>
+                    <Select value={filters.warehouse_id ?? 'all'} onValueChange={(v) => applyFilter('warehouse_id', v)}>
                         <SelectTrigger className="w-48"><SelectValue placeholder="Almacén" /></SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="">Todos</SelectItem>
+                            <SelectItem value="all">Todos</SelectItem>
                             {warehouses.map((w) => (
                                 <SelectItem key={w.id} value={String(w.id)}>{w.name}</SelectItem>
                             ))}

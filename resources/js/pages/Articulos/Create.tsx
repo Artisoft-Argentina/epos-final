@@ -10,9 +10,9 @@ import { FormField } from '@/components/form-field';
 interface Category { id: number; name: string; }
 interface Brand { id: number; name: string; }
 interface Supplier { id: number; business_name: string; }
-interface Props { categorias: Category[]; marcas: Brand[]; suppliers: Supplier[]; }
+interface Props { categories: Category[]; brands: Brand[]; suppliers: Supplier[]; }
 
-export default function Create({ categorias, marcas, suppliers }: Props) {
+export default function Create({ categories, brands, suppliers }: Props) {
     const { data, setData, post, processing, errors } = useForm({
         sku: '', name: '', description: '', unit: 'Unidad', price: '',
         tax_rate: '', min_stock: '', brand_id: '', category_id: '',
@@ -64,13 +64,13 @@ export default function Create({ categorias, marcas, suppliers }: Props) {
                                 <FormField label="Categoría" error={errors.category_id} required>
                                     <Select value={data.category_id} onValueChange={(v) => setData('category_id', v)}>
                                         <SelectTrigger error={errors.category_id}><SelectValue placeholder="Seleccionar categoría" /></SelectTrigger>
-                                        <SelectContent>{categorias.map((c) => <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>)}</SelectContent>
+                                        <SelectContent>{categories.map((c) => <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>)}</SelectContent>
                                     </Select>
                                 </FormField>
                                 <FormField label="Marca" error={errors.brand_id} required>
                                     <Select value={data.brand_id} onValueChange={(v) => setData('brand_id', v)}>
                                         <SelectTrigger error={errors.brand_id}><SelectValue placeholder="Seleccionar marca" /></SelectTrigger>
-                                        <SelectContent>{marcas.map((b) => <SelectItem key={b.id} value={b.id.toString()}>{b.name}</SelectItem>)}</SelectContent>
+                                        <SelectContent>{brands.map((b) => <SelectItem key={b.id} value={b.id.toString()}>{b.name}</SelectItem>)}</SelectContent>
                                     </Select>
                                 </FormField>
                                 <FormField label="Proveedor">
