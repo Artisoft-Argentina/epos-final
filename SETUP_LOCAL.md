@@ -296,6 +296,101 @@ php artisan view:clear
 
 ---
 
+## Tests E2E (Playwright)
+
+El suite vive en [tests/e2e/](tests/e2e/) y corre contra un tenant dedicado (`e2e.epos.lvh.me:5433`) que se resetea automáticamente al inicio de cada corrida.
+
+### Prerequisitos
+
+```bash
+# Los contenedores tienen que estar arriba
+make up
+
+# Instalar Playwright (solo la primera vez)
+pnpm install
+pnpm exec playwright install --with-deps chromium
+```
+
+> No hace falta resetear el tenant `e2e` a mano — el `global-setup.ts` lo hace antes de cada corrida. Si querés saltarlo (más rápido cuando ya está limpio), usar `E2E_SKIP_RESET=1`.
+
+### Variantes principales
+
+| Comando | Qué hace |
+|---|---|
+| `pnpm test:e2e` | Corrida headless completa — la que usa CI |
+| `pnpm test:e2e:watch` | **Headed**, 1 navegador, tests en serie. Para ver paso a paso lo que prueba |
+| `pnpm test:e2e:ui` | Modo UI panel — interactivo, time-travel, mejor DX para iterar un test |
+| `pnpm test:e2e:debug` | Step debugger de Playwright (pausa en cada acción) |
+| `pnpm test:e2e:report` | Abre el HTML report de la última corrida (traces, screenshots, video) |
+| `pnpm test:e2e:reset` | Resetea manualmente el tenant `e2e` (no hace falta normalmente) |
+
+### Env vars configurables
+
+| Variable | Default | Para qué |
+|---|---|---|
+| `WORKERS` | `1` local / `2` CI | Cuántos navegadores corren en paralelo |
+| `SLOW_MO` | `0` | Milisegundos entre cada acción del browser (para ver despacio) |
+| `E2E_SKIP_RESET` | — | `=1` para saltear el reset del tenant |
+
+### Recetas comunes
+
+```bash
+# Default: 1 navegador, velocidad normal — ver tests pasar uno por uno
+pnpm test:e2e:watch
+
+# 2 navegadores en paralelo (la mitad de tiempo)
+WORKERS=2 pnpm test:e2e:watch
+
+# 4 navegadores (si la máquina aguanta — bajar si flakea)
+WORKERS=4 pnpm test:e2e:watch
+
+# Ver bien despacio qué hace cada acción
+SLOW_MO=300 pnpm test:e2e:watch
+
+# Combinable: 2 en paralelo, despacio
+WORKERS=2 SLOW_MO=300 pnpm test:e2e:watch
+
+# Saltar reset del tenant (iteración rápida cuando ya está limpio)
+E2E_SKIP_RESET=1 pnpm test:e2e:watch
+```
+
+### Filtrar qué se corre
+
+```bash
+# Un solo spec
+pnpm test:e2e:watch tests/e2e/specs/sales.spec.ts
+
+# Por nombre (regex sobre describe + test)
+pnpm test:e2e:watch --grep "marca una entrega"
+
+# Solo los críticos (tagged @smoke)
+pnpm test:e2e:watch --grep "@smoke"
+
+# Todo menos los flaky
+pnpm test:e2e:watch --grep-invert "@flaky"
+```
+
+### Si algo falla
+
+```bash
+# Ver el HTML report con traces interactivos
+pnpm test:e2e:report
+
+# Re-correr solo los tests que fallaron en la última corrida
+pnpm test:e2e --last-failed
+
+# Aumentar paciencia (timeout por test)
+pnpm test:e2e --timeout=60000
+```
+
+### Catálogo y skill
+
+- Catálogo completo de flujos del sistema, agrupado por módulo, con estado de cobertura y observaciones UX/UI: [tests/e2e/CATALOG.md](tests/e2e/CATALOG.md).
+- README arquitectónico del suite (convenciones, fixtures, page objects, CI): [tests/e2e/README.md](tests/e2e/README.md).
+- Skill para escribir tests nuevos: invocar con `/e2e-tester SCRUM-XX` o `/e2e-tester "feature"`.
+
+---
+
 ## Comandos de referencia rápida
 
 | Comando | Descripción |
@@ -310,8 +405,7 @@ php artisan view:clear
 | `make fresh` | Reset completo (pide confirmación) |
 | `make tinker` | Abrir Laravel Tinker |
 | `make mysql-shell` | Abrir MySQL CLI |
-
-
-sentry_token=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
-
-jira=ATATT3xFfGF0ZXzLC4vzkEnLnuc-T7LEIM-mKXtqqsPlbkLOvbm1HoYfvJYih4ERRvkX57v3HdQSBwxYt4QVR57WAhcMzYRuYddk49dXaPST3aIKZEB01FpXNqjorYBSE7VKV1qQZLc8RdIljV0N_sDonQ0wz02hI1UbVJ-zbNgjpKypRvt97DY=B5336D1A
+| `pnpm test:e2e` | E2E headless (CI) |
+| `pnpm test:e2e:watch` | E2E con navegador visible |
+| `pnpm test:e2e:ui` | E2E modo UI interactivo |
+| `pnpm test:e2e:report` | Abrir reporte HTML de la última corrida |
