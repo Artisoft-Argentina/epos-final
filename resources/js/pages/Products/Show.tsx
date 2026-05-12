@@ -208,7 +208,7 @@ export default function Show({ product }: Props) {
                                             <div className="size-6 rounded-full bg-primary/10 flex items-center justify-center">
                                                 <DollarSign className="size-3.5 text-primary" />
                                             </div>
-                                            <p className="text-xs text-muted-foreground">Precio</p>
+                                            <p className="text-xs text-muted-foreground">Precio base</p>
                                         </div>
                                         <p className="text-lg font-bold tabular-nums text-foreground">{fmt(product.price)}</p>
                                     </div>
@@ -217,7 +217,7 @@ export default function Show({ product }: Props) {
                                             <div className="size-6 rounded-full bg-info-soft flex items-center justify-center">
                                                 <Tag className="size-3.5 text-info" />
                                             </div>
-                                            <p className="text-xs text-muted-foreground">Costo</p>
+                                            <p className="text-xs text-muted-foreground">Costo de compra</p>
                                         </div>
                                         <p className="text-lg font-bold tabular-nums text-foreground">{product.cost ? fmt(product.cost) : '—'}</p>
                                     </div>
@@ -324,7 +324,7 @@ export default function Show({ product }: Props) {
                                 </CardHeader>
                                 <CardContent className="px-6 py-4">
                                     <DataRow label="Precio base" value={fmt(product.price)} />
-                                    <DataRow label="Costo" value={product.cost ? fmt(product.cost) : '—'} />
+                                    <DataRow label="Costo de compra" value={product.cost ? fmt(product.cost) : '—'} />
                                     <DataRow label="Alícuota IVA" value={`${product.tax_rate}%`} />
                                     <DataRow label="Unidad" value={product.unit} />
                                     {product.supplier_code && <DataRow label="Cód. proveedor" value={product.supplier_code} />}

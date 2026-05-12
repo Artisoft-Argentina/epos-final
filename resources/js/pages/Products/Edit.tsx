@@ -158,10 +158,10 @@ export default function Edit({ product, categories, brands, suppliers, priceList
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="px-6 py-5 grid grid-cols-2 gap-5">
-                                    <FormField label="Precio" htmlFor="price" error={errors.price} required>
+                                    <FormField label="Precio base" htmlFor="price" error={errors.price} required>
                                         <Input id="price" type="number" step="0.01" min="0" value={data.price} onChange={(e) => setData('price', e.target.value)} placeholder={product.price} error={errors.price} />
                                     </FormField>
-                                    <FormField label="Costo" htmlFor="cost" error={errors.cost}>
+                                    <FormField label="Costo de compra" htmlFor="cost" error={errors.cost}>
                                         <Input id="cost" type="number" step="0.01" min="0" value={data.cost} onChange={(e) => setData('cost', e.target.value)} placeholder={product.cost ?? '0.00'} error={errors.cost} />
                                     </FormField>
                                     <FormField label="Alícuota IVA (%)" htmlFor="tax_rate" error={errors.tax_rate} required>

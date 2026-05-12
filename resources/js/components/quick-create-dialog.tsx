@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { FormField } from '@/components/form-field';
 import { Plus } from 'lucide-react';
 
@@ -54,16 +55,20 @@ export function QuickCreateDialog({ title, placeholder, routeName, onSuccess }: 
 
     return (
         <>
-            <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                className="shrink-0"
-                onClick={() => { setName(''); setError(undefined); setOpen(true); }}
-                title={title}
-            >
-                <Plus className="size-4" />
-            </Button>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="shrink-0"
+                        onClick={() => { setName(''); setError(undefined); setOpen(true); }}
+                    >
+                        <Plus className="size-4" />
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent>{title}</TooltipContent>
+            </Tooltip>
 
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogContent>
