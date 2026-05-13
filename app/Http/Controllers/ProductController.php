@@ -94,8 +94,13 @@ class ProductController extends Controller
 
     public function show(Product $product): Response
     {
+        $product->load(['category', 'brand', 'supplier', 'images', 'stock.movements' => function ($q) {
+            $q->with('user')->orderBy('created_at', 'desc')->limit(20);
+        }, 'priceLists']);
+
         return Inertia::render('Products/Show', [
-            'product' => $product->load(['category', 'brand', 'supplier', 'images', 'stock', 'priceLists']),
+            'product'    => $product,
+            'movements'  => $product->stock?->movements ?? [],
         ]);
     }
 

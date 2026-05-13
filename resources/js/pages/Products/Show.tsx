@@ -18,8 +18,12 @@ interface StockMovement {
     id: number;
     type: string;
     quantity: number;
-    notes: string | null;
+    reason: string | null;
+    date: string;
     created_at: string;
+    user: { id: number; name: string } | null;
+    referenceable_type: string | null;
+    referenceable_id: number | null;
 }
 
 interface PriceListItem {
@@ -54,7 +58,26 @@ interface Product {
     price_lists: PriceListItem[];
 }
 
-interface Props { product: Product; }
+interface Props {
+    product: Product;
+    movements: StockMovement[];
+}
+
+const MOVEMENT_LABELS: Record<string, string> = {
+    purchase_entry: 'Ingreso por compra',
+    assistant_entry: 'Ingreso por asistente',
+    adjustment_entry: 'Ajuste positivo',
+    delivery_exit: 'Egreso por entrega',
+    pos_sale_exit: 'Venta POS',
+    adjustment_exit: 'Ajuste negativo',
+    return: 'Devolución',
+    reconciliation_entry: 'Conciliación (+)',
+    reconciliation_exit: 'Conciliación (-)',
+    transfer_out: 'Transferencia salida',
+    transfer_in: 'Transferencia entrada',
+};
+
+const ENTRY_TYPES = ['purchase_entry', 'assistant_entry', 'adjustment_entry', 'return', 'reconciliation_entry', 'transfer_in'];
 
 const fmt = (n: string | number) =>
     `$${Number(n).toLocaleString('es-AR', { minimumFractionDigits: 2 })}`;
@@ -68,7 +91,7 @@ function DataRow({ label, value }: { label: string; value: React.ReactNode }) {
     );
 }
 
-export default function Show({ product }: Props) {
+export default function Show({ product, movements }: Props) {
     const qty = product.stock?.quantity ?? null;
     const min = product.min_stock;
     const stockAlert = qty === null ? null
@@ -99,11 +122,11 @@ export default function Show({ product }: Props) {
             key: 'type',
             header: 'Tipo',
             render: (row) => {
-                const isIn = ['entrada', 'compra', 'ajuste_positivo'].includes(row.type);
+                const isIn = ENTRY_TYPES.includes(row.type);
                 return (
                     <Badge variant={isIn ? 'success' : 'destructive'}>
                         {isIn ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}
-                        {row.type}
+                        {MOVEMENT_LABELS[row.type] ?? row.type}
                     </Badge>
                 );
             },
@@ -111,16 +134,24 @@ export default function Show({ product }: Props) {
         {
             key: 'quantity',
             header: 'Cantidad',
-            render: (row) => (
-                <span className="font-medium tabular-nums text-foreground">
-                    {row.quantity} {product.unit}
-                </span>
-            ),
+            render: (row) => {
+                const isIn = ENTRY_TYPES.includes(row.type);
+                return (
+                    <span className={`font-medium tabular-nums ${isIn ? 'text-success' : 'text-destructive'}`}>
+                        {isIn ? '+' : '-'}{row.quantity} {product.unit}
+                    </span>
+                );
+            },
         },
         {
-            key: 'notes',
-            header: 'Notas',
-            render: (row) => <span className="text-sm text-muted-foreground">{row.notes ?? '—'}</span>,
+            key: 'user',
+            header: 'Usuario',
+            render: (row) => <span className="text-sm text-muted-foreground">{row.user?.name ?? '—'}</span>,
+        },
+        {
+            key: 'reason',
+            header: 'Motivo',
+            render: (row) => <span className="text-sm text-muted-foreground">{row.reason ?? '—'}</span>,
         },
     ];
 
@@ -424,11 +455,15 @@ export default function Show({ product }: Props) {
                     <TabsContent value="movements">
                         <DataTable
                             columns={movementColumns}
-                            data={[]}
+                            data={movements}
                             keyExtractor={(row) => row.id}
                             title="Movimientos de Stock"
                             emptyMessage="No hay movimientos registrados para este producto."
-                            footer={<p className="text-sm text-muted-foreground">0 registros</p>}
+                            footer={
+                                movements.length > 0
+                                    ? <p className="text-sm text-muted-foreground">{movements.length} registros</p>
+                                    : undefined
+                            }
                         />
                     </TabsContent>
                 </Tabs>
