@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { router } from '@inertiajs/react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,6 +28,7 @@ export function QuickCreateDialog({ title, placeholder, routeName, onSuccess }: 
         setProcessing(true);
         try {
             const { data: item } = await axios.post(route(routeName), { name: name.trim(), active: true });
+            router.flushAll();
             onSuccess({ id: item.id, name: item.name });
             setName('');
             setError(undefined);
