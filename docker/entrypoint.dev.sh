@@ -19,10 +19,11 @@ chown -R www-data:www-data storage bootstrap/cache
 chmod -R 775 storage bootstrap/cache
 
 # Fix permisos de nginx tmp para uploads de archivos
-chown root:www-data /var/lib/nginx
-chmod 750 /var/lib/nginx
-chown -R www-data:www-data /var/lib/nginx/tmp
-chmod -R 755 /var/lib/nginx/tmp
+mkdir -p /tmp/nginx/client_body /tmp/nginx/fastcgi /tmp/nginx/proxy /tmp/nginx/uwsgi /tmp/nginx/scgi
+chown -R www-data:www-data /tmp/nginx
+chmod -R 755 /tmp/nginx
+# Asegurar también la herencia de grupo para subdirectorios nuevos
+chmod 2755 /tmp/nginx
 
 echo "==> Limpiando cache de configuración..."
 rm -f bootstrap/cache/packages.php bootstrap/cache/services.php
