@@ -37,7 +37,7 @@ function SelectTrigger({
         "disabled:cursor-not-allowed disabled:opacity-50",
         error && "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/30",
         "*:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2",
-        "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&>span]:line-clamp-1",
+        "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&>span]:line-clamp-1 [&>span]:truncate",
         className
       )}
       {...props}

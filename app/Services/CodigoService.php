@@ -10,12 +10,12 @@ class CodigoService
 {
     public function generarCodigoBarras($articulo)
     {
-        return $articulo->sku;
+        return $articulo->ean ?? $articulo->sku ?? (string) $articulo->id;
     }
 
     public function generarCodigoQR($articulo)
     {
-        return $articulo->sku;
+        return $articulo->ean ?? $articulo->sku ?? (string) $articulo->id;
     }
 
     public function generarImagenCodigoBarras($codigo)

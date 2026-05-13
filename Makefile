@@ -116,7 +116,10 @@ fresh:
 	@read CONFIRM; [ "$$CONFIRM" = "si" ] || (echo "Cancelado." && exit 1)
 	$(COMPOSE) down -v
 	$(COMPOSE) up -d
-	$(COMPOSE) exec app php artisan migrate:fresh --seed --force
+	@echo "Esperando que PostgreSQL esté listo..."
+	@sleep 5
+	$(COMPOSE) exec app php artisan migrate:fresh --force
+	$(COMPOSE) exec app php artisan db:seed --force
 
 fresh-ci:
 	$(COMPOSE_PROD) exec -T app php artisan migrate:fresh --seed --force

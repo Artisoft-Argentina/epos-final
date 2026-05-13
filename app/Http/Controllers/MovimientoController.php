@@ -10,11 +10,11 @@ use Inertia\Inertia;
 class MovimientoController extends Controller
 {
     /**
-     * Muestra el historial de movimientos de stock de un artículo.
+     * Muestra el historial de movimientos de stock de un producto.
      */
-    public function index(Product $articulo)
+    public function index(Product $product)
     {
-        $stock = Stock::where('product_id', $articulo->id)->first();
+        $stock = Stock::where('product_id', $product->id)->first();
 
         $calculatedQuantity = 0;
 
@@ -29,16 +29,16 @@ class MovimientoController extends Controller
             $movements = StockMovement::whereNull('id')->paginate(20);
         }
 
-        $from = request('from', 'articulos'); // 'articulos' | 'inventarios'
+        $from = request('from', 'products'); // 'products' | 'inventarios'
 
         return Inertia::render('Inventarios/Movimientos', [
-            'articulo'       => $articulo->load(['category', 'brand']),
+            'articulo'       => $product->load(['category', 'brand']),
             'inventario'     => $stock,
             'movimientos'    => $movements,
             'stockCalculado' => $calculatedQuantity,
             'tipos'          => StockMovement::TYPES,
-            'backUrl'        => $from === 'inventarios' ? route('inventarios.index') : route('articulos.index'),
-            'backLabel'      => $from === 'inventarios' ? 'Inventarios' : 'Artículos',
+            'backUrl'        => $from === 'inventarios' ? route('inventarios.index') : route('products.index'),
+            'backLabel'      => $from === 'inventarios' ? 'Inventarios' : 'Productos',
         ]);
     }
 }

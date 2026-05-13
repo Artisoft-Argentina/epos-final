@@ -28,7 +28,7 @@ function TabsList({ className, ...props }: React.ComponentProps<typeof TabsPrimi
             className={cn(
                 variant === 'pill'
                     ? 'inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground'
-                    : 'flex border-b border-border space-x-6',
+                    : 'flex overflow-x-auto border-b border-border space-x-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]',
                 className
             )}
             {...props}

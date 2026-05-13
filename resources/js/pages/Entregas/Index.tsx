@@ -75,7 +75,7 @@ export default function Index({ entregas, warehouses, selected_status, selected_
         setMarkModal(entrega);
         setSelectedWarehouseId(entrega.warehouse_id ? String(entrega.warehouse_id) : '');
         try {
-            const res = await fetch(route('articulos.stock-by-warehouse', entrega.product.id) + (entrega.warehouse_id ? `?pos_warehouse_id=${entrega.warehouse_id}` : ''), {
+            const res = await fetch(route('products.stock-by-warehouse', entrega.product.id) + (entrega.warehouse_id ? `?pos_warehouse_id=${entrega.warehouse_id}` : ''), {
                 headers: { Accept: 'application/json' },
             });
             if (res.ok) setStockByWarehouse(await res.json());
