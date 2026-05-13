@@ -18,6 +18,12 @@ mkdir -p bootstrap/cache
 chown -R www-data:www-data storage bootstrap/cache
 chmod -R 775 storage bootstrap/cache
 
+# Fix permisos de nginx tmp para uploads de archivos
+mkdir -p /tmp/nginx/client_body /tmp/nginx/fastcgi /tmp/nginx/proxy /tmp/nginx/uwsgi /tmp/nginx/scgi
+chown -R www-data:www-data /tmp/nginx
+chmod -R 755 /tmp/nginx
+chmod 2755 /tmp/nginx
+
 if [ -z "$(grep -E '^APP_KEY=base64:' /var/www/html/.env 2>/dev/null)" ]; then
     echo "==> Generando APP_KEY..."
     php artisan key:generate --force

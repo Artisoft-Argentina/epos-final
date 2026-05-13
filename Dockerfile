@@ -71,8 +71,10 @@ RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html \
     && chmod -R 775 /var/www/html/storage \
     && chmod -R 775 /var/www/html/bootstrap/cache \
-    && chown -R www-data:www-data /var/lib/nginx/tmp \
-    && chmod -R 755 /var/lib/nginx/tmp
+    && mkdir -p /tmp/nginx/client_body /tmp/nginx/fastcgi /tmp/nginx/proxy /tmp/nginx/uwsgi /tmp/nginx/scgi \
+    && chown -R www-data:www-data /tmp/nginx \
+    && chmod -R 755 /tmp/nginx \
+    && chmod 2755 /tmp/nginx
 
 # Asegurarse de que no exista el archivo `public/hot` en la imagen final.
 # Si este archivo existe, Laravel/Vite detectará un dev-server y servirá assets
