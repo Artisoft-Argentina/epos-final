@@ -60,7 +60,7 @@ export default function Index({ orders }: Props) {
             header: 'Acciones',
             align: 'right',
             render: (row) => (
-                <div className="flex items-center justify-end gap-1">
+                <div className="flex items-center gap-1">
                     <Link href={route('orders.show', row.id)}>
                         <ActionButton title="Ver"><Eye className="size-3.5" /></ActionButton>
                     </Link>

@@ -113,7 +113,7 @@ export default function Create({ clientes, articulos, listasPrecios, listaDefaul
     const fetchStockForProduct = async (productId: string) => {
         if (stockByProduct[productId]) return;
         try {
-            const url = route('articulos.stock-by-warehouse', productId) + (activePos ? `?pos_warehouse_id=${activePos.warehouse_id}` : '');
+            const url = route('products.stock-by-warehouse', productId) + (activePos ? `?pos_warehouse_id=${activePos.warehouse_id}` : '');
             const res = await fetch(url, { headers: { Accept: 'application/json' } });
             if (res.ok) {
                 const data: WarehouseStock[] = await res.json();

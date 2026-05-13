@@ -128,7 +128,7 @@ export default function Index({ inventarios, warehouses, selected_warehouse_id }
             render: (row) => {
                 const diff = row.calculated_quantity - row.quantity;
                 return (
-                    <div className="flex items-center justify-end gap-1">
+                    <div className="flex items-center gap-1">
                         {isAdmin && diff !== 0 && (
                             <ActionButton variant="outline" title="Conciliar" className="border-warning/30 text-warning hover:bg-warning-soft" onClick={() => router.post(route('inventarios.reconcile', row.id))}>
                                 <AlertTriangle className="size-3.5" />
@@ -139,7 +139,7 @@ export default function Index({ inventarios, warehouses, selected_warehouse_id }
                                 <SlidersHorizontal className="size-3.5" />
                             </ActionButton>
                         )}
-                        <Link href={route('movimientos.index', row.product_id) + '?from=inventarios'}>
+                        <Link href={route('products.movements', row.product_id) + '?from=inventarios'}>
                             <ActionButton title="Movimientos"><History className="size-3.5" /></ActionButton>
                         </Link>
                         <Link href={route('inventarios.edit', row.id)}>

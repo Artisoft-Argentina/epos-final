@@ -162,7 +162,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                             <Plus className="size-4" />
                             Nueva venta
                         </Button>
-                        <Button size="sm" variant="outline" onClick={() => router.visit(route('articulos.create'))}>
+                        <Button size="sm" variant="outline" onClick={() => router.visit(route('products.create'))}>
                             <Package className="size-4" />
                             Añadir artículo
                         </Button>

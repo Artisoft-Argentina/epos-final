@@ -67,7 +67,7 @@ export default function Index({ presupuestos }: Props) {
             header: 'Acciones',
             align: 'right',
             render: (row) => (
-                <div className="flex items-center justify-end gap-1">
+                <div className="flex items-center gap-1">
                     <ActionButton title="Convertir a venta" onClick={() => convertirAVenta(row.id)}>
                         <ShoppingCart className="size-3.5" />
                     </ActionButton>

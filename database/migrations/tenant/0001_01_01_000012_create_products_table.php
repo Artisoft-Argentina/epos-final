@@ -13,17 +13,20 @@ return new class extends Migration
             $table->string('supplier_code')->nullable();  // codprov → supplier_code
             $table->string('sku');                         // codarticulo → sku
             $table->string('name');                        // articulo → name
-            $table->text('description');                   // descripcion → description
+            $table->text('description')->nullable();           // descripcion → description
             $table->string('unit');                        // medida → unit
             $table->decimal('price', 12, 2);                // precio → price
             $table->decimal('tax_rate', 8, 2);             // alicuota → tax_rate
             $table->integer('min_stock');                  // stockminimo → min_stock
-            $table->foreignId('brand_id')->constrained('brands');
+            $table->foreignId('brand_id')->nullable()->constrained('brands')->nullOnDelete();
             $table->foreignId('category_id')->constrained('categories');
             $table->foreignId('supplier_id')->nullable()->constrained('suppliers')->nullOnDelete();
-            $table->string('barcode')->nullable()->unique();  // codigo_barras → barcode
-            $table->string('qr_code')->nullable()->unique();  // codigo_qr → qr_code
+            $table->string('ean')->nullable()->unique();       // EAN/GTIN comercial opcional
+            $table->decimal('cost', 12, 2)->nullable();         // costo unitario
+            $table->string('barcode')->nullable()->unique();    // codigo_barras → barcode
+            $table->string('qr_code')->nullable()->unique();    // codigo_qr → qr_code
             $table->boolean('active')->default(true);
+            $table->boolean('published')->default(true); // visible en catálogo/ecommerce
             $table->softDeletes();
             $table->timestamps();
         });

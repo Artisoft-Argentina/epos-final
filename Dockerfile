@@ -70,7 +70,9 @@ RUN composer run-script post-autoload-dump --no-interaction 2>/dev/null || true
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html \
     && chmod -R 775 /var/www/html/storage \
-    && chmod -R 775 /var/www/html/bootstrap/cache
+    && chmod -R 775 /var/www/html/bootstrap/cache \
+    && chown -R www-data:www-data /var/lib/nginx/tmp \
+    && chmod -R 755 /var/lib/nginx/tmp
 
 # Asegurarse de que no exista el archivo `public/hot` en la imagen final.
 # Si este archivo existe, Laravel/Vite detectará un dev-server y servirá assets
