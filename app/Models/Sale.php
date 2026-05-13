@@ -41,6 +41,8 @@ class Sale extends Model
         'customer_id',
         'user_id',
         'price_list_id',
+        'point_of_sale_id',
+        'warehouse_id',
         'active',
     ];
 
@@ -66,6 +68,16 @@ class Sale extends Model
     public function priceList()
     {
         return $this->belongsTo(PriceList::class);
+    }
+
+    public function pointOfSale()
+    {
+        return $this->belongsTo(PointOfSale::class);
+    }
+
+    public function warehouse()
+    {
+        return $this->belongsTo(Warehouse::class);
     }
 
     public function products()

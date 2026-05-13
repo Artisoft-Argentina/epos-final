@@ -11,7 +11,7 @@ import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialo
 import { ActionButton } from '@/components/action-button';
 import { Pagination } from '@/components/pagination';
 import { FormField } from '@/components/form-field';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Plus, Edit, Search } from 'lucide-react';
 import { useState } from 'react';
 
@@ -55,7 +55,9 @@ export default function Index({ brands, filters }: Props) {
         setModalOpen(true);
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = (e?: React.FormEvent) => {
+        e?.preventDefault();
+        if (processing) return;
         if (editing) {
             put(route('brands.update', editing.id), {
                 onSuccess: () => setModalOpen(false),
@@ -154,9 +156,10 @@ export default function Index({ brands, filters }: Props) {
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>{editing ? 'Editar Marca' : 'Nueva Marca'}</DialogTitle>
+                        <DialogDescription>Completá los datos de la marca.</DialogDescription>
                     </DialogHeader>
 
-                    <div className="flex flex-col gap-4 py-2">
+                    <form onSubmit={handleSubmit} className="flex flex-col gap-4 py-2">
                         <FormField label="Nombre" htmlFor="name" error={errors.name} required>
                             <Input
                                 id="name"
@@ -175,16 +178,16 @@ export default function Index({ brands, filters }: Props) {
                                 onCheckedChange={(v) => setData('active', v)}
                             />
                         </FormField>
-                    </div>
 
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setModalOpen(false)}>
-                            Cancelar
-                        </Button>
-                        <Button onClick={handleSubmit} disabled={processing}>
-                            {editing ? 'Guardar' : 'Crear'}
-                        </Button>
-                    </DialogFooter>
+                        <DialogFooter>
+                            <Button type="button" variant="outline" onClick={() => setModalOpen(false)}>
+                                Cancelar
+                            </Button>
+                            <Button type="submit" disabled={processing}>
+                                {editing ? 'Guardar' : 'Crear'}
+                            </Button>
+                        </DialogFooter>
+                    </form>
                 </DialogContent>
             </Dialog>
         </AppLayout>

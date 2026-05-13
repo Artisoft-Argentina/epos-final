@@ -68,17 +68,31 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('inventarios/reconcile-all', [\App\Http\Controllers\InventarioController::class, 'reconcileAll'])->name('inventarios.reconcile-all');
         Route::post('inventarios/{inventario}/reconcile', [\App\Http\Controllers\InventarioController::class, 'reconcile'])->name('inventarios.reconcile');
         Route::post('inventarios/{inventario}/adjust', [\App\Http\Controllers\InventarioController::class, 'adjust'])->name('inventarios.adjust');
-        Route::resource('inventarios', \App\Http\Controllers\InventarioController::class);
+        Route::resource('inventarios', \App\Http\Controllers\InventarioController::class)->only(['create', 'store', 'edit', 'update', 'destroy']);
         Route::get('products/{product}/movements', [\App\Http\Controllers\MovimientoController::class, 'index'])->name('products.movements');
+        Route::resource('almacenes', \App\Http\Controllers\WarehouseController::class);
+        Route::post('puntos-venta/set-active', [\App\Http\Controllers\PointOfSaleController::class, 'setActive'])->name('puntos-venta.set-active');
+        Route::resource('puntos-venta', \App\Http\Controllers\PointOfSaleController::class)->parameters(['puntos-venta' => 'puntoVenta']);
+        Route::post('transferencias/{transferencia}/dispatch', [\App\Http\Controllers\StockTransferController::class, 'dispatchTransfer'])->name('transferencias.dispatch');
+        Route::post('transferencias/{transferencia}/receive', [\App\Http\Controllers\StockTransferController::class, 'receive'])->name('transferencias.receive');
+        Route::post('transferencias/{transferencia}/cancel', [\App\Http\Controllers\StockTransferController::class, 'cancel'])->name('transferencias.cancel');
         Route::resource('listas-precios', \App\Http\Controllers\ListaPrecioController::class);
         Route::post('listas-precios/{listas_precio}/regenerar', [\App\Http\Controllers\ListaPrecioController::class, 'regenerarPrecios'])->name('listas-precios.regenerar');
     });
 
     // Rutas para todos los roles
+    // Transferencias: vendedor puede crear/listar/ver (queda en draft); admin maneja dispatch/receive/cancel arriba
+    Route::resource('transferencias', \App\Http\Controllers\StockTransferController::class)->except(['edit', 'update']);
+
     Route::resource('customers', \App\Http\Controllers\CustomerController::class)->except(['destroy']);
     Route::patch('customers/{customer}/toggle-active', [\App\Http\Controllers\CustomerController::class, 'toggleActive'])->name('customers.toggle-active');
     Route::get('customers/{customer}/export-excel', [\App\Http\Controllers\CustomerController::class, 'exportExcel'])->name('customers.export-excel');
     Route::get('customers/{customer}/export-pdf', [\App\Http\Controllers\CustomerController::class, 'exportPdf'])->name('customers.export-pdf');
+
+    // Inventario y productos — lectura para todos los roles autenticados
+    Route::get('inventarios', [\App\Http\Controllers\InventarioController::class, 'index'])->name('inventarios.index');
+    Route::get('inventarios/{inventario}', [\App\Http\Controllers\InventarioController::class, 'show'])->name('inventarios.show');
+    Route::get('products/{product}/stock-by-warehouse', [\App\Http\Controllers\ProductController::class, 'stockByWarehouse'])->name('products.stock-by-warehouse');
     
     // Rutas de escáner de códigos para ventas
     Route::get('scanner', [\App\Http\Controllers\CodigoController::class, 'scanner'])->name('scanner.index');
@@ -96,6 +110,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('entregas', [\App\Http\Controllers\EntregaController::class, 'index'])->name('entregas.index');
     Route::post('entregas/{entrega}/marcar-entregada', [\App\Http\Controllers\EntregaController::class, 'marcarEntregada'])->name('entregas.marcar-entregada');
     Route::post('entregas/{entrega}/cancelar', [\App\Http\Controllers\EntregaController::class, 'cancelar'])->name('entregas.cancelar');
+    Route::patch('entregas/{entrega}/warehouse', [\App\Http\Controllers\EntregaController::class, 'updateWarehouse'])->name('entregas.update-warehouse');
     Route::delete('entregas/{entrega}', [\App\Http\Controllers\EntregaController::class, 'destroy'])->name('entregas.destroy');
 
     Route::get('chat', [\App\Http\Controllers\ChatController::class, 'index'])->name('chat.index');

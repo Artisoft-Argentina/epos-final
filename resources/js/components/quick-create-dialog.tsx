@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { FormField } from '@/components/form-field';
 import { Plus } from 'lucide-react';
@@ -20,6 +20,7 @@ export function QuickCreateDialog({ title, placeholder, routeName, onSuccess }: 
     const [processing, setProcessing] = useState(false);
 
     const handleSubmit = async () => {
+        if (processing) return;
         if (!name.trim()) { setError('El nombre es obligatorio.'); return; }
 
         setProcessing(true);
@@ -74,6 +75,7 @@ export function QuickCreateDialog({ title, placeholder, routeName, onSuccess }: 
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>{title}</DialogTitle>
+                        <DialogDescription>Completá el nombre para crear.</DialogDescription>
                     </DialogHeader>
                     <div className="py-2">
                         <FormField label="Nombre" htmlFor="quick-name" error={error} required>
@@ -84,7 +86,7 @@ export function QuickCreateDialog({ title, placeholder, routeName, onSuccess }: 
                                 placeholder={placeholder}
                                 error={error}
                                 autoFocus
-                                onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+                                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSubmit(); } }}
                             />
                         </FormField>
                     </div>

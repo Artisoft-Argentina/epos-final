@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Setting;
+use App\Models\Warehouse;
+use App\Models\PointOfSale;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -12,7 +14,11 @@ class EmpresaController extends Controller
     {
         $empresa = Setting::first() ?? new Setting();
 
-        return Inertia::render('Empresa/Index', ['empresa' => $empresa]);
+        return Inertia::render('Empresa/Index', [
+            'empresa'    => $empresa,
+            'warehouses' => Warehouse::active()->orderBy('is_default', 'desc')->orderBy('name')->get(['id', 'name', 'is_default']),
+            'puntosVenta' => PointOfSale::active()->orderBy('is_default', 'desc')->orderBy('pos_number')->get(['id', 'name', 'pos_number', 'is_default']),
+        ]);
     }
 
     public function store(Request $request)
@@ -42,6 +48,8 @@ class EmpresaController extends Controller
             'next_quote_number'    => 'nullable|integer',
             'next_payment_number'  => 'nullable|integer',
             'next_receipt_number'  => 'nullable|integer',
+            'default_ecommerce_warehouse_id'     => 'nullable|exists:warehouses,id',
+            'default_ecommerce_point_of_sale_id' => 'nullable|exists:points_of_sale,id',
         ]);
 
         $data = $request->except(['logo', 'cert_file', 'key_file']);

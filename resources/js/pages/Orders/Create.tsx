@@ -20,8 +20,15 @@ interface Articulo {
     price: number;
 }
 
+interface Warehouse {
+    id: number;
+    name: string;
+    is_default: boolean;
+}
+
 interface Props {
     suppliers: Supplier[];
+    warehouses: Warehouse[];
 }
 
 interface DetalleForm {
@@ -30,12 +37,14 @@ interface DetalleForm {
     unit_price: number;
 }
 
-export default function Create({ suppliers }: Props) {
+export default function Create({ suppliers, warehouses }: Props) {
+    const defaultWarehouse = warehouses.find((w) => w.is_default) ?? warehouses[0];
     const { data, setData, post, processing, errors } = useForm({
         pos_number: 1,
         order_number: '',
         date: new Date().toISOString().split('T')[0],
         supplier_id: '',
+        warehouse_id: defaultWarehouse ? String(defaultWarehouse.id) : '',
         notes: '',
         detalles: [] as DetalleForm[],
     });
@@ -175,6 +184,22 @@ export default function Create({ suppliers }: Props) {
                                     </Select>
                                     {errors.supplier_id && <p className="text-sm text-red-600 mt-1">{errors.supplier_id}</p>}
                                 </div>
+                            </div>
+                            <div>
+                                <Label htmlFor="warehouse_id">Almacén destino</Label>
+                                <Select value={data.warehouse_id} onValueChange={(v) => setData('warehouse_id', v)}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Seleccionar almacén" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {warehouses.map((w) => (
+                                            <SelectItem key={w.id} value={String(w.id)}>
+                                                {w.name}{w.is_default ? ' (default)' : ''}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                {errors.warehouse_id && <p className="text-sm text-red-600 mt-1">{errors.warehouse_id}</p>}
                             </div>
                             <div>
                                 <Label htmlFor="notes">Observaciones</Label>

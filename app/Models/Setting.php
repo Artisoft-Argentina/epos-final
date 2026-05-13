@@ -35,6 +35,8 @@ class Setting extends Model
         'mp_access_token',
         'mp_public_key',
         'mp_environment',
+        'default_ecommerce_warehouse_id',
+        'default_ecommerce_point_of_sale_id',
         'active',
     ];
 
@@ -58,5 +60,15 @@ class Setting extends Model
     public function state()
     {
         return $this->belongsTo(State::class);
+    }
+
+    public function defaultEcommerceWarehouse()
+    {
+        return $this->belongsTo(Warehouse::class, 'default_ecommerce_warehouse_id');
+    }
+
+    public function defaultEcommercePointOfSale()
+    {
+        return $this->belongsTo(PointOfSale::class, 'default_ecommerce_point_of_sale_id');
     }
 }

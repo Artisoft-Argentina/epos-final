@@ -9,11 +9,12 @@ interface CartItem {
     quantity: number;
     articulo: {
         id: number;
-        articulo: string;
-        precio: number;
-        imagenes?: Array<{
+        name: string;
+        price: number;
+        images?: Array<{
             id: number;
-            ruta: string;
+            path: string;
+            url?: string;
         }>;
     };
 }
@@ -24,7 +25,7 @@ interface Props {
 
 export default function EcommerceCart({ cartItems }: Props) {
     const total = cartItems.reduce((sum, cartItem) =>
-        sum + (Number(cartItem.articulo.precio) * cartItem.quantity), 0
+        sum + (Number(cartItem.articulo.price) * cartItem.quantity), 0
     );
 
     const cartCount = cartItems.reduce((sum, cartItem) => sum + cartItem.quantity, 0);
@@ -112,10 +113,10 @@ export default function EcommerceCart({ cartItems }: Props) {
                                         {/* Image */}
                                         <Link href={`/shop/${cartItem.articulo.id}`} className="flex-shrink-0">
                                             <div className="w-24 h-24 md:w-28 md:h-28 bg-gradient-to-br from-gray-100 to-gray-50 rounded-xl overflow-hidden">
-                                                {cartItem.articulo.imagenes && cartItem.articulo.imagenes.length > 0 ? (
+                                                {cartItem.articulo.images && cartItem.articulo.images.length > 0 ? (
                                                     <img
-                                                        src={`/storage/${cartItem.articulo.imagenes[0].ruta}`}
-                                                        alt={cartItem.articulo.articulo}
+                                                        src={`/storage/${cartItem.articulo.images[0].path}`}
+                                                        alt={cartItem.articulo.name}
                                                         className="w-full h-full object-cover hover:scale-105 transition-transform"
                                                     />
                                                 ) : (
@@ -130,11 +131,11 @@ export default function EcommerceCart({ cartItems }: Props) {
                                         <div className="flex-1 min-w-0">
                                             <Link href={`/shop/${cartItem.articulo.id}`}>
                                                 <h3 className="font-semibold text-gray-900 hover:text-violet-600 transition-colors line-clamp-2 mb-1">
-                                                    {cartItem.articulo.articulo}
+                                                    {cartItem.articulo.name}
                                                 </h3>
                                             </Link>
                                             <p className="text-gray-500 text-sm mb-3">
-                                                ${Number(cartItem.articulo.precio).toLocaleString('es-AR', { minimumFractionDigits: 2 })} c/u
+                                                ${Number(cartItem.articulo.price).toLocaleString('es-AR', { minimumFractionDigits: 2 })} c/u
                                             </p>
 
                                             {/* Mobile: Price and Actions */}
@@ -156,7 +157,7 @@ export default function EcommerceCart({ cartItems }: Props) {
                                                     </button>
                                                 </div>
                                                 <p className="font-bold text-lg bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">
-                                                    ${(Number(cartItem.articulo.precio) * cartItem.quantity).toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+                                                    ${(Number(cartItem.articulo.price) * cartItem.quantity).toLocaleString('es-AR', { minimumFractionDigits: 2 })}
                                                 </p>
                                             </div>
                                         </div>
@@ -182,7 +183,7 @@ export default function EcommerceCart({ cartItems }: Props) {
 
                                             <div className="text-right min-w-[100px]">
                                                 <p className="font-bold text-xl bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">
-                                                    ${(Number(cartItem.articulo.precio) * cartItem.quantity).toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+                                                    ${(Number(cartItem.articulo.price) * cartItem.quantity).toLocaleString('es-AR', { minimumFractionDigits: 2 })}
                                                 </p>
                                             </div>
 

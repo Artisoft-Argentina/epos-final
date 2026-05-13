@@ -213,6 +213,19 @@ AI_PROVIDER=groq                    # groq | ollama
 - No usar axios (fue removido) — usar `fetch` nativo
 - shadcn/ui para componentes base (Button, Card, Badge, Input, etc.)
 
+### Naming convention (BD, modelos y props)
+- **Toda la capa de datos en inglés**: columnas de BD, atributos de modelos Eloquent, claves de pivot, props que envía el backend a Inertia. No mezclar idiomas en el mismo recorrido.
+- **Mapeo canónico** (referencias rápidas para el frontend):
+  - `Customer`: `business_name`, `fantasy_name`, `tax_id`, `dni`, `phone`, `email`, `address`, `tax_status` (NO `razonsocial`, `nombre`, `apellido`, `cuit`).
+  - `Product`: `name`, `sku`, `price`, `description`, `unit`, `tax_rate`, `barcode`, `min_stock`, `images`, `category`, `brand`, `priceLists` (NO `articulo`, `codarticulo`, `precio`, `medida`, `alicuota`, `codigo_barras`, `imagenes`, `categoria`, `marca`, `listas_precios`).
+  - `Sale`: `invoice_number`, `pos_number`, `voucher_letter`, `total`, `subtotal`, `customer`, `products`, `deliveries`, `sale_type` (NO `numfactura`, `tipo_venta`, `cliente`, `articulos`, `factura`).
+  - `Delivery`: `quantity`, `delivery_date`, `actual_delivery_date`, `status`, `warehouse`, `product`, `sale` (NO `cantidad`, `fecha_entrega`, `estado`, `articulo`, `factura`).
+  - `Order`: `order_number`, `pos_number`, `date`, `total`, `supplier`, `products`, `warehouse` (NO `numero`, `fecha`, `proveedor`, `articulos`).
+  - Categorías: `name` (NO `categoria`). Marcas: `name` (NO `marca`).
+- **Nombres en español permitidos**: solo en URLs/rutas (`/ventas`, `/articulos`, `/almacenes`) y nombres de archivos de páginas/controllers (`VentaController`, `Ventas/Create.tsx`). Esos son alias de UX. Adentro de los archivos se usan los nombres reales del modelo.
+- **Variables locales en español**: aceptable cuando aporta claridad de dominio (`$factura`, `$articulo`) pero los **atributos** que se acceden son siempre en inglés (`$factura->invoice_number`, `$articulo->name`).
+- **Si encontrás código viejo con nombres en español como `razonsocial`, `articulo.articulo`, `numfactura`**, etc.: arreglalo a la convención inglés. Es deuda técnica heredada del sistema original.
+
 ### Rutas
 - Rutas tenant en `routes/web.php` agrupadas por rol (`role:admin,superadmin`)
 - Rutas centrales en `routes/central.php`

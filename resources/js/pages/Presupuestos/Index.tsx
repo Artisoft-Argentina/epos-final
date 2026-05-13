@@ -12,10 +12,10 @@ import { useState } from 'react';
 
 interface Presupuesto {
     id: number;
-    numpresupuesto: number;
-    fecha: string;
+    quote_number: number;
+    date: string;
     total: number;
-    cliente: { razonsocial: string };
+    customer: { business_name: string; fantasy_name?: string | null };
     user: { name: string };
 }
 
@@ -26,8 +26,8 @@ export default function Index({ presupuestos }: Props) {
     const [search, setSearch] = useState('');
 
     const filtered = presupuestos.data.filter((p) =>
-        p.cliente.razonsocial.toLowerCase().includes(search.toLowerCase()) ||
-        p.numpresupuesto.toString().includes(search) ||
+        (p.customer?.business_name ?? '').toLowerCase().includes(search.toLowerCase()) ||
+        p.quote_number.toString().includes(search) ||
         p.user.name.toLowerCase().includes(search.toLowerCase())
     );
 
@@ -37,19 +37,19 @@ export default function Index({ presupuestos }: Props) {
 
     const columns: Column<Presupuesto>[] = [
         {
-            key: 'numpresupuesto',
+            key: 'quote_number',
             header: 'Presupuesto',
-            render: (row) => <span className="font-medium tabular-nums text-foreground">#{row.numpresupuesto}</span>,
+            render: (row) => <span className="font-medium tabular-nums text-foreground">#{row.quote_number}</span>,
         },
         {
-            key: 'cliente',
+            key: 'customer',
             header: 'Cliente',
-            render: (row) => <span className="text-foreground">{row.cliente.razonsocial}</span>,
+            render: (row) => <span className="text-foreground">{row.customer?.fantasy_name || row.customer?.business_name || '-'}</span>,
         },
         {
-            key: 'fecha',
+            key: 'date',
             header: 'Fecha',
-            render: (row) => <span className="text-muted-foreground">{new Date(row.fecha).toLocaleDateString('es-AR')}</span>,
+            render: (row) => <span className="text-muted-foreground">{new Date(row.date).toLocaleDateString('es-AR')}</span>,
         },
         {
             key: 'total',
@@ -74,7 +74,7 @@ export default function Index({ presupuestos }: Props) {
                     <Link href={route('presupuestos.show', row.id)}>
                         <ActionButton title="Ver"><Eye className="size-3.5" /></ActionButton>
                     </Link>
-                    <DeleteConfirmationDialog url={route('presupuestos.destroy', row.id)} title="Eliminar presupuesto" description={`¿Está seguro que desea eliminar el presupuesto #${row.numpresupuesto}?`} />
+                    <DeleteConfirmationDialog url={route('presupuestos.destroy', row.id)} title="Eliminar presupuesto" description={`¿Está seguro que desea eliminar el presupuesto #${row.quote_number}?`} />
                 </div>
             ),
         },

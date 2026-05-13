@@ -9,11 +9,17 @@ import { toast } from 'sonner';
 import { useEffect } from 'react';
 
 interface Product { id: number; name: string; sku: string; }
-interface Props { articulos: Product[]; }
+interface Warehouse { id: number; name: string; is_default: boolean; }
+interface Props { articulos: Product[]; warehouses: Warehouse[]; }
 
-export default function Create({ articulos }: Props) {
+export default function Create({ articulos, warehouses }: Props) {
     const page = usePage<any>();
-    const { data, setData, post, processing, errors } = useForm({ quantity: '', product_id: '' });
+    const defaultWarehouse = warehouses.find((w) => w.is_default) ?? warehouses[0];
+    const { data, setData, post, processing, errors } = useForm({
+        quantity: '',
+        product_id: '',
+        warehouse_id: defaultWarehouse ? String(defaultWarehouse.id) : '',
+    });
 
     useEffect(() => {
         if (page.props.flash?.success) toast.success(page.props.flash.success);
@@ -30,6 +36,16 @@ export default function Create({ articulos }: Props) {
                     <CardHeader><CardTitle>Crear Nuevo Inventario</CardTitle></CardHeader>
                     <CardContent>
                         <form onSubmit={submit} className="space-y-4">
+                            <FormField label="Almacén" error={errors.warehouse_id} required>
+                                <Select value={data.warehouse_id} onValueChange={(v) => setData('warehouse_id', v)}>
+                                    <SelectTrigger error={errors.warehouse_id}><SelectValue placeholder="Seleccionar almacén" /></SelectTrigger>
+                                    <SelectContent>
+                                        {warehouses.map((w) => (
+                                            <SelectItem key={w.id} value={String(w.id)}>{w.name}{w.is_default ? ' (default)' : ''}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </FormField>
                             <FormField label="Artículo" error={errors.product_id} required>
                                 <Select value={data.product_id} onValueChange={(v) => setData('product_id', v)}>
                                     <SelectTrigger error={errors.product_id}><SelectValue placeholder="Seleccionar artículo" /></SelectTrigger>

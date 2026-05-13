@@ -6,7 +6,9 @@ use App\Models\Brand;
 use App\Models\Category;
 use App\Models\PriceList;
 use App\Models\Product;
+use App\Models\Stock;
 use App\Models\Supplier;
+use App\Models\Warehouse;
 use App\Services\ProductService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Arr;
@@ -137,6 +139,28 @@ class ProductController extends Controller
         return back()->with('success', $product->active
             ? 'Producto activado.'
             : 'Producto desactivado.'
+        );
+    }
+
+    public function stockByWarehouse(Request $request, Product $product)
+    {
+        $posWarehouseId = $request->integer('pos_warehouse_id') ?: null;
+
+        $warehouses = Warehouse::where('active', true)
+            ->orderBy('is_default', 'desc')
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        $stocks = Stock::where('product_id', $product->id)
+            ->pluck('quantity', 'warehouse_id');
+
+        return response()->json(
+            $warehouses->map(fn ($w) => [
+                'warehouse_id'     => $w->id,
+                'warehouse_name'   => $w->name,
+                'quantity'         => (int) ($stocks[$w->id] ?? 0),
+                'is_pos_warehouse' => $posWarehouseId === $w->id,
+            ])->values()
         );
     }
 

@@ -11,15 +11,15 @@ import { toast } from 'sonner';
 
 interface Articulo {
   id: number;
-  codarticulo: string;
-  articulo: string;
-  descripcion: string;
-  precio: number;
-  categoria: { nombre: string };
-  marca: { nombre: string };
-  inventario: { stock: number } | null;
-  codigo_barras?: string;
-  codigo_qr?: string;
+  sku: string;
+  name: string;
+  description: string;
+  price: number;
+  category?: { id: number; name: string } | null;
+  brand?: { id: number; name: string } | null;
+  stock?: { quantity: number } | null;
+  barcode?: string;
+  qr_code?: string;
 }
 
 export default function Scanner() {
@@ -158,30 +158,30 @@ export default function Scanner() {
                       <div className="space-y-2">
                         <div>
                           <Label className="text-sm font-medium">Código</Label>
-                          <p className="text-sm text-gray-600">{foundArticle.codarticulo}</p>
+                          <p className="text-sm text-gray-600">{foundArticle.sku}</p>
                         </div>
                         <div>
                           <Label className="text-sm font-medium">Nombre</Label>
-                          <p className="text-sm text-gray-600">{foundArticle.articulo}</p>
+                          <p className="text-sm text-gray-600">{foundArticle.name}</p>
                         </div>
                         <div>
                           <Label className="text-sm font-medium">Descripción</Label>
-                          <p className="text-sm text-gray-600">{foundArticle.descripcion}</p>
+                          <p className="text-sm text-gray-600">{foundArticle.description}</p>
                         </div>
                       </div>
                       <div className="space-y-2">
                         <div>
                           <Label className="text-sm font-medium">Precio</Label>
-                          <p className="text-sm text-gray-600">${foundArticle.precio}</p>
+                          <p className="text-sm text-gray-600">${foundArticle.price}</p>
                         </div>
                         <div>
                           <Label className="text-sm font-medium">Categoría</Label>
-                          <p className="text-sm text-gray-600">{foundArticle.categoria.nombre}</p>
+                          <p className="text-sm text-gray-600">{foundArticle.category?.name ?? '-'}</p>
                         </div>
                         <div>
                           <Label className="text-sm font-medium">Stock</Label>
                           <p className="text-sm text-gray-600">
-                            {foundArticle.inventario?.stock || 0} unidades
+                            {foundArticle.stock?.quantity ?? 0} unidades
                           </p>
                         </div>
                       </div>

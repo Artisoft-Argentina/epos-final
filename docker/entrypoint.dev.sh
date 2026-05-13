@@ -18,6 +18,12 @@ mkdir -p bootstrap/cache
 chown -R www-data:www-data storage bootstrap/cache
 chmod -R 775 storage bootstrap/cache
 
+# Fix permisos de nginx tmp para uploads de archivos
+chown root:www-data /var/lib/nginx
+chmod 750 /var/lib/nginx
+chown -R www-data:www-data /var/lib/nginx/tmp
+chmod -R 755 /var/lib/nginx/tmp
+
 echo "==> Limpiando cache de configuración..."
 rm -f bootstrap/cache/packages.php bootstrap/cache/services.php
 
