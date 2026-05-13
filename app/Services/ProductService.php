@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\ProductImage;
 use App\Models\Stock;
 use App\Models\StockMovement;
+use App\Models\Warehouse;
 use Illuminate\Support\Arr;
 
 class ProductService
@@ -24,12 +25,13 @@ class ProductService
 
         $trackStock   = ! empty($data['track_stock']);
         $initialStock = (int) ($data['initial_stock'] ?? 0);
-        $data = Arr::except($data, ['initial_stock', 'track_stock']);
+        $warehouseId  = (int) ($data['warehouse_id'] ?? 0) ?: Warehouse::getDefault()?->id;
+        $data = Arr::except($data, ['initial_stock', 'track_stock', 'warehouse_id']);
 
         $product = Product::create($data);
 
-        if ($trackStock) {
-            $this->initStock($product, $initialStock);
+        if ($trackStock && $warehouseId) {
+            $this->initStock($product, $initialStock, $warehouseId);
         }
 
         $this->storeImages($product, $images);
@@ -92,11 +94,12 @@ class ProductService
         }
     }
 
-    private function initStock(Product $product, int $quantity): void
+    private function initStock(Product $product, int $quantity, int $warehouseId): void
     {
         $stock = Stock::create([
-            'product_id' => $product->id,
-            'quantity'   => 0,
+            'product_id'   => $product->id,
+            'warehouse_id' => $warehouseId,
+            'quantity'     => 0,
         ]);
 
         if ($quantity > 0) {

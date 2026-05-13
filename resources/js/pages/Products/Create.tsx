@@ -17,12 +17,15 @@ interface Category { id: number; name: string; }
 interface Brand { id: number; name: string; }
 interface Supplier { id: number; business_name: string; }
 interface PriceList { id: number; name: string; percentage: string; }
-interface Props { categories: Category[]; brands: Brand[]; suppliers: Supplier[]; priceLists: PriceList[]; }
+interface WarehouseOption { id: number; name: string; is_default: boolean; }
+interface Props { categories: Category[]; brands: Brand[]; suppliers: Supplier[]; priceLists: PriceList[]; warehouses: WarehouseOption[]; }
 
 const UNITS = ['Unidad', 'Kg', 'Litro', 'Metro', 'Caja', 'Pack', 'Par', 'Rollo'];
 const fmt = (n: number) => `$${n.toLocaleString('es-AR', { minimumFractionDigits: 2 })}`;
 
-export default function Create({ categories, brands, suppliers, priceLists }: Props) {
+export default function Create({ categories, brands, suppliers, priceLists, warehouses }: Props) {
+    const defaultWarehouse = warehouses.find((w) => w.is_default) ?? warehouses[0] ?? null;
+
     const { data, setData, post, processing, errors } = useForm({
         sku: '',
         ean: '',
@@ -41,6 +44,7 @@ export default function Create({ categories, brands, suppliers, priceLists }: Pr
         published: true,
         track_stock: false,
         initial_stock: '0',
+        warehouse_id: defaultWarehouse?.id.toString() ?? '',
         images: [] as File[],
     });
 
@@ -212,9 +216,23 @@ export default function Create({ categories, brands, suppliers, priceLists }: Pr
                                         <Input id="min_stock" type="number" min="0" value={data.min_stock} onChange={(e) => setData('min_stock', e.target.value)} placeholder="0" error={errors.min_stock} />
                                     </FormField>
                                     {trackStock && (
-                                        <FormField label="Cantidad inicial" htmlFor="initial_stock" error={errors.initial_stock} required hint={`En ${data.unit}`}>
-                                            <Input id="initial_stock" type="number" min="0" value={data.initial_stock} onChange={(e) => setData('initial_stock', e.target.value)} placeholder="0" error={errors.initial_stock} autoFocus />
-                                        </FormField>
+                                        <>
+                                            <FormField label="Almacén" error={errors.warehouse_id} required>
+                                                <Select value={data.warehouse_id} onValueChange={(v) => setData('warehouse_id', v)}>
+                                                    <SelectTrigger><SelectValue placeholder="Seleccionar almacén..." /></SelectTrigger>
+                                                    <SelectContent>
+                                                        {warehouses.map((w) => (
+                                                            <SelectItem key={w.id} value={w.id.toString()}>
+                                                                {w.name}{w.is_default && ' (principal)'}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </FormField>
+                                            <FormField label="Cantidad inicial" htmlFor="initial_stock" error={errors.initial_stock} required hint={`En ${data.unit}`}>
+                                                <Input id="initial_stock" type="number" min="0" value={data.initial_stock} onChange={(e) => setData('initial_stock', e.target.value)} placeholder="0" error={errors.initial_stock} autoFocus />
+                                            </FormField>
+                                        </>
                                     )}
                                 </CardContent>
                             </Card>
