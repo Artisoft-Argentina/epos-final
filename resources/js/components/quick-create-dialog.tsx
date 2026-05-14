@@ -1,3 +1,5 @@
+import axios from 'axios';
+import { router } from '@inertiajs/react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,30 +27,18 @@ export function QuickCreateDialog({ title, placeholder, routeName, onSuccess }: 
 
         setProcessing(true);
         try {
-            const csrfToken = (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content;
-            const res = await fetch(route(routeName), {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken ?? '',
-                },
-                body: JSON.stringify({ name: name.trim(), active: true }),
-            });
-
-            if (!res.ok) {
-                const data = await res.json();
-                setError(data.errors?.name?.[0] ?? 'Error al crear.');
-                return;
-            }
-
-            const item = await res.json();
+            const { data: item } = await axios.post(route(routeName), { name: name.trim(), active: true });
+            router.flushAll();
             onSuccess({ id: item.id, name: item.name });
             setName('');
             setError(undefined);
             setOpen(false);
-        } catch {
-            setError('Error de conexión.');
+        } catch (err: unknown) {
+            if (axios.isAxiosError(err)) {
+                setError(err.response?.data?.errors?.name?.[0] ?? 'Error al crear.');
+            } else {
+                setError('Error de conexión.');
+            }
         } finally {
             setProcessing(false);
         }

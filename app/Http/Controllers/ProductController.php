@@ -76,6 +76,7 @@ class ProductController extends Controller
             'brands'     => Brand::active()->orderBy('name')->get(['id', 'name']),
             'suppliers'  => Supplier::orderBy('business_name')->get(['id', 'business_name']),
             'priceLists' => PriceList::where('active', true)->orderBy('name')->get(['id', 'name', 'percentage']),
+            'warehouses' => Warehouse::active()->orderBy('is_default', 'desc')->orderBy('name')->get(['id', 'name', 'is_default']),
         ]);
     }
 
@@ -176,6 +177,7 @@ class ProductController extends Controller
         return array_merge($this->rules(), [
             'track_stock'   => 'boolean',
             'initial_stock' => 'nullable|integer|min:0',
+            'warehouse_id'  => 'nullable|exists:warehouses,id',
         ]);
     }
 
