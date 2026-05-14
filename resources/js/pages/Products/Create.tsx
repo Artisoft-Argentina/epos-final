@@ -10,7 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Combobox } from '@/components/ui/combobox';
 import { FormField } from '@/components/form-field';
 import { QuickCreateDialog } from '@/components/quick-create-dialog';
-import { ChevronRight, Save, Package, DollarSign, QrCode, ImagePlus, X, Warehouse, Tag, Layers, SlidersHorizontal } from 'lucide-react';
+import { ImageUploadPreview } from '@/components/image-upload-preview';
+import { ChevronRight, Save, Package, DollarSign, QrCode, ImagePlus, Warehouse, Tag, Layers, SlidersHorizontal } from 'lucide-react';
 import { useState } from 'react';
 
 interface Category { id: number; name: string; }
@@ -46,9 +47,9 @@ export default function Create({ categories, brands, suppliers, priceLists, ware
         initial_stock: '0',
         warehouse_id: defaultWarehouse?.id.toString() ?? '',
         images: [] as File[],
+        primary_image_index: 0,
     });
 
-    const [previews, setPreviews] = useState<string[]>([]);
     const [autoSku, setAutoSku] = useState(true);
     const [trackStock, setTrackStock] = useState(false);
     const [categoryList, setCategoryList] = useState(categories);
@@ -57,17 +58,6 @@ export default function Create({ categories, brands, suppliers, priceLists, ware
     const categoryOptions = categoryList.map((c) => ({ value: c.id.toString(), label: c.name }));
     const brandOptions    = [{ value: '', label: 'Sin marca' }, ...brandList.map((b) => ({ value: b.id.toString(), label: b.name }))];
     const supplierOptions = suppliers.map((s) => ({ value: s.id.toString(), label: s.business_name }));
-
-    const handleImages = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = Array.from(e.target.files ?? []);
-        setData('images', files);
-        setPreviews(files.map((f) => URL.createObjectURL(f)));
-    };
-
-    const removeImage = (index: number) => {
-        setData('images', data.images.filter((_, i) => i !== index));
-        setPreviews((prev) => prev.filter((_, i) => i !== index));
-    };
 
     const handleAutoSku = (checked: boolean) => {
         setAutoSku(checked);
@@ -244,28 +234,13 @@ export default function Create({ categories, brands, suppliers, priceLists, ware
                                         <ImagePlus className="size-4 text-primary" />Imágenes
                                     </CardTitle>
                                 </CardHeader>
-                                <CardContent className="px-6 py-5 flex flex-col gap-4">
-                                    <label htmlFor="images" className="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border bg-muted/30 p-5 text-center cursor-pointer hover:bg-muted/50 transition-colors">
-                                        <ImagePlus className="size-5 text-muted-foreground" />
-                                        <div>
-                                            <p className="text-sm font-medium text-foreground">Subir imágenes</p>
-                                            <p className="text-xs text-muted-foreground">JPEG, PNG, GIF, WebP — Máx. 5 MB</p>
-                                        </div>
-                                        <input id="images" type="file" multiple accept="image/jpeg,image/png,image/gif,image/webp" className="sr-only" onChange={handleImages} />
-                                    </label>
-                                    {previews.length > 0 && (
-                                        <div className="grid grid-cols-3 gap-2">
-                                            {previews.map((src, i) => (
-                                                <div key={i} className="relative group aspect-square rounded-md overflow-hidden border border-border">
-                                                    <img src={src} alt="" className="size-full object-cover" />
-                                                    {i === 0 && <span className="absolute top-1 left-1 text-[10px] font-semibold bg-primary text-primary-foreground px-1.5 py-0.5 rounded">Principal</span>}
-                                                    <button type="button" onClick={() => removeImage(i)} className="absolute top-1 right-1 size-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <X className="size-3" />
-                                                    </button>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
+                                <CardContent className="px-6 py-5">
+                                    <ImageUploadPreview
+                                        onChange={(files, primaryIndex) => {
+                                            setData('images', files);
+                                            setData('primary_image_index', primaryIndex);
+                                        }}
+                                    />
                                 </CardContent>
                             </Card>
                         </div>

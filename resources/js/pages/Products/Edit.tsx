@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Combobox } from '@/components/ui/combobox';
 import { FormField } from '@/components/form-field';
 import { QuickCreateDialog } from '@/components/quick-create-dialog';
+import { ImageUploadPreview } from '@/components/image-upload-preview';
 import { ChevronRight, Save, Package, DollarSign, QrCode, ImagePlus, X, Star, Tag, Layers, SlidersHorizontal, Warehouse } from 'lucide-react';
 import { useState } from 'react';
 
@@ -68,10 +69,10 @@ export default function Edit({ product, categories, brands, suppliers, priceList
         active: product.active,
         published: product.published,
         images: [] as File[],
+        primary_image_index: 0,
         _method: 'PUT',
     });
 
-    const [newPreviews, setNewPreviews] = useState<string[]>([]);
     const [categoryList, setCategoryList] = useState(categories);
     const [brandList, setBrandList] = useState(brands);
 
@@ -79,15 +80,9 @@ export default function Edit({ product, categories, brands, suppliers, priceList
     const brandOptions    = [{ value: '', label: 'Sin marca' }, ...brandList.map((b) => ({ value: b.id.toString(), label: b.name }))];
     const supplierOptions = suppliers.map((s) => ({ value: s.id.toString(), label: s.business_name }));
 
-    const handleImages = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = Array.from(e.target.files ?? []);
+    const handleImages = (files: File[], primaryIndex: number) => {
         setData('images', files);
-        setNewPreviews(files.map((f) => URL.createObjectURL(f)));
-    };
-
-    const removeNewImage = (index: number) => {
-        setData('images', data.images.filter((_, i) => i !== index));
-        setNewPreviews((prev) => prev.filter((_, i) => i !== index));
+        setData('primary_image_index', primaryIndex);
     };
 
     const deleteImage = (imageId: number) =>
@@ -260,26 +255,7 @@ export default function Edit({ product, categories, brands, suppliers, priceList
                                             </div>
                                         </div>
                                     )}
-                                    <label htmlFor="images" className="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border bg-muted/30 p-5 text-center cursor-pointer hover:bg-muted/50 transition-colors">
-                                        <ImagePlus className="size-5 text-muted-foreground" />
-                                        <div>
-                                            <p className="text-sm font-medium text-foreground">Agregar imágenes</p>
-                                            <p className="text-xs text-muted-foreground">JPEG, PNG, GIF, WebP — Máx. 5 MB</p>
-                                        </div>
-                                        <input id="images" type="file" multiple accept="image/jpeg,image/png,image/gif,image/webp" className="sr-only" onChange={handleImages} />
-                                    </label>
-                                    {newPreviews.length > 0 && (
-                                        <div className="grid grid-cols-3 gap-2">
-                                            {newPreviews.map((src, i) => (
-                                                <div key={i} className="relative group aspect-square rounded-md overflow-hidden border border-border">
-                                                    <img src={src} alt="" className="size-full object-cover" />
-                                                    <button type="button" onClick={() => removeNewImage(i)} className="absolute top-1 right-1 size-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <X className="size-3" />
-                                                    </button>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
+                                    <ImageUploadPreview onChange={handleImages} />
                                 </CardContent>
                             </Card>
                         </div>
