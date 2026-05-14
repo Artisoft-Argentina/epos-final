@@ -26,7 +26,8 @@ class ProductService
         $trackStock   = ! empty($data['track_stock']);
         $initialStock = (int) ($data['initial_stock'] ?? 0);
         $warehouseId  = (int) ($data['warehouse_id'] ?? 0) ?: Warehouse::getDefault()?->id;
-        $data = Arr::except($data, ['initial_stock', 'track_stock', 'warehouse_id']);
+        $primaryIndex = (int) ($data['primary_image_index'] ?? 0);
+        $data = Arr::except($data, ['initial_stock', 'track_stock', 'warehouse_id', 'primary_image_index']);
 
         $product = Product::create($data);
 
@@ -34,7 +35,7 @@ class ProductService
             $this->initStock($product, $initialStock, $warehouseId);
         }
 
-        $this->storeImages($product, $images);
+        $this->storeImages($product, $images, $primaryIndex);
         $this->syncPriceLists($product);
 
         return $product;
@@ -114,7 +115,7 @@ class ProductService
         }
     }
 
-    private function storeImages(Product $product, array $images): void
+    private function storeImages(Product $product, array $images, int $primaryIndex = 0): void
     {
         if (empty($images)) {
             return;
@@ -129,7 +130,7 @@ class ProductService
                 'filename'       => $result['filename'],
                 'path'           => $result['path'],
                 'thumbnail_path' => $result['thumbnail_path'],
-                'is_primary'     => $currentCount === 0 && $index === 0,
+                'is_primary'     => $currentCount === 0 && $index === $primaryIndex,
                 'sort_order'     => $currentCount + $index,
             ]);
         }

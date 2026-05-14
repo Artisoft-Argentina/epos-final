@@ -175,9 +175,10 @@ class ProductController extends Controller
     private function storeRules(): array
     {
         return array_merge($this->rules(), [
-            'track_stock'   => 'boolean',
-            'initial_stock' => 'nullable|integer|min:0',
-            'warehouse_id'  => 'nullable|exists:warehouses,id',
+            'track_stock'         => 'boolean',
+            'initial_stock'       => 'nullable|integer|min:0',
+            'warehouse_id'        => 'nullable|exists:warehouses,id',
+            'primary_image_index' => 'nullable|integer|min:0',
         ]);
     }
 
