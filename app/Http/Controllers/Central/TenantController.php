@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
 use Inertia\Response;
+use Spatie\Permission\Models\Role;
 
 class TenantController extends Controller
 {
@@ -77,10 +78,10 @@ class TenantController extends Controller
         tenancy()->initialize($tenant);
 
         try {
-            $superadminRole = \App\Models\Role::firstOrCreate(['role' => 'superadmin'], ['permission' => '*', 'description' => 'Super Administrador']);
-            \App\Models\Role::firstOrCreate(['role' => 'admin'],      ['permission' => '*', 'description' => 'Administrador']);
-            \App\Models\Role::firstOrCreate(['role' => 'vendedor'], ['permission' => '',  'description' => 'Vendedor']);
-            \App\Models\Role::firstOrCreate(['role' => 'cliente'],  ['permission' => '',  'description' => 'Cliente']);
+            $superadminRole = Role::firstOrCreate(['name' => 'superadmin', 'guard_name' => 'web']);
+            Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
+            Role::firstOrCreate(['name' => 'vendedor', 'guard_name' => 'web']);
+            Role::firstOrCreate(['name' => 'cliente', 'guard_name' => 'web']);
 
             // Datos comunes a todos los tenants
             (new \Database\Seeders\StatesSeeder())->run();
@@ -89,8 +90,7 @@ class TenantController extends Controller
                 'name'     => $request->admin_name,
                 'email'    => $request->admin_email,
                 'password' => Hash::make($request->admin_password),
-                'role_id'  => $superadminRole->id,
-            ]);
+            ])->assignRole($superadminRole);
 
             // Pre-poblar configuración de la empresa con los datos del alta
             \App\Models\Setting::create([

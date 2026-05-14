@@ -7,7 +7,7 @@ import { FormField } from '@/components/form-field';
 
 export default function Create() {
     const { data, setData, post, processing, errors } = useForm({
-        role: '', permission: '', description: '',
+        name: '',
     });
 
     const submit = (e: React.FormEvent) => { e.preventDefault(); post(route('roles.store')); };
@@ -20,14 +20,8 @@ export default function Create() {
                     <CardHeader><CardTitle>Crear Nuevo Rol</CardTitle></CardHeader>
                     <CardContent>
                         <form onSubmit={submit} className="space-y-4">
-                            <FormField label="Rol" htmlFor="role" error={errors.role}>
-                                <Input id="role" value={data.role} onChange={(e) => setData('role', e.target.value)} error={errors.role} placeholder="Ej: vendedor" />
-                            </FormField>
-                            <FormField label="Permisos" htmlFor="permission" error={errors.permission}>
-                                <Input id="permission" value={data.permission} onChange={(e) => setData('permission', e.target.value)} error={errors.permission} placeholder="Ej: ventas,clientes" />
-                            </FormField>
-                            <FormField label="Descripción" htmlFor="description" error={errors.description}>
-                                <Input id="description" value={data.description} onChange={(e) => setData('description', e.target.value)} error={errors.description} placeholder="Descripción del rol" />
+                            <FormField label="Nombre del rol" htmlFor="name" error={errors.name}>
+                                <Input id="name" value={data.name} onChange={(e) => setData('name', e.target.value)} error={errors.name} placeholder="Ej: vendedor" />
                             </FormField>
                             <div className="flex gap-2">
                                 <Button type="submit" disabled={processing}>Crear</Button>

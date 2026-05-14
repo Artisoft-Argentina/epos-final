@@ -46,7 +46,7 @@ class HandleInertiaRequests extends Middleware
             'quote' => ['message' => trim($message), 'author' => trim($author)],
             'auth' => [
                 'user' => tenancy()->initialized
-                    ? $request->user()?->load('role')
+                    ? $request->user()?->load('roles')
                     : $request->user('central'),
                 'tour_completed' => tenancy()->initialized
                     ? ($request->user()?->tour_completed ?? true)

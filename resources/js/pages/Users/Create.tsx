@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FormField } from '@/components/form-field';
 
-interface Role { id: number; role: string; }
+interface Role { id: number; name: string; }
 interface PuntoVenta { id: number; name: string; pos_number: number; is_default: boolean; }
 interface Props { roles: Role[]; puntosVenta: PuntoVenta[]; }
 
@@ -16,7 +16,7 @@ export default function Create({ roles, puntosVenta }: Props) {
     });
 
     const selectedRole = roles.find((r) => r.id.toString() === data.role_id);
-    const isVendedor = selectedRole?.role === 'vendedor';
+    const isVendedor = selectedRole?.name === 'vendedor';
 
     const submit = (e: React.FormEvent) => { e.preventDefault(); post(route('users.store')); };
 
@@ -41,7 +41,7 @@ export default function Create({ roles, puntosVenta }: Props) {
                                 <FormField label="Rol" error={errors.role_id}>
                                     <Select value={data.role_id} onValueChange={(v) => { setData('role_id', v); setData('point_of_sale_id', ''); }}>
                                         <SelectTrigger error={errors.role_id}><SelectValue placeholder="Seleccionar rol" /></SelectTrigger>
-                                        <SelectContent>{roles.map((r) => <SelectItem key={r.id} value={r.id.toString()}>{r.role}</SelectItem>)}</SelectContent>
+                                        <SelectContent>{roles.map((r) => <SelectItem key={r.id} value={r.id.toString()}>{r.name}</SelectItem>)}</SelectContent>
                                     </Select>
                                 </FormField>
                                 {isVendedor && (

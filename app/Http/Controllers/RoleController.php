@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Role;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Spatie\Permission\Models\Role;
 
 class RoleController extends Controller
 {
@@ -23,12 +23,10 @@ class RoleController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'role' => 'required|string|max:255',
-            'permission' => 'nullable|string',
-            'description' => 'nullable|string',
+            'name' => 'required|string|max:255|unique:roles',
         ]);
 
-        Role::create($request->all());
+        Role::create(['name' => $request->name]);
 
         return redirect()->route('roles.index');
     }
@@ -43,12 +41,10 @@ class RoleController extends Controller
     public function update(Request $request, Role $role)
     {
         $request->validate([
-            'role' => 'required|string|max:255',
-            'permission' => 'nullable|string',
-            'description' => 'nullable|string',
+            'name' => 'required|string|max:255|unique:roles,name,' . $role->id,
         ]);
 
-        $role->update($request->all());
+        $role->update(['name' => $request->name]);
 
         return redirect()->route('roles.index');
     }

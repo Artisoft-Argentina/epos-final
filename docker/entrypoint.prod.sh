@@ -24,6 +24,9 @@ chown -R www-data:www-data /tmp/nginx
 chmod -R 755 /tmp/nginx
 chmod 2755 /tmp/nginx
 
+echo "==> Creando Roles y Permisos..."
+php artisan app:create-roles-and-permissions --force 2>/dev/null || true
+
 if [ -z "$(grep -E '^APP_KEY=base64:' /var/www/html/.env 2>/dev/null)" ]; then
     echo "==> Generando APP_KEY..."
     php artisan key:generate --force

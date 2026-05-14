@@ -5,23 +5,29 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use HasFactory;
-    use Notifiable;
+    use HasFactory, Notifiable, HasRoles;
 
     protected $fillable = [
         'name',
         'email',
         'password',
-        'role_id',
         'point_of_sale_id',
     ];
 
-    public function role()
+    protected $appends = ['role_id'];
+
+    public function getRoleIdAttribute(): ?int
     {
-        return $this->belongsTo(Role::class);
+        return $this->roles->first()?->id;
+    }
+
+    public function primaryRole()
+    {
+        return $this->roles->first();
     }
 
     public function pointOfSale()
@@ -31,12 +37,12 @@ class User extends Authenticatable
 
     public function isVendedor(): bool
     {
-        return $this->role?->role === 'vendedor';
+        return $this->primaryRole()?->name === 'vendedor';
     }
 
     public function isAdmin(): bool
     {
-        return in_array($this->role?->role, ['admin', 'superadmin'], true);
+        return in_array($this->primaryRole()?->name, ['admin', 'superadmin'], true);
     }
 
     protected $hidden = [

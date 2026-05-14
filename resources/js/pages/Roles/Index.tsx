@@ -8,25 +8,20 @@ import { ActionButton } from '@/components/action-button';
 import { Pagination } from '@/components/pagination';
 import { Plus, Edit } from 'lucide-react';
 
-interface Role { id: number; role: string; permission?: string; description?: string; }
+interface Role { id: number; name: string; guard_name: string; }
 interface Props { roles: { data: Role[]; links: any; meta: any }; }
 
 export default function Index({ roles }: Props) {
     const columns: Column<Role>[] = [
         {
-            key: 'role',
+            key: 'name',
             header: 'Rol',
-            render: (row) => <span className="font-medium text-foreground">{row.role}</span>,
+            render: (row) => <span className="font-medium text-foreground">{row.name}</span>,
         },
         {
-            key: 'permission',
-            header: 'Permisos',
-            render: (row) => <span className="text-muted-foreground">{row.permission}</span>,
-        },
-        {
-            key: 'description',
-            header: 'Descripción',
-            render: (row) => <span className="text-muted-foreground">{row.description}</span>,
+            key: 'guard_name',
+            header: 'Guard',
+            render: (row) => <span className="text-muted-foreground">{row.guard_name}</span>,
         },
         {
             key: 'actions',
@@ -37,7 +32,7 @@ export default function Index({ roles }: Props) {
                     <Link href={route('roles.edit', row.id)}>
                         <ActionButton title="Editar"><Edit className="size-3.5" /></ActionButton>
                     </Link>
-                    <DeleteConfirmationDialog url={route('roles.destroy', row.id)} title="Eliminar rol" description={`¿Está seguro que desea eliminar el rol ${row.role}?`} />
+                    <DeleteConfirmationDialog url={route('roles.destroy', row.id)} title="Eliminar rol" description={`¿Está seguro que desea eliminar el rol ${row.name}?`} />
                 </div>
             ),
         },
