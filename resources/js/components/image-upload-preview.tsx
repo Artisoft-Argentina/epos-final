@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
-import { ImagePlus, X, Star } from 'lucide-react';
+import { ImagePlus, X, Star, AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface PreviewItem {
     file: File;
@@ -8,22 +9,51 @@ interface PreviewItem {
 
 interface ImageUploadPreviewProps {
     onChange: (files: File[], primaryIndex: number) => void;
+    maxFiles?: number;
+    maxSizeMb?: number;
 }
 
-export function ImageUploadPreview({ onChange }: ImageUploadPreviewProps) {
+const MAX_FILES_DEFAULT = 5;
+const MAX_SIZE_MB_DEFAULT = 5;
+
+export function ImageUploadPreview({ onChange, maxFiles = MAX_FILES_DEFAULT, maxSizeMb = MAX_SIZE_MB_DEFAULT }: ImageUploadPreviewProps) {
     const [items, setItems] = useState<PreviewItem[]>([]);
     const [primaryIndex, setPrimaryIndex] = useState(0);
     const [dragging, setDragging] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
     const ACCEPTED = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    const maxSizeBytes = maxSizeMb * 1024 * 1024;
 
     const addFiles = (files: File[]) => {
+        setError(null);
+
         const valid = files.filter((f) => ACCEPTED.includes(f.type));
-        if (!valid.length) return;
+        if (!valid.length) {
+            setError('Formato no soportado. Usá JPEG, PNG, GIF o WebP.');
+            return;
+        }
+
+        const oversized = valid.filter((f) => f.size > maxSizeBytes);
+        if (oversized.length) {
+            setError(`${oversized.length === 1 ? 'Una imagen excede' : `${oversized.length} imágenes exceden`} el límite de ${maxSizeMb} MB.`);
+            return;
+        }
 
         setItems((prev) => {
-            const next = [...prev, ...valid.map((file) => ({ file, url: URL.createObjectURL(file) }))];
+            const available = maxFiles - prev.length;
+            if (available <= 0) {
+                setError(`Máximo ${maxFiles} imágenes por producto.`);
+                return prev;
+            }
+
+            const toAdd = valid.slice(0, available);
+            if (toAdd.length < valid.length) {
+                setError(`Solo se agregaron ${toAdd.length} de ${valid.length} imágenes. Máximo ${maxFiles} en total.`);
+            }
+
+            const next = [...prev, ...toAdd.map((file) => ({ file, url: URL.createObjectURL(file) }))];
             onChange(next.map((i) => i.file), primaryIndex);
             return next;
         });
@@ -41,6 +71,7 @@ export function ImageUploadPreview({ onChange }: ImageUploadPreviewProps) {
     };
 
     const remove = (index: number) => {
+        setError(null);
         setItems((prev) => {
             URL.revokeObjectURL(prev[index].url);
             const next = prev.filter((_, i) => i !== index);
@@ -58,26 +89,40 @@ export function ImageUploadPreview({ onChange }: ImageUploadPreviewProps) {
         onChange(items.map((i) => i.file), index);
     };
 
+    const isFull = items.length >= maxFiles;
+
     return (
         <div className="flex flex-col gap-4">
+            {/* Error message */}
+            {error && (
+                <Alert variant="warning">
+                    <AlertCircle />
+                    <AlertDescription>{error}</AlertDescription>
+                </Alert>
+            )}
+
             {/* Drop zone */}
             <div
-                onClick={() => inputRef.current?.click()}
-                onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+                onClick={() => !isFull && inputRef.current?.click()}
+                onDragOver={(e) => { e.preventDefault(); if (!isFull) setDragging(true); }}
                 onDragLeave={() => setDragging(false)}
-                onDrop={handleDrop}
-                className={`flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-5 text-center cursor-pointer transition-colors ${
-                    dragging
-                        ? 'border-primary bg-primary/5'
-                        : 'border-border bg-muted/30 hover:bg-muted/50'
+                onDrop={(e) => { if (isFull) { e.preventDefault(); setDragging(false); return; } handleDrop(e); }}
+                className={`flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-5 text-center transition-colors ${
+                    isFull
+                        ? 'border-border bg-muted/20 cursor-not-allowed opacity-60'
+                        : dragging
+                            ? 'border-primary bg-primary/5 cursor-pointer'
+                            : 'border-border bg-muted/30 hover:bg-muted/50 cursor-pointer'
                 }`}
             >
                 <ImagePlus className={`size-5 transition-colors ${dragging ? 'text-primary' : 'text-muted-foreground'}`} />
                 <div>
                     <p className="text-sm font-medium text-foreground">
-                        {dragging ? 'Soltá las imágenes aquí' : 'Subir imágenes'}
+                        {isFull ? `Límite alcanzado (${maxFiles} imágenes)` : dragging ? 'Soltá las imágenes aquí' : 'Subir imágenes'}
                     </p>
-                    <p className="text-xs text-muted-foreground">Arrastrá o hacé click — JPEG, PNG, GIF, WebP — Máx. 5 MB</p>
+                    <p className="text-xs text-muted-foreground">
+                        {isFull ? 'Eliminá una imagen para agregar otra' : `JPEG, PNG, GIF, WebP — Máx. ${maxSizeMb} MB por archivo — Hasta ${maxFiles} imágenes`}
+                    </p>
                 </div>
                 <input
                     ref={inputRef}
@@ -86,6 +131,7 @@ export function ImageUploadPreview({ onChange }: ImageUploadPreviewProps) {
                     accept={ACCEPTED.join(',')}
                     className="sr-only"
                     onChange={handleInput}
+                    disabled={isFull}
                 />
             </div>
 
@@ -93,7 +139,7 @@ export function ImageUploadPreview({ onChange }: ImageUploadPreviewProps) {
             {items.length > 0 && (
                 <div className="flex flex-col gap-2">
                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                        {items.length} {items.length === 1 ? 'imagen seleccionada' : 'imágenes seleccionadas'} — hacé click en <Star className="inline size-3 mb-0.5" /> para elegir la principal
+                        {items.length}/{maxFiles} {items.length === 1 ? 'imagen' : 'imágenes'} — hacé click en <Star className="inline size-3 mb-0.5" /> para elegir la principal
                     </p>
                     <div className="grid grid-cols-3 gap-2">
                         {items.map((item, i) => (
@@ -105,14 +151,12 @@ export function ImageUploadPreview({ onChange }: ImageUploadPreviewProps) {
                             >
                                 <img src={item.url} alt="" className="size-full object-cover" />
 
-                                {/* Badge principal */}
                                 {i === primaryIndex && (
                                     <span className="absolute top-1 left-1 flex items-center gap-1 text-[10px] font-semibold bg-primary text-primary-foreground px-1.5 py-0.5 rounded">
                                         <Star className="size-2.5 fill-current" />Principal
                                     </span>
                                 )}
 
-                                {/* Acciones en hover */}
                                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5">
                                     {i !== primaryIndex && (
                                         <button

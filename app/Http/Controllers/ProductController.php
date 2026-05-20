@@ -118,7 +118,12 @@ class ProductController extends Controller
 
     public function update(Request $request, Product $product): RedirectResponse
     {
-        $validated = $request->validate($this->rules($product->id));
+        $currentCount = $product->images()->count();
+        $maxNew = max(0, 5 - $currentCount);
+
+        $validated = $request->validate(array_merge($this->rules($product->id), [
+            'images' => "nullable|array|max:{$maxNew}",
+        ]));
 
         $this->productService->update(
             $product,
@@ -200,7 +205,8 @@ class ProductController extends Controller
             'supplier_code' => 'nullable|string|max:100',
             'active'        => 'boolean',
             'published'     => 'boolean',
-            'images.*'      => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+            'images'        => 'nullable|array|max:5',
+            'images.*'      => 'image|mimes:jpeg,png,jpg,gif,webp|max:5120',
         ];
     }
 }
