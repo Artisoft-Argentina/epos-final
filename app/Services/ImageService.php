@@ -8,46 +8,56 @@ use Intervention\Image\Laravel\Facades\Image;
 
 class ImageService
 {
-    // Tamaño máximo para imagen principal (ecommerce)
-    const MAIN_MAX_WIDTH = 800;
-    const MAIN_MAX_HEIGHT = 800;
+    const MAIN_MAX   = 1200;
+    const MEDIUM_MAX = 600;
+    const THUMB_MAX  = 200;
 
-    // Tamaño para thumbnail
-    const THUMB_WIDTH = 300;
-    const THUMB_HEIGHT = 300;
+    const MAIN_QUALITY   = 80;
+    const MEDIUM_QUALITY = 75;
+    const THUMB_QUALITY  = 70;
 
     /**
-     * Procesa una imagen: redimensiona y crea thumbnail
+     * Procesa una imagen de producto: genera 3 variantes en WebP sin recorte.
      */
     public function processProductImage(UploadedFile $file, int $productId, int $index): array
     {
-        $extension = $file->getClientOriginalExtension();
         $timestamp = time();
+        $directory = "products/{$productId}";
 
-        $filename      = "{$timestamp}_{$index}.{$extension}";
-        $thumbFilename = "{$timestamp}_{$index}_thumb.{$extension}";
-        $directory     = "products/{$productId}";
+        $mainName   = "{$timestamp}_{$index}.webp";
+        $mediumName = "{$timestamp}_{$index}_md.webp";
+        $thumbName  = "{$timestamp}_{$index}_thumb.webp";
 
-        $main = Image::read($file->getRealPath());
-        $main->scaleDown(self::MAIN_MAX_WIDTH, self::MAIN_MAX_HEIGHT);
-        $path = "{$directory}/{$filename}";
-        Storage::disk('public')->put($path, $main->toJpeg(85));
+        $original = Image::read($file->getRealPath());
 
-        $thumb = Image::read($file->getRealPath());
-        $thumb->cover(self::THUMB_WIDTH, self::THUMB_HEIGHT);
-        $thumbPath = "{$directory}/{$thumbFilename}";
-        Storage::disk('public')->put($thumbPath, $thumb->toJpeg(80));
+        $main = clone $original;
+        $main->scaleDown(self::MAIN_MAX, self::MAIN_MAX);
+        Storage::disk('public')->put("{$directory}/{$mainName}", $main->toWebp(self::MAIN_QUALITY));
+
+        $medium = clone $original;
+        $medium->scaleDown(self::MEDIUM_MAX, self::MEDIUM_MAX);
+        Storage::disk('public')->put("{$directory}/{$mediumName}", $medium->toWebp(self::MEDIUM_QUALITY));
+
+        $thumb = clone $original;
+        $thumb->scaleDown(self::THUMB_MAX, self::THUMB_MAX);
+        Storage::disk('public')->put("{$directory}/{$thumbName}", $thumb->toWebp(self::THUMB_QUALITY));
 
         return [
-            'filename'       => $filename,
-            'path'           => $path,
-            'thumbnail_path' => $thumbPath,
+            'filename'       => $mainName,
+            'path'           => "{$directory}/{$mainName}",
+            'medium_path'    => "{$directory}/{$mediumName}",
+            'thumbnail_path' => "{$directory}/{$thumbName}",
         ];
     }
 
-    public function deleteProductImage(string $path, ?string $thumbnailPath = null): void
+    public function deleteProductImage(string $path, ?string $mediumPath = null, ?string $thumbnailPath = null): void
     {
         Storage::disk('public')->delete($path);
+
+        if ($mediumPath) {
+            Storage::disk('public')->delete($mediumPath);
+        }
+
         if ($thumbnailPath) {
             Storage::disk('public')->delete($thumbnailPath);
         }

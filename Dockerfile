@@ -29,7 +29,8 @@ RUN apk add --no-cache \
     npm
 
 # Instalar extensiones PHP
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+RUN apk add --no-cache libwebp-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
     && docker-php-ext-install -j$(nproc) \
         pdo_pgsql \
         pgsql \
