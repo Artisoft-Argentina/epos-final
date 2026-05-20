@@ -11,11 +11,12 @@ return new class extends Migration
         Schema::create('product_images', function (Blueprint $table) {
             $table->id();
             $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
-            $table->string('filename');                        // nombre_archivo → filename
-            $table->string('path');                            // ruta → path
-            $table->string('thumbnail_path')->nullable();      // ruta_thumb → thumbnail_path
-            $table->boolean('is_primary')->default(false);    // es_principal → is_primary
-            $table->integer('sort_order')->default(0);         // orden → sort_order
+            $table->string('filename');
+            $table->string('path');
+            $table->string('medium_path')->nullable();
+            $table->string('thumbnail_path')->nullable();
+            $table->boolean('is_primary')->default(false);
+            $table->integer('sort_order')->default(0);
             $table->softDeletes();
             $table->boolean('active')->default(true);
             $table->timestamps();
