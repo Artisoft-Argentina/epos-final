@@ -1,9 +1,16 @@
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
-import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft, DollarSign, Trash2, Package } from 'lucide-react';
+import { Head, Link, router } from '@inertiajs/react';
+import { ArrowLeft, DollarSign, Trash2, Package, CheckCircle, XCircle } from 'lucide-react';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
+
+interface Warehouse {
+    id: number;
+    name: string;
+}
 
 interface Sale {
     id: number;
@@ -38,15 +45,21 @@ interface Sale {
         id: number;
         product_id: number;
         quantity: number;
+        status: 'pending' | 'delivered' | 'cancelled';
         delivery_date: string;
         notes?: string;
+        warehouse_id: number | null;
+        warehouse: Warehouse | null;
         product: { sku: string; name: string; };
     }>;
 }
 
-interface Props { factura: Sale; }
+interface Props {
+    factura: Sale;
+    warehouses: Warehouse[];
+}
 
-const metodoPagoLabels = {
+const metodoPagoLabels: Record<string, string> = {
     efectivo: 'Efectivo',
     tarjeta_debito: 'Tarjeta de Débito',
     tarjeta_credito: 'Tarjeta de Crédito',
@@ -55,9 +68,31 @@ const metodoPagoLabels = {
     cheque: 'Cheque'
 };
 
-export default function Show({ factura }: Props) {
+export default function Show({ factura, warehouses }: Props) {
     const totalPagado = factura.payments?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
     const saldoPendiente = Number(factura.total) - totalPagado;
+
+    const changeWarehouse = (deliveryId: number, warehouseId: string) => {
+        router.patch(route('entregas.update-warehouse', deliveryId), { warehouse_id: warehouseId }, { preserveScroll: true });
+    };
+
+    const marcarEntregada = (deliveryId: number, warehouseId: number | null) => {
+        if (!warehouseId) return;
+        if (confirm('¿Confirmar entrega? Se descontará el stock del almacén seleccionado.')) {
+            router.post(route('entregas.marcar-entregada', deliveryId), { warehouse_id: warehouseId });
+        }
+    };
+
+    const cancelarEntrega = (deliveryId: number) => {
+        if (confirm('¿Cancelar esta entrega?')) {
+            router.post(route('entregas.cancelar', deliveryId));
+        }
+    };
+
+    const hasPendingDeliveries = factura.deliveries?.some(d => d.status === 'pending');
+    const totalVendido = factura.products?.reduce((sum, p) => sum + p.pivot.quantity, 0) || 0;
+    const totalEntregado = factura.deliveries?.filter(d => d.status === 'delivered').reduce((sum, d) => sum + d.quantity, 0) || 0;
+    const showDeliveryButton = hasPendingDeliveries || totalEntregado < totalVendido;
 
     return (
         <AppLayout>
@@ -72,11 +107,7 @@ export default function Show({ factura }: Props) {
                         <Link href={route('ventas.index')}>
                             <Button variant="outline"><ArrowLeft className="w-4 h-4 mr-2" />Volver</Button>
                         </Link>
-                        {(() => {
-                            const totalVendido = factura.products?.reduce((sum, p) => sum + p.pivot.quantity, 0) || 0;
-                            const totalEntregado = factura.deliveries?.reduce((sum, d) => sum + d.quantity, 0) || 0;
-                            return totalEntregado < totalVendido;
-                        })() && (
+                        {showDeliveryButton && (
                             <Link href={route('entregas.create', factura.id)}>
                                 <Button variant="outline"><Package className="w-4 h-4 mr-2" />Registrar Entrega</Button>
                             </Link>
@@ -96,11 +127,11 @@ export default function Show({ factura }: Props) {
                             <div><label className="text-sm font-medium text-gray-500">Cliente</label><p className="text-sm">{factura.customer.business_name}</p></div>
                             <div><label className="text-sm font-medium text-gray-500">Vendedor</label><p className="text-sm">{factura.user.name}</p></div>
                             <div>
-                                <label className="text-sm font-medium text-gray-500">Estado</label>
-                                <p className="text-sm">
-                                    <span className={`px-2 py-1 rounded text-xs ${factura.payment_status === 'SI' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                <label className="text-sm font-medium text-muted-foreground">Estado</label>
+                                <p className="text-sm mt-1">
+                                    <Badge variant={factura.payment_status === 'SI' ? 'success' : 'warning'}>
                                         {factura.payment_status === 'SI' ? 'Pagada' : 'Pendiente'}
-                                    </span>
+                                    </Badge>
                                 </p>
                             </div>
                             <div><label className="text-sm font-medium text-gray-500">Fecha</label><p className="text-sm">{new Date(factura.date).toLocaleDateString()}</p></div>
@@ -116,7 +147,7 @@ export default function Show({ factura }: Props) {
                             {factura.additional_discount && Number(factura.additional_discount) > 0 && <div><label className="text-sm font-medium text-gray-500">Descuento</label><p className="text-sm text-green-600">-${Number(factura.additional_discount).toFixed(2)}</p></div>}
                             <div><label className="text-sm font-medium text-gray-500">Total</label><p className="text-lg font-bold">${Number(factura.total).toFixed(2)}</p></div>
                             <div><label className="text-sm font-medium text-gray-500">Total Pagado</label><p className="text-sm font-semibold text-green-600">${totalPagado.toFixed(2)}</p></div>
-                            {saldoPendiente > 0 && <div><label className="text-sm font-medium text-gray-500">Saldo Pendiente</label><p className="text-lg font-bold text-red-600">${saldoPendiente.toFixed(2)}</p></div>}
+                            {saldoPendiente > 0 && <div><label className="text-sm font-medium text-muted-foreground">Saldo Pendiente</label><p className="text-lg font-bold text-destructive">${saldoPendiente.toFixed(2)}</p></div>}
                         </CardContent>
                     </Card>
                 </div>
@@ -147,7 +178,7 @@ export default function Show({ factura }: Props) {
                 </Card>
 
                 {factura.payments && factura.payments.length > 0 && (
-                    <Card>
+                    <Card className="mb-6">
                         <CardHeader>
                             <CardTitle>Pagos Realizados</CardTitle>
                             <CardDescription>{factura.payments.length} pago{factura.payments.length !== 1 ? 's' : ''}</CardDescription>
@@ -160,7 +191,7 @@ export default function Show({ factura }: Props) {
                                         {factura.payments.map((payment) => (
                                             <tr key={payment.id} className="border-b">
                                                 <td className="p-2 font-medium">${Number(payment.amount).toFixed(2)}</td>
-                                                <td className="p-2">{metodoPagoLabels[payment.payment_method as keyof typeof metodoPagoLabels] || payment.payment_method}</td>
+                                                <td className="p-2">{metodoPagoLabels[payment.payment_method] || payment.payment_method}</td>
                                                 <td className="p-2">{new Date(payment.payment_date).toLocaleDateString()}</td>
                                                 <td className="p-2">{payment.notes || '-'}</td>
                                                 <td className="p-2 text-right">
@@ -183,28 +214,92 @@ export default function Show({ factura }: Props) {
                 {factura.deliveries && factura.deliveries.length > 0 && (
                     <Card>
                         <CardHeader>
-                            <CardTitle>Entregas Realizadas</CardTitle>
-                            <CardDescription>{factura.deliveries.length} entrega{factura.deliveries.length !== 1 ? 's' : ''}</CardDescription>
+                            <CardTitle>Entregas</CardTitle>
+                            <CardDescription>
+                                {factura.deliveries.filter(d => d.status === 'delivered').length} entregada{factura.deliveries.filter(d => d.status === 'delivered').length !== 1 ? 's' : ''}
+                                {factura.deliveries.some(d => d.status === 'pending') && (
+                                    <> · {factura.deliveries.filter(d => d.status === 'pending').length} pendiente{factura.deliveries.filter(d => d.status === 'pending').length !== 1 ? 's' : ''}</>
+                                )}
+                            </CardDescription>
                         </CardHeader>
                         <CardContent>
                             <div className="overflow-x-auto">
                                 <table className="w-full">
-                                    <thead><tr className="border-b"><th className="text-left p-2">SKU</th><th className="text-left p-2">Artículo</th><th className="text-left p-2">Cantidad</th><th className="text-left p-2">Fecha</th><th className="text-left p-2">Notas</th><th className="text-right p-2">Acciones</th></tr></thead>
+                                    <thead>
+                                        <tr className="border-b">
+                                            <th className="text-left p-2">Artículo</th>
+                                            <th className="text-left p-2">Cantidad</th>
+                                            <th className="text-left p-2">Almacén</th>
+                                            <th className="text-left p-2">Estado</th>
+                                            <th className="text-left p-2">Fecha</th>
+                                            <th className="text-right p-2">Acciones</th>
+                                        </tr>
+                                    </thead>
                                     <tbody>
                                         {factura.deliveries.map((delivery) => (
                                             <tr key={delivery.id} className="border-b">
-                                                <td className="p-2 font-mono text-sm">{delivery.product.sku}</td>
-                                                <td className="p-2 font-medium">{delivery.product.name}</td>
+                                                <td className="p-2">
+                                                    <p className="font-medium">{delivery.product.name}</p>
+                                                    <p className="text-xs text-muted-foreground font-mono">{delivery.product.sku}</p>
+                                                </td>
                                                 <td className="p-2">{delivery.quantity}</td>
-                                                <td className="p-2">{new Date(delivery.delivery_date).toLocaleDateString()}</td>
-                                                <td className="p-2">{delivery.notes || '-'}</td>
+                                                <td className="p-2">
+                                                    {delivery.status === 'pending' ? (
+                                                        <Select
+                                                            value={delivery.warehouse_id ? String(delivery.warehouse_id) : ''}
+                                                            onValueChange={(v) => changeWarehouse(delivery.id, v)}
+                                                        >
+                                                            <SelectTrigger className="h-8 w-40 text-xs">
+                                                                <SelectValue placeholder="Seleccionar..." />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                {warehouses.map((w) => (
+                                                                    <SelectItem key={w.id} value={String(w.id)}>{w.name}</SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                    ) : (
+                                                        <span className="text-sm">{delivery.warehouse?.name ?? '-'}</span>
+                                                    )}
+                                                </td>
+                                                <td className="p-2">
+                                                    <Badge variant={delivery.status === 'delivered' ? 'success' : delivery.status === 'cancelled' ? 'destructive' : 'warning'}>
+                                                        {delivery.status === 'delivered' ? 'Entregada' : delivery.status === 'cancelled' ? 'Cancelada' : 'Pendiente'}
+                                                    </Badge>
+                                                </td>
+                                                <td className="p-2 text-sm">{new Date(delivery.delivery_date).toLocaleDateString()}</td>
                                                 <td className="p-2 text-right">
-                                                    <DeleteConfirmationDialog
-                                                        url={route('entregas.destroy', delivery.id)}
-                                                        title="Eliminar entrega"
-                                                        description={`¿Está seguro que desea eliminar esta entrega de ${delivery.quantity} unidades?`}
-                                                        trigger={<Button variant="outline" size="sm"><Trash2 className="w-4 h-4" /></Button>}
-                                                    />
+                                                    {delivery.status === 'pending' && (
+                                                        <div className="flex items-center justify-end gap-1">
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                className="text-green-600 border-green-200 hover:bg-green-50"
+                                                                onClick={() => marcarEntregada(delivery.id, delivery.warehouse_id)}
+                                                                disabled={!delivery.warehouse_id}
+                                                                title="Marcar entregada"
+                                                            >
+                                                                <CheckCircle className="w-4 h-4" />
+                                                            </Button>
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                className="text-destructive border-destructive/20 hover:bg-destructive/5"
+                                                                onClick={() => cancelarEntrega(delivery.id)}
+                                                                title="Cancelar"
+                                                            >
+                                                                <XCircle className="w-4 h-4" />
+                                                            </Button>
+                                                        </div>
+                                                    )}
+                                                    {delivery.status === 'delivered' && (
+                                                        <DeleteConfirmationDialog
+                                                            url={route('entregas.destroy', delivery.id)}
+                                                            title="Revertir entrega"
+                                                            description={`¿Revertir la entrega de ${delivery.quantity} unidades de ${delivery.product.name}? Se devolverá el stock.`}
+                                                            trigger={<Button variant="outline" size="sm"><Trash2 className="w-4 h-4" /></Button>}
+                                                        />
+                                                    )}
                                                 </td>
                                             </tr>
                                         ))}

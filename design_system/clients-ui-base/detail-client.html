@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Detalle de Cliente - EPOS</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-secondary-fixed": "#00201d",
+                    "primary-container": "#0b7d6e",
+                    "inverse-surface": "#2e3131",
+                    "surface-dim": "#d9dada",
+                    "primary-fixed-dim": "#7ad7c5",
+                    "on-tertiary-fixed-variant": "#1d4e48",
+                    "primary-fixed": "#96f3e1",
+                    "on-background": "#191c1c",
+                    "surface-variant": "#e1e3e3",
+                    "surface-tint": "#006b5d",
+                    "on-secondary-fixed-variant": "#2c4d48",
+                    "surface-container": "#edeeee",
+                    "secondary-container": "#c3e7e0",
+                    "surface": "#f8f9f9",
+                    "error": "#ba1a1a",
+                    "tertiary-fixed": "#baede3",
+                    "tertiary": "#2f5f58",
+                    "on-primary-fixed": "#00201b",
+                    "outline": "#6e7a76",
+                    "outline-variant": "#bdc9c5",
+                    "on-tertiary-fixed": "#00201c",
+                    "surface-container-lowest": "#ffffff",
+                    "tertiary-container": "#487870",
+                    "on-surface": "#191c1c",
+                    "tertiary-fixed-dim": "#9fd0c7",
+                    "surface-container-low": "#f3f4f4",
+                    "on-secondary-container": "#486964",
+                    "surface-container-highest": "#e1e3e3",
+                    "on-tertiary-container": "#cbfef5",
+                    "background": "#f8f9f9",
+                    "surface-container-high": "#e7e8e8",
+                    "error-container": "#ffdad6",
+                    "primary": "#006256",
+                    "on-secondary": "#ffffff",
+                    "on-primary-fixed-variant": "#005046",
+                    "surface-bright": "#f8f9f9",
+                    "on-primary": "#ffffff",
+                    "inverse-primary": "#7ad7c5",
+                    "secondary-fixed-dim": "#aacec7",
+                    "on-tertiary": "#ffffff",
+                    "on-error-container": "#93000a",
+                    "secondary-fixed": "#c6eae3",
+                    "secondary": "#43645f",
+                    "inverse-on-surface": "#f0f1f1",
+                    "on-primary-container": "#c6fff2",
+                    "on-surface-variant": "#3e4946",
+                    "on-error": "#ffffff"
+            },
+            "boxShadow": {
+                    "sm": "0 1px 2px 0 rgba(0, 0, 0, 0.05)"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.5rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Inter", "sans-serif"],
+                    "display": ["Inter", "sans-serif"],
+                    "body": ["Inter", "sans-serif"],
+                    "label": ["Inter", "sans-serif"],
+                    "sans": ["Inter", "sans-serif"]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex w-full font-sans">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-full w-64 border-r border-zinc-200 dark:border-zinc-800 bg-[#F7F8F8] dark:bg-zinc-950 flex flex-col p-4 gap-2 z-40 hidden md:flex">
+<div class="mb-6 flex items-center gap-3 px-2">
+<div class="w-10 h-10 rounded-lg bg-primary-container text-white flex items-center justify-center font-bold text-lg">E</div>
+<div>
+<h1 class="text-lg font-bold text-[#111111] dark:text-white">Gestión EPOS</h1>
+<p class="text-xs text-[#48615C]">Business Suite</p>
+</div>
+</div>
+<button class="w-full bg-[#0B7D6E] hover:bg-[#09695D] text-white py-2.5 rounded-lg font-medium text-sm transition-colors mb-4 flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]">add</span>
+            Nueva Venta
+        </button>
+<nav class="flex-1 flex flex-col gap-1 overflow-y-auto">
+<a class="flex items-center gap-3 px-3 py-2 text-[#48615C] dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-lg text-sm transition-transform duration-200 hover:translate-x-1 cursor-pointer" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+                Dashboard
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 bg-[#E7F4F1] text-[#0B7D6E] font-semibold rounded-lg text-sm transition-transform duration-200 cursor-pointer" href="#">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">group</span>
+                Clientes
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-[#48615C] dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-lg text-sm transition-transform duration-200 hover:translate-x-1 cursor-pointer" href="#">
+<span class="material-symbols-outlined text-[20px]">payments</span>
+                Ventas
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-[#48615C] dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-lg text-sm transition-transform duration-200 hover:translate-x-1 cursor-pointer" href="#">
+<span class="material-symbols-outlined text-[20px]">inventory_2</span>
+                Inventario
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-[#48615C] dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-lg text-sm transition-transform duration-200 hover:translate-x-1 cursor-pointer" href="#">
+<span class="material-symbols-outlined text-[20px]">shopping_cart</span>
+                Compras
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-[#48615C] dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-lg text-sm transition-transform duration-200 hover:translate-x-1 cursor-pointer" href="#">
+<span class="material-symbols-outlined text-[20px]">admin_panel_settings</span>
+                Administración
+            </a>
+</nav>
+<div class="mt-auto flex flex-col gap-1 pt-4 border-t border-zinc-200">
+<a class="flex items-center gap-3 px-3 py-2 text-[#48615C] dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-lg text-sm transition-transform duration-200 hover:translate-x-1 cursor-pointer" href="#">
+<span class="material-symbols-outlined text-[20px]">account_circle</span>
+                Perfil
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-[#48615C] dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-lg text-sm transition-transform duration-200 hover:translate-x-1 cursor-pointer" href="#">
+<span class="material-symbols-outlined text-[20px]">logout</span>
+                Cerrar Sesión
+            </a>
+</div>
+</aside>
+<!-- Main Content Wrapper -->
+<div class="flex-1 md:ml-64 flex flex-col min-h-screen">
+<!-- TopNavBar -->
+<header class="bg-white dark:bg-zinc-950 flex justify-between items-center px-6 h-16 w-full docked full-width top-0 border-b border-zinc-200 dark:border-zinc-800 z-50 shadow-sm sticky font-sans antialiased">
+<div class="flex items-center gap-4">
+<div class="md:hidden flex items-center">
+<span class="material-symbols-outlined text-zinc-500 cursor-pointer text-2xl">menu</span>
+</div>
+<div class="text-xl font-bold text-[#0B7D6E] tracking-tight md:hidden">EPOS</div>
+<div class="relative hidden sm:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 text-[20px]">search</span>
+<input class="pl-10 pr-4 py-2 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg text-sm w-64 focus:outline-none focus:ring-2 focus:ring-primary-container/20 focus:border-primary-container transition-all font-sans" placeholder="Buscar clientes, ventas..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-2 sm:gap-4">
+<button class="p-2 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors rounded-full active:scale-95 duration-150 relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-1.5 right-1.5 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<button class="p-2 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors rounded-full active:scale-95 duration-150 hidden sm:block">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<button class="p-2 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors rounded-full active:scale-95 duration-150 hidden sm:block">
+<span class="material-symbols-outlined">help</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-zinc-200 ml-2 overflow-hidden border border-zinc-200">
+<img alt="Usuario Administrador" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBGkBeJH8VfEYQ4OlY745ldIkPoJup5bxoKwXdt_4i3kLZghT-x8cpk7cFb6u5wUDOsNvLS-wjtpm3lqMJGC0s99yPIiAFc-aWMBoT1VUTQERh-cppjdZ4BPhCAXRsbIjY6lCH4xfcfMtFxd33b3hf2O8BJhwGEuHQ6mMP9z97NjF1qV4r9A4V8gUkw_hXPcZUWjPT3XICIxjXhcr53MM6Nd3IYGNr5u4EaeMx72c-v65PHT-ryDZ7K1qdOngRL5mIsvY0llBWKEI0"/>
+</div>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full flex flex-col gap-6 font-sans">
+<!-- Breadcrumbs & Header -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<nav class="flex items-center text-sm text-zinc-500 mb-2">
+<a class="hover:text-primary-container transition-colors" href="#">Clientes</a>
+<span class="material-symbols-outlined text-[16px] mx-1">chevron_right</span>
+<span class="text-on-surface">Detalle</span>
+</nav>
+<div class="flex items-center gap-3">
+<h1 class="text-3xl font-bold text-[#111111]">Distribuidora Andina S.A.</h1>
+<span class="px-2.5 py-0.5 rounded-full bg-[#E7F6EE] text-[#1F8F63] text-xs font-semibold border border-[#1F8F63]/20 flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-[#1F8F63]"></span>
+                            Activo
+                        </span>
+</div>
+<p class="text-sm text-zinc-500 mt-1">Cliente desde el 15 Mar 2021 • ID: CLI-8902</p>
+</div>
+<div class="flex flex-wrap items-center gap-2">
+<button class="px-4 py-2 bg-white border border-zinc-200 rounded-lg text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition-colors flex items-center gap-2 shadow-sm">
+<span class="material-symbols-outlined text-[18px]">receipt_long</span>
+                        Emitir Recibo
+                    </button>
+<button class="px-4 py-2 bg-white border border-zinc-200 rounded-lg text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition-colors flex items-center gap-2 shadow-sm hidden sm:flex">
+<span class="material-symbols-outlined text-[18px]">map</span>
+                        Ver Mapa
+                    </button>
+<button class="px-4 py-2 bg-primary-container text-white rounded-lg text-sm font-medium hover:bg-[#09695D] transition-colors flex items-center gap-2 shadow-sm">
+<span class="material-symbols-outlined text-[18px]">shopping_cart_checkout</span>
+                        Nueva Venta
+                    </button>
+</div>
+</div>
+<!-- Bento Grid - Resumen Visual -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+<!-- Saldo Card -->
+<div class="bg-white rounded-lg p-5 border border-zinc-200 shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between mb-4">
+<span class="text-sm font-semibold text-zinc-500">Saldo Actual</span>
+<span class="material-symbols-outlined text-zinc-400">account_balance_wallet</span>
+</div>
+<div>
+<div class="text-3xl font-bold text-error">$ 4,250.00</div>
+<p class="text-xs text-zinc-500 mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-error">warning</span>
+                            Vencido hace 5 días
+                        </p>
+</div>
+</div>
+<!-- Límite Crédito Card -->
+<div class="bg-white rounded-lg p-5 border border-zinc-200 shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between mb-4">
+<span class="text-sm font-semibold text-zinc-500">Límite de Crédito</span>
+<span class="material-symbols-outlined text-zinc-400">credit_card</span>
+</div>
+<div>
+<div class="flex items-end justify-between mb-2">
+<div class="text-2xl font-bold text-[#111111]">$ 10,000.00</div>
+<div class="text-sm font-medium text-zinc-500">42% utilizado</div>
+</div>
+<div class="w-full bg-zinc-100 rounded-full h-2">
+<div class="bg-warning h-2 rounded-full" style="width: 42%"></div>
+</div>
+</div>
+</div>
+<!-- Última Compra Card -->
+<div class="bg-white rounded-lg p-5 border border-zinc-200 shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between mb-4">
+<span class="text-sm font-semibold text-zinc-500">Última Compra</span>
+<span class="material-symbols-outlined text-zinc-400">history</span>
+</div>
+<div>
+<div class="text-xl font-bold text-[#111111]">Hace 12 días</div>
+<p class="text-sm text-zinc-600 mt-1">Factura #F001-4589 por $1,200.00</p>
+</div>
+</div>
+</div>
+<!-- Tabs Navigation -->
+<div class="mt-4">
+<nav aria-label="Tabs" class="flex space-x-8 border-b border-zinc-200">
+<a aria-current="page" class="border-primary-container text-primary-container whitespace-nowrap border-b-2 py-2 px-1 text-sm font-medium flex items-center gap-2" href="#">
+<span class="material-symbols-outlined text-[18px]">info</span>
+                        General
+                    </a>
+<a class="border-transparent text-zinc-500 hover:border-zinc-300 hover:text-zinc-700 whitespace-nowrap border-b-2 py-2 px-1 text-sm font-medium flex items-center gap-2" href="#">
+<span class="material-symbols-outlined text-[18px]">request_quote</span>
+                        Estado de Cuenta
+                    </a>
+<a class="border-transparent text-zinc-500 hover:border-zinc-300 hover:text-zinc-700 whitespace-nowrap border-b-2 py-2 px-1 text-sm font-medium flex items-center gap-2" href="#">
+<span class="material-symbols-outlined text-[18px]">monitoring</span>
+                        Historial Comercial
+                    </a>
+</nav>
+</div>
+<!-- Tab Content: General -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+<!-- Contact Info Col -->
+<div class="lg:col-span-1 flex flex-col gap-6">
+<div class="bg-white rounded-lg border border-zinc-200 shadow-sm overflow-hidden">
+<div class="px-5 py-4 border-b border-zinc-100 flex items-center justify-between">
+<h3 class="text-base font-semibold text-[#111111]">Información de Contacto</h3>
+<button class="text-zinc-400 hover:text-primary-container transition-colors">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+</div>
+<div class="p-5 space-y-4">
+<div class="flex gap-3">
+<span class="material-symbols-outlined text-zinc-400 text-[20px] mt-0.5">person</span>
+<div>
+<div class="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-0.5">Contacto Principal</div>
+<div class="text-sm text-[#111111] font-medium">Carlos Mendoza (Gerente de Compras)</div>
+</div>
+</div>
+<div class="flex gap-3">
+<span class="material-symbols-outlined text-zinc-400 text-[20px] mt-0.5">mail</span>
+<div>
+<div class="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-0.5">Email</div>
+<a class="text-sm text-info hover:underline" href="mailto:compras@andina.com">compras@andina.com</a>
+</div>
+</div>
+<div class="flex gap-3">
+<span class="material-symbols-outlined text-zinc-400 text-[20px] mt-0.5">call</span>
+<div>
+<div class="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-0.5">Teléfono</div>
+<div class="text-sm text-[#111111]">+54 9 11 4321-8765</div>
+</div>
+</div>
+<div class="flex gap-3">
+<span class="material-symbols-outlined text-zinc-400 text-[20px] mt-0.5">location_on</span>
+<div>
+<div class="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-0.5">Dirección Principal</div>
+<div class="text-sm text-[#111111]">Av. Libertador 4580, Piso 3<br/>C1426BWP, Buenos Aires<br/>Argentina</div>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-white rounded-lg border border-zinc-200 shadow-sm overflow-hidden">
+<div class="px-5 py-4 border-b border-zinc-100 flex items-center justify-between">
+<h3 class="text-base font-semibold text-[#111111]">Datos Fiscales</h3>
+<button class="text-zinc-400 hover:text-primary-container transition-colors">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+</div>
+<div class="p-5 space-y-4">
+<div>
+<div class="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-1">Razón Social</div>
+<div class="text-sm text-[#111111]">Distribuidora Andina S.A.</div>
+</div>
+<div>
+<div class="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-1">CUIT / RUC</div>
+<div class="text-sm text-[#111111] font-mono">30-71234567-8</div>
+</div>
+<div>
+<div class="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-1">Condición Fiscal</div>
+<div class="text-sm text-[#111111]">Responsable Inscripto</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Main Col -->
+<div class="lg:col-span-2 flex flex-col gap-6">
+<!-- Últimos Movimientos Minimal Table -->
+<div class="bg-white rounded-lg border border-zinc-200 shadow-sm overflow-hidden">
+<div class="px-6 py-4 flex items-center justify-between">
+<h3 class="text-base font-semibold text-[#111111]">Últimos Comprobantes</h3>
+<a class="text-sm font-medium text-primary-container hover:underline" href="#">Ver todos</a>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-zinc-50/50 border-y border-zinc-200 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+<th class="px-6 py-4">Fecha</th>
+<th class="px-6 py-4">Tipo / Nro</th>
+<th class="px-6 py-4 text-right">Importe</th>
+<th class="px-6 py-4 text-center">Estado</th>
+<th class="px-6 py-4 w-10"></th>
+</tr>
+</thead>
+<tbody class="text-sm divide-y divide-zinc-200">
+<tr class="hover:bg-zinc-50/80 transition-colors cursor-pointer bg-white group">
+<td class="px-6 py-4 text-zinc-600">10 Oct 2023</td>
+<td class="px-6 py-4 font-medium text-[#111111]">Factura #F001-4589</td>
+<td class="px-6 py-4 text-right font-medium text-[#111111]">$ 1,200.00</td>
+<td class="px-6 py-4 text-center">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#FCECEC] text-[#D14343]">
+                                                Vencido
+                                            </span>
+</td>
+<td class="px-6 py-4 text-center">
+<button class="text-zinc-400 hover:text-zinc-700 opacity-0 group-hover:opacity-100 transition-opacity"><span class="material-symbols-outlined text-[18px]">more_vert</span></button>
+</td>
+</tr>
+<tr class="hover:bg-zinc-50/80 transition-colors cursor-pointer bg-white group">
+<td class="px-6 py-4 text-zinc-600">02 Oct 2023</td>
+<td class="px-6 py-4 font-medium text-[#111111]">Recibo #R001-2210</td>
+<td class="px-6 py-4 text-right font-medium text-success">- $ 3,050.00</td>
+<td class="px-6 py-4 text-center">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#E7F6EE] text-[#1F8F63]">
+                                                Aplicado
+                                            </span>
+</td>
+<td class="px-6 py-4 text-center">
+<button class="text-zinc-400 hover:text-zinc-700 opacity-0 group-hover:opacity-100 transition-opacity"><span class="material-symbols-outlined text-[18px]">more_vert</span></button>
+</td>
+</tr>
+<tr class="hover:bg-zinc-50/80 transition-colors cursor-pointer bg-white group">
+<td class="px-6 py-4 text-zinc-600">15 Sep 2023</td>
+<td class="px-6 py-4 font-medium text-[#111111]">Factura #F001-4450</td>
+<td class="px-6 py-4 text-right font-medium text-[#111111]">$ 3,050.00</td>
+<td class="px-6 py-4 text-center">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#E7F6EE] text-[#1F8F63]">
+                                                Pagado
+                                            </span>
+</td>
+<td class="px-6 py-4 text-center">
+<button class="text-zinc-400 hover:text-zinc-700 opacity-0 group-hover:opacity-100 transition-opacity"><span class="material-symbols-outlined text-[18px]">more_vert</span></button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Notas / Observaciones -->
+<div class="bg-white rounded-lg border border-zinc-200 shadow-sm overflow-hidden flex flex-col h-full">
+<div class="px-6 py-4 border-b border-zinc-200 flex items-center justify-between">
+<h3 class="text-base font-semibold text-[#111111]">Notas Internas</h3>
+<button class="text-sm font-medium text-primary-container hover:underline flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">add</span>
+                                Añadir
+                            </button>
+</div>
+<div class="p-6 flex-1 bg-white space-y-4">
+<div class="border border-zinc-200 rounded-lg p-4 flex gap-3 bg-zinc-50/50">
+<span class="material-symbols-outlined text-zinc-700 mt-0.5">info</span>
+<div>
+<p class="text-sm text-zinc-800">El cliente solicitó extender el plazo de pago a 45 días a partir de Noviembre. Pendiente de aprobación por gerencia.</p>
+<span class="text-xs text-zinc-500 mt-2 block">Por Admin • Hace 2 semanas</span>
+</div>
+</div>
+<div class="border border-zinc-200 rounded-lg p-4 flex gap-3 bg-zinc-50/50">
+<span class="material-symbols-outlined text-zinc-700 mt-0.5">note</span>
+<div>
+<p class="text-sm text-zinc-800">Entregas preferiblemente por la mañana, acceso por portón lateral.</p>
+<span class="text-xs text-zinc-500 mt-2 block">Por Logística • 15 Mar 2021</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

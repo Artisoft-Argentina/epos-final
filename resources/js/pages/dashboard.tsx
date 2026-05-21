@@ -73,28 +73,28 @@ const kpiCards = [
         label: 'Total Ventas',
         icon: DollarSign,
         format: 'currency',
-        colorClass: 'bg-primary/10 text-primary',
+        colorClass: 'bg-primary/5 text-primary',
     },
     {
         key: 'clientesNuevos',
         label: 'Clientes Nuevos',
         icon: Users,
         format: 'number',
-        colorClass: 'bg-info-soft text-info',
+        colorClass: 'bg-blue-50 text-blue-500',
     },
     {
         key: 'ventasDelMes',
         label: 'Ventas del Mes',
         icon: TrendingUp,
         format: 'currency',
-        colorClass: 'bg-success-soft text-success',
+        colorClass: 'bg-emerald-50 text-emerald-500',
     },
     {
         key: 'saldoImpagas',
         label: 'Saldo Impagas',
         icon: AlertTriangle,
         format: 'currency',
-        colorClass: 'bg-destructive/10 text-destructive',
+        colorClass: 'bg-red-50 text-red-500',
         valueClass: 'text-destructive',
     },
 ] as const;
@@ -162,7 +162,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                             <Plus className="size-4" />
                             Nueva venta
                         </Button>
-                        <Button size="sm" variant="outline" onClick={() => router.visit(route('articulos.create'))}>
+                        <Button size="sm" variant="outline" onClick={() => router.visit(route('products.create'))}>
                             <Package className="size-4" />
                             Añadir artículo
                         </Button>
@@ -215,18 +215,18 @@ const Dashboard: React.FC<DashboardProps> = ({
                     {kpiCards.map((kpi) => {
                         const Icon = kpi.icon;
                         return (
-                            <Card key={kpi.key}>
-                                <CardContent className="pt-6">
-                                    <div className="flex items-start justify-between">
-                                        <div className={`flex size-10 items-center justify-center rounded-xl ${kpi.colorClass}`}>
-                                            <Icon className="size-5" />
+                            <Card key={kpi.key} className="gap-0 py-0">
+                                <CardContent className="p-4 flex flex-col gap-4">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2.5">
+                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${kpi.colorClass}`}>
+                                                <Icon className="size-4" />
+                                            </div>
+                                            <span className="text-sm font-medium text-foreground">{kpi.label}</span>
                                         </div>
                                     </div>
-                                    <div className="mt-4">
-                                        <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
-                                            {kpi.label}
-                                        </p>
-                                        <p className={`mt-1 text-2xl font-bold tabular-nums ${kpi.valueClass ?? ''}`}>
+                                    <div>
+                                        <p className={`text-2xl font-bold tracking-tight tabular-nums ${kpi.valueClass ?? 'text-foreground'}`}>
                                             {formatValue(values[kpi.key], kpi.format)}
                                         </p>
                                     </div>

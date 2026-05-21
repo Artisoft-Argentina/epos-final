@@ -3,67 +3,79 @@ import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Save, X, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
+interface Warehouse {
+    id: number;
+    name: string;
+    is_default: boolean;
+}
+
 interface Factura {
     id: number;
-    numfactura: number;
-    cliente: {
-        razonsocial: string;
+    invoice_number: number;
+    customer: {
+        business_name: string;
+        fantasy_name?: string | null;
     };
-    articulos: Array<{
+    products: Array<{
         id: number;
-        articulo: string;
-        codarticulo: string;
+        name: string;
+        sku: string;
         pivot: {
-            cantidad: number;
+            quantity: number;
         };
     }>;
-    entregas: Array<{
+    deliveries: Array<{
         id: number;
-        articulo_id: number;
-        cantidad: number;
-        fecha_entrega: string;
+        product_id: number;
+        quantity: number;
+        status: 'pending' | 'delivered' | 'cancelled';
+        delivery_date: string;
     }>;
 }
 
 interface Props {
     factura: Factura;
+    warehouses: Warehouse[];
 }
 
 interface EntregaItem {
     articulo_id: string;
     cantidad: number;
+    warehouse_id: string;
 }
 
-export default function Create({ factura }: Props) {
+export default function Create({ factura, warehouses }: Props) {
+    const defaultWarehouseId = warehouses.find((w) => w.is_default)?.id ?? warehouses[0]?.id ?? null;
     const [entregas, setEntregas] = useState<EntregaItem[]>([
-        { articulo_id: '', cantidad: 1 }
+        { articulo_id: '', cantidad: 1, warehouse_id: defaultWarehouseId ? String(defaultWarehouseId) : '' }
     ]);
 
     const { data, setData, post, processing, errors } = useForm({
-        entregas: entregas,
+        entregas,
         fecha_entrega: new Date().toISOString().split('T')[0],
         observaciones: '',
     });
 
-    const getCantidadEntregada = (articuloId: number) => {
-        return factura.entregas
-            .filter(e => e.articulo_id === articuloId)
-            .reduce((sum, e) => sum + e.cantidad, 0);
+    const getCantidadEntregada = (productId: number) => {
+        return factura.deliveries
+            .filter(d => d.product_id === productId && d.status === 'delivered')
+            .reduce((sum, d) => sum + d.quantity, 0);
     };
 
-    const getCantidadPendiente = (articuloId: number) => {
-        const articuloVenta = factura.articulos.find(a => a.id === articuloId);
-        const cantidadVendida = articuloVenta?.pivot.cantidad || 0;
-        const cantidadEntregada = getCantidadEntregada(articuloId);
+    const getCantidadPendiente = (productId: number) => {
+        const product = factura.products.find(p => p.id === productId);
+        const cantidadVendida = product?.pivot.quantity || 0;
+        const cantidadEntregada = getCantidadEntregada(productId);
         return cantidadVendida - cantidadEntregada;
     };
 
     const addEntrega = () => {
-        const nuevasEntregas = [...entregas, { articulo_id: '', cantidad: 1 }];
+        const nuevasEntregas = [...entregas, { articulo_id: '', cantidad: 1, warehouse_id: defaultWarehouseId ? String(defaultWarehouseId) : '' }];
         setEntregas(nuevasEntregas);
         setData('entregas', nuevasEntregas);
     };
@@ -89,11 +101,11 @@ export default function Create({ factura }: Props) {
     return (
         <AppLayout>
             <Head title="Registrar Entrega" />
-            
+
             <div className="p-6">
                 <div className="mb-6">
                     <h1 className="text-2xl font-semibold text-gray-900">Registrar Entrega</h1>
-                    <p className="text-gray-600">Factura #{factura.numfactura} - {factura.cliente.razonsocial}</p>
+                    <p className="text-gray-600">Factura #{factura.invoice_number} - {factura.customer.fantasy_name || factura.customer.business_name}</p>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
@@ -104,15 +116,15 @@ export default function Create({ factura }: Props) {
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-3">
-                                {factura.articulos.map((articulo) => {
-                                    const cantidadPendiente = getCantidadPendiente(articulo.id);
+                                {factura.products.map((product) => {
+                                    const cantidadPendiente = getCantidadPendiente(product.id);
                                     return (
-                                        <div key={articulo.id} className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                                        <div key={product.id} className="flex justify-between items-center p-3 bg-gray-50 rounded">
                                             <div>
-                                                <p className="font-medium">{articulo.codarticulo} - {articulo.articulo}</p>
+                                                <p className="font-medium">{product.sku} - {product.name}</p>
                                                 <p className="text-sm text-gray-600">
-                                                    Vendido: {articulo.pivot.cantidad} | 
-                                                    Entregado: {getCantidadEntregada(articulo.id)} | 
+                                                    Vendido: {product.pivot.quantity} |
+                                                    Entregado: {getCantidadEntregada(product.id)} |
                                                     Pendiente: {cantidadPendiente}
                                                 </p>
                                             </div>
@@ -172,24 +184,33 @@ export default function Create({ factura }: Props) {
                     <CardContent>
                         <form onSubmit={submit} className="space-y-4">
                             {entregas.map((entrega, index) => (
-                                <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border rounded-lg">
+                                <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 border rounded-lg">
                                     <div>
                                         <Label>Artículo</Label>
-                                        <select
-                                            value={entrega.articulo_id}
-                                            onChange={(e) => updateEntrega(index, 'articulo_id', e.target.value)}
-                                            className="w-full p-2 border rounded"
-                                        >
-                                            <option value="">Seleccionar artículo</option>
-                                            {factura.articulos
-                                                .filter(a => getCantidadPendiente(a.id) > 0)
-                                                .map((articulo) => (
-                                                    <option key={articulo.id} value={articulo.id.toString()}>
-                                                        {articulo.codarticulo} - {articulo.articulo} (Pendiente: {getCantidadPendiente(articulo.id)})
-                                                    </option>
-                                                ))
-                                            }
-                                        </select>
+                                        <Select value={entrega.articulo_id} onValueChange={(v) => updateEntrega(index, 'articulo_id', v)}>
+                                            <SelectTrigger><SelectValue placeholder="Seleccionar artículo" /></SelectTrigger>
+                                            <SelectContent>
+                                                {factura.products
+                                                    .filter(p => getCantidadPendiente(p.id) > 0)
+                                                    .map((product) => (
+                                                        <SelectItem key={product.id} value={product.id.toString()}>
+                                                            {product.sku} - {product.name} (Pendiente: {getCantidadPendiente(product.id)})
+                                                        </SelectItem>
+                                                    ))
+                                                }
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div>
+                                        <Label>Almacén</Label>
+                                        <Select value={entrega.warehouse_id} onValueChange={(v) => updateEntrega(index, 'warehouse_id', v)}>
+                                            <SelectTrigger><SelectValue placeholder="Almacén" /></SelectTrigger>
+                                            <SelectContent>
+                                                {warehouses.map((w) => (
+                                                    <SelectItem key={w.id} value={String(w.id)}>{w.name}{w.is_default ? ' (default)' : ''}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
                                     </div>
                                     <div>
                                         <Label>Cantidad</Label>
@@ -202,12 +223,7 @@ export default function Create({ factura }: Props) {
                                         />
                                     </div>
                                     <div className="flex items-end">
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => removeEntrega(index)}
-                                        >
+                                        <Button type="button" variant="outline" size="sm" onClick={() => removeEntrega(index)}>
                                             <Trash2 className="w-4 h-4" />
                                         </Button>
                                     </div>

@@ -16,11 +16,13 @@ class Delivery extends Model
     protected $fillable = [
         'sale_id',
         'product_id',
+        'warehouse_id',
         'quantity',
         'delivery_date',
         'notes',
         'status',
         'actual_delivery_date',
+        'delivered_by_user_id',
         'active',
     ];
 
@@ -48,6 +50,16 @@ class Delivery extends Model
     public function product()
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function warehouse()
+    {
+        return $this->belongsTo(Warehouse::class);
+    }
+
+    public function deliveredBy()
+    {
+        return $this->belongsTo(User::class, 'delivered_by_user_id');
     }
 
     public function markAsDelivered(): void

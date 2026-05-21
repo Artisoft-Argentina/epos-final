@@ -8,15 +8,16 @@ const alertVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-background text-foreground",
-        destructive:
-          "text-destructive-foreground [&>svg]:text-current *:data-[slot=alert-description]:text-destructive-foreground/80",
-        success:
-          "bg-success-soft text-success [&>svg]:text-current *:data-[slot=alert-description]:text-success/80",
-        warning:
-          "bg-warning-soft text-warning [&>svg]:text-current *:data-[slot=alert-description]:text-warning/80",
+        default:
+          "bg-white text-foreground border-border",
         info:
-          "bg-info-soft text-info [&>svg]:text-current *:data-[slot=alert-description]:text-info/80",
+          "bg-blue-50 border-blue-200 text-blue-900 [&>svg]:text-blue-500 *:data-[slot=alert-description]:text-blue-700",
+        success:
+          "bg-emerald-50 border-emerald-200 text-emerald-900 [&>svg]:text-emerald-500 *:data-[slot=alert-description]:text-emerald-700",
+        warning:
+          "bg-amber-50 border-amber-200 text-amber-900 [&>svg]:text-amber-500 *:data-[slot=alert-description]:text-amber-700",
+        destructive:
+          "bg-red-50 border-red-200 text-red-900 [&>svg]:text-red-500 *:data-[slot=alert-description]:text-red-700",
       },
     },
     defaultVariants: {
@@ -45,7 +46,7 @@ function AlertTitle({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="alert-title"
       className={cn(
-        "col-start-2 line-clamp-1 min-h-4 font-medium tracking-tight",
+        "col-start-2 line-clamp-1 min-h-4 font-semibold tracking-tight",
         className
       )}
       {...props}
@@ -61,7 +62,7 @@ function AlertDescription({
     <div
       data-slot="alert-description"
       className={cn(
-        "text-muted-foreground col-start-2 grid justify-items-start gap-1 text-sm [&_p]:leading-relaxed",
+        "col-start-2 grid justify-items-start gap-1 text-sm [&_p]:leading-relaxed",
         className
       )}
       {...props}

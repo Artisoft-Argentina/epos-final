@@ -81,14 +81,10 @@ export default function Afip({ config }: Props) {
 
     const getStatusBadge = (status: string) => {
         switch (status) {
-            case 'ok':
-                return <Badge variant="default" className="bg-green-500">Operativo</Badge>;
-            case 'warning':
-                return <Badge variant="default" className="bg-yellow-500">Advertencia</Badge>;
-            case 'error':
-                return <Badge variant="destructive">Error</Badge>;
-            default:
-                return null;
+            case 'ok':      return <Badge variant="success">Operativo</Badge>;
+            case 'warning': return <Badge variant="warning">Advertencia</Badge>;
+            case 'error':   return <Badge variant="destructive">Error</Badge>;
+            default:        return null;
         }
     };
 

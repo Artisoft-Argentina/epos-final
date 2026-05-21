@@ -21,6 +21,7 @@ RUN apk add --no-cache \
     libpng-dev \
     libjpeg-turbo-dev \
     freetype-dev \
+    libwebp-dev \
     libzip-dev \
     icu-dev \
     oniguruma-dev \
@@ -29,7 +30,7 @@ RUN apk add --no-cache \
     npm
 
 # Instalar extensiones PHP
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
     && docker-php-ext-install -j$(nproc) \
         pdo_pgsql \
         pgsql \
@@ -70,7 +71,11 @@ RUN composer run-script post-autoload-dump --no-interaction 2>/dev/null || true
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html \
     && chmod -R 775 /var/www/html/storage \
-    && chmod -R 775 /var/www/html/bootstrap/cache
+    && chmod -R 775 /var/www/html/bootstrap/cache \
+    && mkdir -p /tmp/nginx/client_body /tmp/nginx/fastcgi /tmp/nginx/proxy /tmp/nginx/uwsgi /tmp/nginx/scgi \
+    && chown -R www-data:www-data /tmp/nginx \
+    && chmod -R 755 /tmp/nginx \
+    && chmod 2755 /tmp/nginx
 
 # Asegurarse de que no exista el archivo `public/hot` en la imagen final.
 # Si este archivo existe, Laravel/Vite detectará un dev-server y servirá assets

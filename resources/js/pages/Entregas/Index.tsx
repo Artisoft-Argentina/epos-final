@@ -1,219 +1,243 @@
+import { Head, router, usePage } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
-import { Head, router } from '@inertiajs/react';
-import { Package, CheckCircle, XCircle, Calendar, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { PageHeader } from '@/components/page-header';
+import { DataTable, type Column } from '@/components/data-table';
+import { Pagination } from '@/components/pagination';
+import { ActionButton } from '@/components/action-button';
+import { CheckCircle, XCircle, Warehouse as WarehouseIcon } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+
+interface Warehouse {
+    id: number;
+    name: string;
+    is_default: boolean;
+}
+
+interface WarehouseStock {
+    warehouse_id: number;
+    warehouse_name: string;
+    quantity: number;
+    is_pos_warehouse: boolean;
+}
 
 interface Entrega {
     id: number;
-    cantidad: number;
-    fecha_entrega: string;
-    fecha_entrega_real: string | null;
-    observaciones: string | null;
-    estado: 'pendiente' | 'entregada' | 'cancelada';
-    factura: {
-        id: number;
-        numfactura: number;
-        tipo_venta: string;
-        cliente: {
-            id: number;
-            nombre: string;
-            apellido: string;
-        };
-    };
-    articulo: {
-        id: number;
-        articulo: string;
-        codarticulo: string;
-    };
+    quantity: number;
+    delivery_date: string;
+    actual_delivery_date: string | null;
+    status: 'pending' | 'delivered' | 'cancelled';
+    notes: string | null;
+    warehouse_id: number | null;
+    sale: { id: number; invoice_number: number; sale_type: string; customer: { id: number; business_name: string } };
+    product: { id: number; name: string; sku: string };
+    warehouse: { id: number; name: string } | null;
 }
 
 interface Props {
-    entregas: {
-        data: Entrega[];
-        links: any[];
-        current_page: number;
-        last_page: number;
-    };
+    entregas: { data: Entrega[]; links: any[] };
+    warehouses: Warehouse[];
+    selected_status: string;
+    selected_warehouse_id: number | null;
+    selected_sale_id: number | null;
 }
 
-export default function Index({ entregas }: Props) {
-    const marcarEntregada = (entregaId: number) => {
-        if (confirm('¿Confirmar que esta entrega fue completada? Se descontará el stock.')) {
-            router.post(route('entregas.marcar-entregada', entregaId));
+const statusVariant: Record<string, 'warning' | 'success' | 'destructive'> = {
+    pending: 'warning',
+    delivered: 'success',
+    cancelled: 'destructive',
+};
+
+const statusLabel: Record<string, string> = {
+    pending: 'Pendiente',
+    delivered: 'Entregada',
+    cancelled: 'Cancelada',
+};
+
+export default function Index({ entregas, warehouses, selected_status, selected_warehouse_id, selected_sale_id }: Props) {
+    const page = usePage<any>();
+    const [markModal, setMarkModal] = useState<Entrega | null>(null);
+    const [stockByWarehouse, setStockByWarehouse] = useState<WarehouseStock[]>([]);
+    const [selectedWarehouseId, setSelectedWarehouseId] = useState<string>('');
+    const [submitting, setSubmitting] = useState(false);
+
+    useEffect(() => {
+        if (page.props.flash?.success) toast.success(page.props.flash.success);
+        if (page.props.flash?.error) toast.error(page.props.flash.error);
+    }, [page.props.flash]);
+
+    const openMarkModal = async (entrega: Entrega) => {
+        setMarkModal(entrega);
+        setSelectedWarehouseId(entrega.warehouse_id ? String(entrega.warehouse_id) : '');
+        try {
+            const res = await fetch(route('products.stock-by-warehouse', entrega.product.id) + (entrega.warehouse_id ? `?pos_warehouse_id=${entrega.warehouse_id}` : ''), {
+                headers: { Accept: 'application/json' },
+            });
+            if (res.ok) setStockByWarehouse(await res.json());
+        } catch (e) {
+            console.error(e);
         }
     };
 
-    const cancelarEntrega = (entregaId: number) => {
-        if (confirm('¿Cancelar esta entrega?')) {
-            router.post(route('entregas.cancelar', entregaId));
+    const submitMarkDelivered = () => {
+        if (!markModal) return;
+        if (!selectedWarehouseId) {
+            toast.error('Seleccioná un almacén.');
+            return;
         }
+        setSubmitting(true);
+        router.post(route('entregas.marcar-entregada', markModal.id), { warehouse_id: selectedWarehouseId }, {
+            onFinish: () => { setSubmitting(false); setMarkModal(null); setStockByWarehouse([]); },
+        });
     };
 
-    const getEstadoBadge = (estado: string) => {
-        const badges = {
-            pendiente: 'bg-yellow-100 text-yellow-800',
-            entregada: 'bg-green-100 text-green-800',
-            cancelada: 'bg-red-100 text-red-800',
-        };
-        return badges[estado as keyof typeof badges] || badges.pendiente;
+    const cancelar = (id: number) => {
+        if (confirm('¿Cancelar esta entrega?')) router.post(route('entregas.cancelar', id));
     };
 
-    const getTipoVentaBadge = (tipo: string) => {
-        return tipo === 'ecommerce' 
-            ? 'bg-blue-100 text-blue-800' 
-            : 'bg-purple-100 text-purple-800';
-    };
+    const baseParams = (overrides: Record<string, any>) => ({
+        status: selected_status,
+        warehouse_id: selected_warehouse_id ?? undefined,
+        sale_id: selected_sale_id ?? undefined,
+        ...overrides,
+    });
+    const filterByStatus = (s: string) => router.get(route('entregas.index'), baseParams({ status: s }), { preserveState: true });
+    const filterByWarehouse = (w: string) => router.get(route('entregas.index'), baseParams({ warehouse_id: w === 'all' ? undefined : w }), { preserveState: true });
+    const clearSaleFilter = () => router.get(route('entregas.index'), baseParams({ sale_id: undefined }), { preserveState: true });
+
+    const columns: Column<Entrega>[] = [
+        { key: 'sale', header: 'Factura', render: (row) => <span className="font-medium tabular-nums text-foreground">#{row.sale.invoice_number}</span> },
+        { key: 'cliente', header: 'Cliente', render: (row) => <span>{row.sale.customer?.business_name ?? '-'}</span> },
+        {
+            key: 'product',
+            header: 'Artículo',
+            render: (row) => (
+                <div>
+                    <p className="font-medium text-foreground">{row.product.name}</p>
+                    <p className="text-xs text-muted-foreground">{row.product.sku}</p>
+                </div>
+            ),
+        },
+        { key: 'qty', header: 'Cantidad', render: (row) => <span className="font-semibold tabular-nums">{row.quantity}</span> },
+        {
+            key: 'warehouse',
+            header: 'Almacén',
+            render: (row) => row.warehouse ? (
+                <div className="flex items-center gap-1.5">
+                    <WarehouseIcon className="text-muted-foreground size-3.5" />
+                    <span>{row.warehouse.name}</span>
+                </div>
+            ) : <span className="text-muted-foreground">—</span>,
+        },
+        { key: 'date', header: 'Fecha', render: (row) => <span className="text-muted-foreground">{new Date(row.delivery_date).toLocaleDateString('es-AR')}</span> },
+        { key: 'status', header: 'Estado', render: (row) => <Badge variant={statusVariant[row.status]}>{statusLabel[row.status]}</Badge> },
+        {
+            key: 'actions',
+            header: 'Acciones',
+            align: 'right',
+            render: (row) => row.status !== 'pending' ? null : (
+                <div className="flex items-center justify-end gap-1">
+                    <ActionButton variant="outline" title="Marcar entregada" className="border-success/30 text-success hover:bg-success-soft" onClick={() => openMarkModal(row)}>
+                        <CheckCircle className="size-3.5" />
+                    </ActionButton>
+                    <ActionButton variant="destructive-soft" title="Cancelar entrega" onClick={() => cancelar(row.id)}>
+                        <XCircle className="size-3.5" />
+                    </ActionButton>
+                </div>
+            ),
+        },
+    ];
+
+    const stockSelected = stockByWarehouse.find((s) => String(s.warehouse_id) === selectedWarehouseId);
+    const insufficient = markModal && stockSelected && stockSelected.quantity < markModal.quantity;
 
     return (
-        <AppLayout
-            title="Entregas Pendientes"
-            header={
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        Entregas Pendientes
-                    </h2>
-                </div>
-            }
-        >
-            <Head title="Entregas Pendientes" />
+        <AppLayout>
+            <Head title="Entregas" />
+            <div className="flex flex-col gap-6 p-6">
+                <PageHeader title="Entregas" description="Gestión de entregas asociadas a ventas." />
 
-            <div className="py-12">
-                <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
-                    <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-                        <div className="p-6">
-                            {entregas.data.length === 0 ? (
-                                <div className="text-center py-12">
-                                    <Package className="mx-auto h-12 w-12 text-gray-400" />
-                                    <h3 className="mt-2 text-sm font-medium text-gray-900">
-                                        No hay entregas pendientes
-                                    </h3>
-                                    <p className="mt-1 text-sm text-gray-500">
-                                        Todas las entregas están completadas
-                                    </p>
-                                </div>
-                            ) : (
-                                <div className="overflow-x-auto">
-                                    <table className="min-w-full divide-y divide-gray-200">
-                                        <thead className="bg-gray-50">
-                                            <tr>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                                    Factura
-                                                </th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                                    Cliente
-                                                </th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                                    Artículo
-                                                </th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                                    Cantidad
-                                                </th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                                    Fecha Entrega
-                                                </th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                                    Tipo
-                                                </th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                                    Estado
-                                                </th>
-                                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                                                    Acciones
-                                                </th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="bg-white divide-y divide-gray-200">
-                                            {entregas.data.map((entrega) => (
-                                                <tr key={entrega.id} className="hover:bg-gray-50">
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                        #{entrega.factura.numfactura}
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                        <div className="flex items-center">
-                                                            <User className="h-4 w-4 mr-2 text-gray-400" />
-                                                            {entrega.factura.cliente.nombre} {entrega.factura.cliente.apellido}
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4 text-sm text-gray-900">
-                                                        <div>
-                                                            <div className="font-medium">{entrega.articulo.articulo}</div>
-                                                            <div className="text-gray-500">Cód: {entrega.articulo.codarticulo}</div>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                        <span className="font-semibold">{entrega.cantidad}</span> unidades
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                        <div className="flex items-center">
-                                                            <Calendar className="h-4 w-4 mr-2 text-gray-400" />
-                                                            {new Date(entrega.fecha_entrega).toLocaleDateString()}
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap">
-                                                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getTipoVentaBadge(entrega.factura.tipo_venta)}`}>
-                                                            {entrega.factura.tipo_venta === 'ecommerce' ? 'E-commerce' : 'POS'}
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap">
-                                                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getEstadoBadge(entrega.estado)}`}>
-                                                            {entrega.estado.charAt(0).toUpperCase() + entrega.estado.slice(1)}
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                        {entrega.estado === 'pendiente' && (
-                                                            <div className="flex justify-end gap-2">
-                                                                <Button
-                                                                    variant="outline"
-                                                                    size="sm"
-                                                                    onClick={() => marcarEntregada(entrega.id)}
-                                                                    title="Completar entrega"
-                                                                >
-                                                                    <CheckCircle className="h-4 w-4" />
-                                                                </Button>
-                                                                <Button
-                                                                    variant="outline"
-                                                                    size="sm"
-                                                                    onClick={() => cancelarEntrega(entrega.id)}
-                                                                    title="Cancelar entrega"
-                                                                >
-                                                                    <XCircle className="h-4 w-4" />
-                                                                </Button>
-                                                            </div>
-                                                        )}
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            )}
+                {selected_sale_id && (
+                    <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 text-sm">
+                        <span>Filtrando por venta <span className="font-mono font-semibold">#{selected_sale_id}</span></span>
+                        <Button variant="ghost" size="sm" onClick={clearSaleFilter}>Quitar filtro</Button>
+                    </div>
+                )}
 
-                            {/* Paginación */}
-                            {entregas.links && entregas.links.length > 3 && (
-                                <div className="mt-4 flex justify-center">
-                                    <nav className="flex gap-2">
-                                        {entregas.links.map((link, index) => (
-                                            <button
-                                                key={index}
-                                                onClick={() => link.url && router.get(link.url)}
-                                                disabled={!link.url}
-                                                className={`px-3 py-1 text-sm rounded ${
-                                                    link.active
-                                                        ? 'bg-blue-600 text-white'
-                                                        : link.url
-                                                        ? 'bg-white text-gray-700 hover:bg-gray-50'
-                                                        : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                                }`}
-                                                dangerouslySetInnerHTML={{ __html: link.label }}
-                                            />
-                                        ))}
-                                    </nav>
-                                </div>
-                            )}
-                        </div>
+                <div className="flex flex-wrap gap-3">
+                    <div className="flex flex-col gap-1">
+                        <Label className="text-xs">Estado</Label>
+                        <Select value={selected_status} onValueChange={filterByStatus}>
+                            <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="pending">Pendientes</SelectItem>
+                                <SelectItem value="delivered">Entregadas</SelectItem>
+                                <SelectItem value="cancelled">Canceladas</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                        <Label className="text-xs">Almacén</Label>
+                        <Select value={selected_warehouse_id ? String(selected_warehouse_id) : 'all'} onValueChange={filterByWarehouse}>
+                            <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Todos</SelectItem>
+                                {warehouses.map((w) => (
+                                    <SelectItem key={w.id} value={String(w.id)}>{w.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
                 </div>
+
+                <DataTable columns={columns} data={entregas.data} keyExtractor={(row) => row.id} emptyMessage="No hay entregas." />
+                <Pagination links={entregas.links} />
             </div>
+
+            <Dialog open={!!markModal} onOpenChange={(open) => { if (!open) { setMarkModal(null); setStockByWarehouse([]); } }}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Marcar entrega como completada</DialogTitle>
+                    </DialogHeader>
+                    {markModal && (
+                        <div className="space-y-4 py-2">
+                            <div className="rounded-lg bg-muted p-3 text-sm">
+                                <p className="font-medium">{markModal.product.name}</p>
+                                <p className="text-muted-foreground text-xs">Factura #{markModal.sale.invoice_number} — Cantidad: {markModal.quantity}</p>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Almacén desde el que se entrega</Label>
+                                <Select value={selectedWarehouseId} onValueChange={setSelectedWarehouseId}>
+                                    <SelectTrigger><SelectValue placeholder="Seleccionar almacén" /></SelectTrigger>
+                                    <SelectContent>
+                                        {stockByWarehouse.map((s) => (
+                                            <SelectItem key={s.warehouse_id} value={String(s.warehouse_id)}>
+                                                {s.warehouse_name} — Stock: {s.quantity}{s.is_pos_warehouse ? ' (PV)' : ''}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                {stockSelected && (
+                                    <p className={`text-xs ${insufficient ? 'text-destructive' : 'text-muted-foreground'}`}>
+                                        Stock disponible: {stockSelected.quantity} — Requerido: {markModal.quantity}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setMarkModal(null)}>Cancelar</Button>
+                        <Button onClick={submitMarkDelivered} disabled={submitting || !selectedWarehouseId || !!insufficient}>
+                            {submitting ? 'Procesando...' : 'Confirmar entrega'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </AppLayout>
     );
 }

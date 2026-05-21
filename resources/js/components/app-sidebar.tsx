@@ -4,8 +4,9 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, Users, Package, Tag, ShoppingCart, FileText, Settings, Truck, MessageSquare, Brain, ShoppingBag, PackageCheck, Camera } from 'lucide-react';
+import { BookOpen, Folder, LayoutGrid, Users, Package, Tag, ShoppingCart, FileText, Settings, Truck, MessageSquare, Brain, ShoppingBag, PackageCheck, Camera, Warehouse, Store, ArrowLeftRight } from 'lucide-react';
 import AppLogo from './app-logo';
+import AppLogoIcon from './app-logo-icon';
 
 const mainNavItems: NavItem[] = [
     {
@@ -19,36 +20,42 @@ const mainNavItems: NavItem[] = [
         items: [
             {
                 title: 'Clientes',
-                href: '/clientes',
-            },
-            {
-                title: 'Estados de Cuenta',
-                href: '/estados-cuenta',
+                href: '/customers',
             },
         ],
     },
     {
-        title: 'Artículos',
-        icon: ShoppingCart,
+        title: 'Productos',
+        icon: Package,
         items: [
             {
-                title: 'Artículos',
-                href: '/articulos',
+                title: 'Productos',
+                href: '/products',
             },
             {
                 title: 'Categorías',
-                href: '/categorias',
+                href: '/categories',
             },
             {
                 title: 'Marcas',
-                href: '/marcas',
+                href: '/brands',
             },
         ],
     },
     {
-        title: 'Inventarios',
-        href: '/inventarios',
+        title: 'Inventario',
         icon: Package,
+        items: [
+            {
+                title: 'Stock por almacén',
+                href: '/inventarios',
+            },
+            {
+                title: 'Transferencias',
+                href: '/transferencias',
+                icon: ArrowLeftRight,
+            },
+        ],
     },
     {
         title: 'Ventas',
@@ -119,6 +126,16 @@ const mainNavItems: NavItem[] = [
                 href: '/empresa',
             },
             {
+                title: 'Almacenes',
+                href: '/almacenes',
+                icon: Warehouse,
+            },
+            {
+                title: 'Puntos de Venta',
+                href: '/puntos-venta',
+                icon: Store,
+            },
+            {
                 title: 'Registro de Actividad',
                 href: '/activity-log',
             },
@@ -160,8 +177,7 @@ export function AppSidebar() {
         
         if (userRole === 'vendedor') {
             return mainNavItems.filter(item => {
-                // Vendedor solo puede ver Ventas
-                return item.title === 'Ventas';
+                return ['Ventas', 'Clientes', 'Inventario', 'Artículos'].includes(item.title);
             });
         }
         
@@ -177,6 +193,7 @@ export function AppSidebar() {
                         <SidebarMenuButton size="lg" asChild>
                             <Link href="/dashboard" prefetch>
                                 <AppLogo />
+                                <AppLogoIcon className="hidden size-8 object-contain group-data-[collapsible=icon]:block" />
                             </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>

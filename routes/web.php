@@ -25,6 +25,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('admin/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])->name('admin.dashboard')->middleware(['role:admin,superadmin']);
     Route::get('dashboard/export', [\App\Http\Controllers\DashboardController::class, 'exportExcel'])->name('dashboard.export')->middleware(['role:admin,superadmin']);
+
+    // Design System demo (solo en desarrollo)
+    Route::get('design-system', function () {
+        return inertia('design-system');
+    })->name('design-system')->middleware(['role:admin,superadmin']);
     
     // Dashboard para usuarios regulares
     Route::get('user/dashboard', [\App\Http\Controllers\UserDashboardController::class, 'index'])->name('user.dashboard');
@@ -39,19 +44,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
     // Rutas para admin y superadmin
     Route::middleware(['role:admin,superadmin'])->group(function () {
-        Route::resource('categorias', \App\Http\Controllers\CategoriaController::class);
-        Route::resource('marcas', \App\Http\Controllers\MarcaController::class);
-        Route::resource('articulos', \App\Http\Controllers\ArticuloController::class);
-        Route::post('articulos/{articulo}/imagenes', [\App\Http\Controllers\ArticuloImagenController::class, 'store'])->name('articulos.imagenes.store');
-        Route::delete('articulos/imagenes/{imagen}', [\App\Http\Controllers\ArticuloImagenController::class, 'destroy'])->name('articulos.imagenes.destroy');
-        Route::post('articulos/imagenes/{imagen}/principal', [\App\Http\Controllers\ArticuloImagenController::class, 'setPrincipal'])->name('articulos.imagenes.setPrincipal');
-        Route::post('articulos/{articulo}/imagenes/order', [\App\Http\Controllers\ArticuloImagenController::class, 'updateOrder'])->name('articulos.imagenes.updateOrder');
-        
+        Route::resource('categories', \App\Http\Controllers\CategoryController::class)->except(['create', 'edit']);
+        Route::patch('categories/{category}/toggle-active', [\App\Http\Controllers\CategoryController::class, 'toggleActive'])->name('categories.toggle-active');
+        Route::resource('brands', \App\Http\Controllers\BrandController::class)->except(['create', 'edit']);
+        Route::patch('brands/{brand}/toggle-active', [\App\Http\Controllers\BrandController::class, 'toggleActive'])->name('brands.toggle-active');
+        Route::resource('products', \App\Http\Controllers\ProductController::class);
+        Route::patch('products/{product}/toggle-active', [\App\Http\Controllers\ProductController::class, 'toggleActive'])->name('products.toggle-active');
+        Route::post('products/{product}/images', [\App\Http\Controllers\ProductImageController::class, 'store'])->name('products.images.store');
+        Route::delete('products/images/{image}', [\App\Http\Controllers\ProductImageController::class, 'destroy'])->name('products.images.destroy');
+        Route::post('products/images/{image}/set-primary', [\App\Http\Controllers\ProductImageController::class, 'setPrimary'])->name('products.images.set-primary');
+        Route::post('products/{product}/images/order', [\App\Http\Controllers\ProductImageController::class, 'updateOrder'])->name('products.images.order');
+
         // Rutas de códigos QR y de barras
-        Route::get('articulos/{articulo}/codigo-barras', [\App\Http\Controllers\CodigoController::class, 'generarCodigoBarras'])->name('articulos.codigo-barras');
-        Route::get('articulos/{articulo}/codigo-qr', [\App\Http\Controllers\CodigoController::class, 'generarCodigoQR'])->name('articulos.codigo-qr');
-        Route::get('articulos/{articulo}/codigos', [\App\Http\Controllers\CodigoController::class, 'generarCodigos'])->name('articulos.codigos');
-        Route::post('codigos/imprimir-etiquetas', [\App\Http\Controllers\CodigoController::class, 'imprimirEtiquetas'])->name('codigos.imprimir-etiquetas');
+        Route::get('products/{product}/barcode', [\App\Http\Controllers\CodigoController::class, 'generarCodigoBarras'])->name('products.barcode');
+        Route::get('products/{product}/qr', [\App\Http\Controllers\CodigoController::class, 'generarCodigoQR'])->name('products.qr');
+        Route::get('products/{product}/codes', [\App\Http\Controllers\CodigoController::class, 'generarCodigos'])->name('products.codes');
+        Route::post('products/print-labels', [\App\Http\Controllers\CodigoController::class, 'imprimirEtiquetas'])->name('products.print-labels');
         
         Route::resource('suppliers', \App\Http\Controllers\SupplierController::class);
         Route::get('orders/products/{supplier}', [\App\Http\Controllers\OrderController::class, 'getProductsBySupplier'])->name('orders.products');
@@ -60,18 +68,31 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('inventarios/reconcile-all', [\App\Http\Controllers\InventarioController::class, 'reconcileAll'])->name('inventarios.reconcile-all');
         Route::post('inventarios/{inventario}/reconcile', [\App\Http\Controllers\InventarioController::class, 'reconcile'])->name('inventarios.reconcile');
         Route::post('inventarios/{inventario}/adjust', [\App\Http\Controllers\InventarioController::class, 'adjust'])->name('inventarios.adjust');
-        Route::resource('inventarios', \App\Http\Controllers\InventarioController::class);
-        Route::get('articulos/{articulo}/movimientos', [\App\Http\Controllers\MovimientoController::class, 'index'])->name('movimientos.index');
+        Route::resource('inventarios', \App\Http\Controllers\InventarioController::class)->only(['create', 'store', 'edit', 'update', 'destroy']);
+        Route::get('products/{product}/movements', [\App\Http\Controllers\MovimientoController::class, 'index'])->name('products.movements');
+        Route::resource('almacenes', \App\Http\Controllers\WarehouseController::class);
+        Route::post('puntos-venta/set-active', [\App\Http\Controllers\PointOfSaleController::class, 'setActive'])->name('puntos-venta.set-active');
+        Route::resource('puntos-venta', \App\Http\Controllers\PointOfSaleController::class)->parameters(['puntos-venta' => 'puntoVenta']);
+        Route::post('transferencias/{transferencia}/dispatch', [\App\Http\Controllers\StockTransferController::class, 'dispatchTransfer'])->name('transferencias.dispatch');
+        Route::post('transferencias/{transferencia}/receive', [\App\Http\Controllers\StockTransferController::class, 'receive'])->name('transferencias.receive');
+        Route::post('transferencias/{transferencia}/cancel', [\App\Http\Controllers\StockTransferController::class, 'cancel'])->name('transferencias.cancel');
         Route::resource('listas-precios', \App\Http\Controllers\ListaPrecioController::class);
         Route::post('listas-precios/{listas_precio}/regenerar', [\App\Http\Controllers\ListaPrecioController::class, 'regenerarPrecios'])->name('listas-precios.regenerar');
     });
 
     // Rutas para todos los roles
-    Route::resource('clientes', \App\Http\Controllers\ClienteController::class);
-    Route::get('clientes/{cliente}/estado-cuenta', [\App\Http\Controllers\ClienteController::class, 'estadoCuenta'])->name('clientes.estado-cuenta');
-    Route::get('clientes/{cliente}/exportar-excel', [\App\Http\Controllers\ClienteController::class, 'exportarExcel'])->name('clientes.exportar-excel');
-    Route::get('clientes/{cliente}/exportar-pdf', [\App\Http\Controllers\ClienteController::class, 'exportarPdf'])->name('clientes.exportar-pdf');
-    Route::get('estados-cuenta', [\App\Http\Controllers\ClienteController::class, 'estadosCuenta'])->name('estados-cuenta.index');
+    // Transferencias: vendedor puede crear/listar/ver (queda en draft); admin maneja dispatch/receive/cancel arriba
+    Route::resource('transferencias', \App\Http\Controllers\StockTransferController::class)->except(['edit', 'update']);
+
+    Route::resource('customers', \App\Http\Controllers\CustomerController::class)->except(['destroy']);
+    Route::patch('customers/{customer}/toggle-active', [\App\Http\Controllers\CustomerController::class, 'toggleActive'])->name('customers.toggle-active');
+    Route::get('customers/{customer}/export-excel', [\App\Http\Controllers\CustomerController::class, 'exportExcel'])->name('customers.export-excel');
+    Route::get('customers/{customer}/export-pdf', [\App\Http\Controllers\CustomerController::class, 'exportPdf'])->name('customers.export-pdf');
+
+    // Inventario y productos — lectura para todos los roles autenticados
+    Route::get('inventarios', [\App\Http\Controllers\InventarioController::class, 'index'])->name('inventarios.index');
+    Route::get('inventarios/{inventario}', [\App\Http\Controllers\InventarioController::class, 'show'])->name('inventarios.show');
+    Route::get('products/{product}/stock-by-warehouse', [\App\Http\Controllers\ProductController::class, 'stockByWarehouse'])->name('products.stock-by-warehouse');
     
     // Rutas de escáner de códigos para ventas
     Route::get('scanner', [\App\Http\Controllers\CodigoController::class, 'scanner'])->name('scanner.index');
@@ -89,6 +110,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('entregas', [\App\Http\Controllers\EntregaController::class, 'index'])->name('entregas.index');
     Route::post('entregas/{entrega}/marcar-entregada', [\App\Http\Controllers\EntregaController::class, 'marcarEntregada'])->name('entregas.marcar-entregada');
     Route::post('entregas/{entrega}/cancelar', [\App\Http\Controllers\EntregaController::class, 'cancelar'])->name('entregas.cancelar');
+    Route::patch('entregas/{entrega}/warehouse', [\App\Http\Controllers\EntregaController::class, 'updateWarehouse'])->name('entregas.update-warehouse');
     Route::delete('entregas/{entrega}', [\App\Http\Controllers\EntregaController::class, 'destroy'])->name('entregas.destroy');
 
     Route::get('chat', [\App\Http\Controllers\ChatController::class, 'index'])->name('chat.index');
@@ -100,7 +122,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('facturas/{factura}/pdf', [\App\Http\Controllers\FacturaPdfController::class, 'generate'])->name('facturas.pdf');
 
-    Route::post('afip/consultar-cuit', [\App\Http\Controllers\ClienteController::class, 'consultarCuit'])->name('afip.consultar-cuit');
+    Route::post('afip/consultar-cuit', [\App\Http\Controllers\CustomerController::class, 'consultarCuit'])->name('afip.consultar-cuit');
 
 });
 

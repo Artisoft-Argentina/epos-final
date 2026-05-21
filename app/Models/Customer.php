@@ -11,30 +11,33 @@ class Customer extends Model
 
     protected $fillable = [
         'business_name',
+        'fantasy_name',
+        'person_type',
         'tax_id',
-        'address',
+        'dni',
         'phone',
+        'cellphone',
         'email',
+        'address',
         'zip_code',
         'city_id',
         'state_id',
         'tax_status',
+        'fiscal_name',
+        'fiscal_address',
+        'notes',
         'credit',
         'active',
     ];
 
     protected $casts = [
         'tax_id'  => 'string',
+        'dni'     => 'string',
         'credit'  => 'decimal:2',
         'active'  => 'boolean',
     ];
 
-    public function getCuitAttribute(): ?string
-    {
-        return $this->tax_id ? (string) $this->tax_id : null;
-    }
-
-    public function city()
+public function city()
     {
         return $this->belongsTo(City::class);
     }

@@ -110,7 +110,7 @@ export default function TenantsIndex({ tenants }: Props) {
                                         </span>
                                     </td>
                                     <td className="px-4 py-3">
-                                        <div className="flex items-center justify-end gap-1">
+                                        <div className="flex items-center gap-1">
                                             <Link href={route('central.tenants.show', tenant.id)}>
                                                 <Button variant="ghost" size="sm">
                                                     <Eye className="h-4 w-4" />

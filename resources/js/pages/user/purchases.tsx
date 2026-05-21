@@ -4,16 +4,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface Factura {
     id: number;
-    numfactura: string;
-    fecha: string;
+    invoice_number: string;
+    date: string;
     total: number;
-    pagada: boolean;
-    articulos: Array<{
+    payment_status: string;
+    products: Array<{
         id: number;
-        articulo: string;
         pivot: {
-            cantidad: number;
-            preciounitario: number;
+            name: string;
+            quantity: number;
+            unit_price: number;
             subtotal: number;
         };
     }>;
@@ -29,7 +29,7 @@ export default function UserPurchases({ facturas }: Props) {
             <Head title="Mis Compras" />
             <div className="container mx-auto px-4 py-8">
                 <h1 className="text-3xl font-bold mb-8">Mis Compras</h1>
-                
+
                 {facturas.length === 0 ? (
                     <Card>
                         <CardContent className="py-8 text-center">
@@ -42,41 +42,41 @@ export default function UserPurchases({ facturas }: Props) {
                             <Card key={factura.id}>
                                 <CardHeader>
                                     <CardTitle className="flex justify-between items-center">
-                                        <span>Factura #{factura.numfactura}</span>
+                                        <span>Factura #{factura.invoice_number}</span>
                                         <span className="text-sm font-normal text-gray-500">
-                                            {new Date(factura.fecha).toLocaleDateString()}
+                                            {new Date(factura.date).toLocaleDateString()}
                                         </span>
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent>
                                     <div className="space-y-4">
-                                        {factura.articulos.map((articulo) => (
-                                            <div key={articulo.id} className="flex justify-between items-center border-b pb-2">
+                                        {factura.products.map((p) => (
+                                            <div key={p.id} className="flex justify-between items-center border-b pb-2">
                                                 <div>
-                                                    <p className="font-medium">{articulo.articulo}</p>
+                                                    <p className="font-medium">{p.pivot.name}</p>
                                                     <p className="text-sm text-gray-500">
-                                                        Cantidad: {articulo.pivot.cantidad}
+                                                        Cantidad: {p.pivot.quantity}
                                                     </p>
                                                 </div>
                                                 <span className="font-bold">
-                                                    ${articulo.pivot.subtotal.toFixed(2)}
+                                                    ${Number(p.pivot.subtotal).toFixed(2)}
                                                 </span>
                                             </div>
                                         ))}
                                         <div className="flex justify-between items-center pt-4 border-t-2">
                                             <span className="text-xl font-bold">Total:</span>
                                             <span className="text-xl font-bold">
-                                                ${factura.total.toFixed(2)}
+                                                ${Number(factura.total).toFixed(2)}
                                             </span>
                                         </div>
                                         <div className="flex justify-between items-center">
                                             <span>Estado:</span>
                                             <span className={`px-3 py-1 rounded ${
-                                                factura.pagada 
-                                                    ? 'bg-green-100 text-green-800' 
+                                                factura.payment_status === 'SI'
+                                                    ? 'bg-green-100 text-green-800'
                                                     : 'bg-yellow-100 text-yellow-800'
                                             }`}>
-                                                {factura.pagada ? 'Pagada' : 'Pendiente'}
+                                                {factura.payment_status === 'SI' ? 'Pagada' : 'Pendiente'}
                                             </span>
                                         </div>
                                     </div>

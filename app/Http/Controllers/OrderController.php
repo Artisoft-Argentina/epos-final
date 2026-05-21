@@ -7,6 +7,7 @@ use App\Models\Supplier;
 use App\Models\Product;
 use App\Models\Stock;
 use App\Models\StockMovement;
+use App\Models\Warehouse;
 use App\Services\MovimientoService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -25,7 +26,8 @@ class OrderController extends Controller
     public function create()
     {
         return Inertia::render('Orders/Create', [
-            'suppliers' => Supplier::all(),
+            'suppliers'  => Supplier::all(),
+            'warehouses' => Warehouse::active()->orderBy('is_default', 'desc')->orderBy('name')->get(),
         ]);
     }
 
@@ -36,6 +38,7 @@ class OrderController extends Controller
             'order_number'                  => 'required|integer',
             'date'                          => 'required|date',
             'supplier_id'                   => 'required|exists:suppliers,id',
+            'warehouse_id'                  => 'nullable|exists:warehouses,id',
             'notes'                         => 'nullable|string',
             'detalles'                      => 'required|array|min:1',
             'detalles.*.articulo_id'        => 'required|exists:products,id',
@@ -43,11 +46,14 @@ class OrderController extends Controller
             'detalles.*.unit_price'         => 'required|numeric|min:0',
         ]);
 
+        $warehouseId = $request->warehouse_id ?? Warehouse::isDefault()->value('id');
+
         $order = Order::create([
             'pos_number'    => $request->pos_number,
             'order_number'  => $request->order_number,
             'date'          => $request->date,
             'supplier_id'   => $request->supplier_id,
+            'warehouse_id'  => $warehouseId,
             'user_id'       => auth()->id(),
             'notes'         => $request->notes,
             'surcharge'     => 0,
@@ -92,8 +98,9 @@ class OrderController extends Controller
     public function edit(Order $order)
     {
         return Inertia::render('Orders/Edit', [
-            'order'     => $order->load(['supplier', 'products.product']),
-            'suppliers' => Supplier::all(),
+            'order'      => $order->load(['supplier', 'products.product', 'warehouse']),
+            'suppliers'  => Supplier::all(),
+            'warehouses' => Warehouse::active()->orderBy('is_default', 'desc')->orderBy('name')->get(),
         ]);
     }
 
@@ -104,6 +111,7 @@ class OrderController extends Controller
             'order_number'                  => 'required|integer',
             'date'                          => 'required|date',
             'supplier_id'                   => 'required|exists:suppliers,id',
+            'warehouse_id'                  => 'nullable|exists:warehouses,id',
             'notes'                         => 'nullable|string',
             'detalles'                      => 'required|array|min:1',
             'detalles.*.articulo_id'        => 'required|exists:products,id',
@@ -116,6 +124,7 @@ class OrderController extends Controller
             'order_number'  => $request->order_number,
             'date'          => $request->date,
             'supplier_id'   => $request->supplier_id,
+            'warehouse_id'  => $request->warehouse_id ?? $order->warehouse_id,
             'notes'         => $request->notes,
         ]);
 
@@ -168,18 +177,14 @@ class OrderController extends Controller
             return redirect()->back()->with('error', 'Esta orden ya fue convertida a inventario');
         }
 
-        foreach ($order->products as $detail) {
-            $stock = Stock::where('product_id', $detail->product_id)->first();
+        $warehouseId = $order->warehouse_id ?? Warehouse::isDefault()->value('id');
 
-            if ($stock) {
-                // quantity se actualiza via MovimientoService
-            } else {
-                $stock = Stock::create([
-                    'product_id'  => $detail->product_id,
-                    'quantity'    => 0,
-                    'supplier_id' => $order->supplier_id,
-                ]);
-            }
+        if (! $warehouseId) {
+            return redirect()->back()->with('error', 'No hay almacén configurado para esta orden.');
+        }
+
+        foreach ($order->products as $detail) {
+            $stock = Stock::forProductInWarehouse($detail->product_id, $warehouseId);
 
             $this->movimientoService->registrar(
                 $stock, StockMovement::TYPE_PURCHASE_ENTRY,

@@ -7,11 +7,11 @@ import { Printer } from 'lucide-react';
 interface Etiqueta {
   articulo: {
     id: number;
-    codarticulo: string;
-    articulo: string;
-    precio: number;
-    categoria: { nombre: string };
-    marca: { nombre: string };
+    sku: string;
+    name: string;
+    price: number;
+    category?: { id: number; name: string } | null;
+    brand?: { id: number; name: string } | null;
   };
   codigo_barras: string;
   codigo_qr: string;
@@ -49,12 +49,12 @@ export default function ImprimirEtiquetas({ etiquetas }: Props) {
                 <div className="text-center space-y-2">
                   {/* Nombre del producto */}
                   <h3 className="font-bold text-sm print:text-xs truncate">
-                    {etiqueta.articulo.articulo}
+                    {etiqueta.articulo.name}
                   </h3>
-                  
+
                   {/* Código del artículo */}
                   <p className="text-xs text-gray-600 print:text-[10px]">
-                    Código: {etiqueta.articulo.codarticulo}
+                    Código: {etiqueta.articulo.sku}
                   </p>
 
                   {/* Código de barras */}
@@ -82,13 +82,13 @@ export default function ImprimirEtiquetas({ etiquetas }: Props) {
 
                   {/* Precio */}
                   <p className="font-bold text-lg print:text-sm">
-                    ${etiqueta.articulo.precio}
+                    ${etiqueta.articulo.price}
                   </p>
 
                   {/* Categoría y marca */}
                   <div className="text-xs text-gray-500 print:text-[8px]">
-                    <p>{etiqueta.articulo.categoria.nombre}</p>
-                    <p>{etiqueta.articulo.marca.nombre}</p>
+                    <p>{etiqueta.articulo.category?.name ?? '-'}</p>
+                    <p>{etiqueta.articulo.brand?.name ?? '-'}</p>
                   </div>
                 </div>
               </CardContent>

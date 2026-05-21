@@ -43,6 +43,9 @@ class DatabaseSeeder extends Seeder
 
         tenancy()->initialize($tenant);
 
+        // Correr migraciones del tenant antes de seedear
+        \Artisan::call('tenants:migrate', ['--tenants' => ['principal'], '--force' => true]);
+
         try {
             $this->call([
                 RoleSeeder::class,

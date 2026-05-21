@@ -1,6 +1,8 @@
 import { Head } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { PageHeader } from '@/components/page-header';
+import { DataTable, type Column } from '@/components/data-table';
 
 interface Activity {
     id: number;
@@ -8,25 +10,12 @@ interface Activity {
     description: string;
     subject_type: string;
     subject_id: number;
-    causer_type: string;
-    causer_id: number;
-    properties: any;
     created_at: string;
-    causer?: {
-        name: string;
-    };
-    subject?: {
-        id: number;
-    };
+    causer?: { name: string };
 }
 
 interface Props {
-    activities: {
-        data: Activity[];
-        links: any[];
-        current_page: number;
-        last_page: number;
-    };
+    activities: { data: Activity[]; links: any[]; current_page: number; last_page: number };
 }
 
 export default function Index({ activities }: Props) {
@@ -35,52 +24,50 @@ export default function Index({ activities }: Props) {
         return `${type} #${activity.subject_id}`;
     };
 
-    const formatDate = (dateString: string) => {
-        const date = new Date(dateString);
-        return date.toLocaleString('es-ES');
-    };
+    const columns: Column<Activity>[] = [
+        {
+            key: 'causer',
+            header: 'Usuario',
+            render: (row) => <span className="font-medium text-foreground">{row.causer?.name || 'Sistema'}</span>,
+        },
+        {
+            key: 'description',
+            header: 'Acción',
+            render: (row) => <span className="text-foreground">{row.description}</span>,
+        },
+        {
+            key: 'subject',
+            header: 'Entidad',
+            render: (row) => <Badge variant="secondary">{getSubjectName(row)}</Badge>,
+        },
+        {
+            key: 'log_name',
+            header: 'Módulo',
+            render: (row) => <span className="text-muted-foreground capitalize">{row.log_name}</span>,
+        },
+        {
+            key: 'created_at',
+            header: 'Fecha',
+            align: 'right',
+            render: (row) => (
+                <span className="text-muted-foreground tabular-nums text-xs">
+                    {new Date(row.created_at).toLocaleString('es-AR')}
+                </span>
+            ),
+        },
+    ];
 
     return (
         <AppLayout>
             <Head title="Registro de Actividad" />
-            
-            <div className="p-6">
-                <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">
-                    Registro de Actividad
-                </h1>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Movimientos del Sistema</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-4">
-                            {activities.data.map((activity) => (
-                                <div key={activity.id} className="border-b pb-4 last:border-b-0">
-                                    <div className="flex justify-between items-start">
-                                        <div className="flex-1">
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <span className="font-medium text-gray-900 dark:text-gray-100">
-                                                    {activity.causer?.name || 'Sistema'}
-                                                </span>
-                                                <span className="text-gray-500">•</span>
-                                                <span className="text-sm text-gray-600 dark:text-gray-400">
-                                                    {activity.description}
-                                                </span>
-                                            </div>
-                                            <div className="text-sm text-gray-500 dark:text-gray-400">
-                                                {getSubjectName(activity)}
-                                            </div>
-                                        </div>
-                                        <div className="text-sm text-gray-500 dark:text-gray-400">
-                                            {formatDate(activity.created_at)}
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </CardContent>
-                </Card>
+            <div className="flex flex-col gap-6 p-6">
+                <PageHeader title="Registro de Actividad" description="Historial de operaciones del sistema" />
+                <DataTable
+                    columns={columns}
+                    data={activities.data}
+                    keyExtractor={(row) => row.id}
+                    emptyMessage="No hay actividad registrada."
+                />
             </div>
         </AppLayout>
     );

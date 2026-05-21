@@ -10,16 +10,23 @@ return new class extends Migration
     {
         Schema::create('customers', function (Blueprint $table) {
             $table->id();
-            $table->string('business_name');              // razonsocial → business_name
-            $table->string('tax_id', 13)->nullable();      // documentounico → tax_id
-            $table->string('address');                     // direccion → address
-            $table->string('phone')->nullable();           // telefono → phone
+            $table->string('business_name');
+            $table->string('fantasy_name')->nullable();
+            $table->string('person_type', 20)->default('fisica'); // 'fisica' / 'juridica'
+            $table->string('tax_id', 13)->nullable();              // CUIT/CUIL — requerido si juridica
+            $table->string('dni', 8)->nullable();                  // DNI — requerido si fisica
+            $table->string('phone')->nullable();
+            $table->string('cellphone')->nullable();
             $table->string('email')->nullable();
-            $table->string('zip_code', 10)->nullable();                   // codigopostal → zip_code
+            $table->string('address')->nullable();
+            $table->string('zip_code', 10)->nullable();
             $table->foreignId('city_id')->nullable()->constrained('cities')->nullOnDelete();
             $table->foreignId('state_id')->nullable()->constrained('states')->nullOnDelete();
-            $table->string('tax_status');                  // condicioniva → tax_status
-            $table->decimal('credit', 12, 2)->default(0);  // haber → credit
+            $table->string('tax_status');                          // condición IVA — NOT NULL
+            $table->string('fiscal_name')->nullable();             // V2 AFIP
+            $table->string('fiscal_address')->nullable();          // V2 AFIP
+            $table->text('notes')->nullable();
+            $table->decimal('credit', 12, 2)->default(0);
             $table->boolean('active')->default(true);
             $table->softDeletes();
             $table->timestamps();

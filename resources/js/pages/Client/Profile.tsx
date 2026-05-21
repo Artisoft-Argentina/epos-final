@@ -12,17 +12,18 @@ interface Props {
         email: string;
     };
     cliente: {
-        razonsocial: string;
-        telefono: string;
-        direccion: string;
+        business_name: string;
+        fantasy_name?: string | null;
+        phone: string;
+        address: string;
     };
 }
 
 export default function ClientProfile({ user, cliente }: Props) {
     const { data, setData, put, processing, errors } = useForm({
         name: user.name,
-        telefono: cliente?.telefono || '',
-        direccion: cliente?.direccion || '',
+        phone: cliente?.phone || '',
+        address: cliente?.address || '',
     });
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -70,27 +71,27 @@ export default function ClientProfile({ user, cliente }: Props) {
                         </div>
 
                         <div>
-                            <Label htmlFor="telefono">Teléfono</Label>
+                            <Label htmlFor="phone">Teléfono</Label>
                             <Input
-                                id="telefono"
+                                id="phone"
                                 type="text"
-                                value={data.telefono}
-                                onChange={(e) => setData('telefono', e.target.value)}
+                                value={data.phone}
+                                onChange={(e) => setData('phone', e.target.value)}
                                 className="mt-1"
                             />
-                            {errors.telefono && <p className="text-red-500 text-sm mt-1">{errors.telefono}</p>}
+                            {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
                         </div>
 
                         <div>
-                            <Label htmlFor="direccion">Dirección</Label>
+                            <Label htmlFor="address">Dirección</Label>
                             <Input
-                                id="direccion"
+                                id="address"
                                 type="text"
-                                value={data.direccion}
-                                onChange={(e) => setData('direccion', e.target.value)}
+                                value={data.address}
+                                onChange={(e) => setData('address', e.target.value)}
                                 className="mt-1"
                             />
-                            {errors.direccion && <p className="text-red-500 text-sm mt-1">{errors.direccion}</p>}
+                            {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
                         </div>
 
                         <div className="flex gap-4">

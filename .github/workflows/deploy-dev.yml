@@ -30,6 +30,9 @@ jobs:
             echo "🐳 Rebuilding Docker containers..."
             make prod-build && make prod-up
 
+            echo "🗄️  Recreating database (dev)..."
+            make fresh-ci
+
             echo "✅ Deployment completed successfully!"
       
       - name: Notify

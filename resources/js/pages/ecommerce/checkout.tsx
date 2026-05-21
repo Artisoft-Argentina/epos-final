@@ -10,11 +10,12 @@ interface CartItem {
     quantity: number;
     articulo: {
         id: number;
-        articulo: string;
-        precio: number;
-        imagenes?: Array<{
+        name: string;
+        price: number;
+        images?: Array<{
             id: number;
-            ruta: string;
+            path: string;
+            url?: string;
         }>;
     };
 }
@@ -107,10 +108,10 @@ function CheckoutContent({ cartItems, total, publicKey }: Props) {
                                 {cartItems.map((cartItem) => (
                                     <div key={cartItem.id} className="flex items-center gap-4">
                                         <div className="w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-50 rounded-xl overflow-hidden flex-shrink-0">
-                                            {cartItem.articulo.imagenes && cartItem.articulo.imagenes.length > 0 ? (
+                                            {cartItem.articulo.images && cartItem.articulo.images.length > 0 ? (
                                                 <img
-                                                    src={`/storage/${cartItem.articulo.imagenes[0].ruta}`}
-                                                    alt={cartItem.articulo.articulo}
+                                                    src={`/storage/${cartItem.articulo.images[0].path}`}
+                                                    alt={cartItem.articulo.name}
                                                     className="w-full h-full object-cover"
                                                 />
                                             ) : (
@@ -121,12 +122,12 @@ function CheckoutContent({ cartItems, total, publicKey }: Props) {
                                         </div>
 
                                         <div className="flex-1 min-w-0">
-                                            <h3 className="font-medium text-gray-900 line-clamp-1">{cartItem.articulo.articulo}</h3>
+                                            <h3 className="font-medium text-gray-900 line-clamp-1">{cartItem.articulo.name}</h3>
                                             <p className="text-sm text-gray-500">Cantidad: {cartItem.quantity}</p>
                                         </div>
 
                                         <span className="font-semibold text-gray-900">
-                                            ${(cartItem.articulo.precio * cartItem.quantity).toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+                                            ${(cartItem.articulo.price * cartItem.quantity).toLocaleString('es-AR', { minimumFractionDigits: 2 })}
                                         </span>
                                     </div>
                                 ))}

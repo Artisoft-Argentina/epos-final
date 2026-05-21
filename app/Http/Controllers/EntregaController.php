@@ -4,31 +4,49 @@ namespace App\Http\Controllers;
 
 use App\Models\Delivery;
 use App\Models\Sale;
-use App\Models\Stock;
-use App\Models\StockMovement;
-use App\Services\MovimientoService;
+use App\Models\Warehouse;
+use App\Services\DeliveryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class EntregaController extends Controller
 {
-    public function __construct(private MovimientoService $movimientoService) {}
+    public function __construct(private DeliveryService $deliveryService) {}
 
-    public function index()
+    public function index(Request $request)
     {
-        $entregas = Delivery::with(['sale.customer', 'product'])
-            ->pending()
-            ->orderBy('delivery_date', 'asc')
-            ->paginate(20);
+        $query = Delivery::with(['sale.customer', 'product', 'warehouse'])
+            ->orderBy('delivery_date', 'asc');
 
-        return Inertia::render('Entregas/Index', ['entregas' => $entregas]);
+        if ($status = $request->input('status')) {
+            $query->where('status', $status);
+        } else {
+            $query->where('status', Delivery::STATUS_PENDING);
+        }
+
+        if ($warehouseId = $request->input('warehouse_id')) {
+            $query->where('warehouse_id', $warehouseId);
+        }
+
+        if ($saleId = $request->input('sale_id')) {
+            $query->where('sale_id', $saleId);
+        }
+
+        return Inertia::render('Entregas/Index', [
+            'entregas'              => $query->paginate(20),
+            'warehouses'            => Warehouse::active()->orderBy('is_default', 'desc')->orderBy('name')->get(['id', 'name', 'is_default']),
+            'selected_status'       => $status ?? Delivery::STATUS_PENDING,
+            'selected_warehouse_id' => $warehouseId,
+            'selected_sale_id'      => $saleId ? (int) $saleId : null,
+        ]);
     }
 
     public function create(Sale $factura)
     {
         return Inertia::render('Entregas/Create', [
-            'factura' => $factura->load(['customer', 'products', 'deliveries']),
+            'factura'    => $factura->load(['customer', 'products', 'deliveries.warehouse']),
+            'warehouses' => Warehouse::active()->orderBy('is_default', 'desc')->orderBy('name')->get(['id', 'name', 'is_default']),
         ]);
     }
 
@@ -38,66 +56,50 @@ class EntregaController extends Controller
             'entregas'                  => 'required|array|min:1',
             'entregas.*.articulo_id'    => 'required|exists:products,id',
             'entregas.*.cantidad'       => 'required|integer|min:1',
+            'entregas.*.warehouse_id'   => 'required|exists:warehouses,id',
             'fecha_entrega'             => 'required|date',
             'observaciones'             => 'nullable|string',
         ]);
 
-        DB::transaction(function () use ($request, $factura) {
-            foreach ($request->entregas as $entregaData) {
-                $stock = Stock::where('product_id', $entregaData['articulo_id'])->first();
-
-                if ($stock) {
-                    if ($stock->quantity < $entregaData['cantidad']) {
-                        throw new \Exception('Stock insuficiente para el producto ID: ' . $entregaData['articulo_id']);
-                    }
-                    // quantity se actualiza via MovimientoService
-                }
-
-                $delivery = Delivery::create([
-                    'sale_id'              => $factura->id,
-                    'product_id'           => $entregaData['articulo_id'],
-                    'quantity'             => $entregaData['cantidad'],
-                    'delivery_date'        => $request->fecha_entrega,
-                    'notes'                => $request->observaciones,
-                    'status'               => Delivery::STATUS_DELIVERED,
-                    'actual_delivery_date' => now(),
-                ]);
-
-                if ($stock) {
-                    $this->movimientoService->registrar(
-                        $stock, StockMovement::TYPE_DELIVERY_EXIT,
-                        $entregaData['cantidad'], $delivery
+        try {
+            DB::transaction(function () use ($request, $factura) {
+                foreach ($request->entregas as $entregaData) {
+                    $this->deliveryService->create(
+                        $factura,
+                        (int) $entregaData['articulo_id'],
+                        (int) $entregaData['cantidad'],
+                        (int) $entregaData['warehouse_id'],
+                        Delivery::STATUS_DELIVERED,
+                        \Carbon\Carbon::parse($request->fecha_entrega),
+                        $request->observaciones,
+                        auth()->id(),
                     );
                 }
-            }
-        });
+            });
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
 
         return redirect()->route('ventas.index')->with('success', 'Entrega registrada y stock descontado exitosamente');
     }
 
-    public function marcarEntregada(Delivery $entrega)
+    public function marcarEntregada(Request $request, Delivery $entrega)
     {
+        $request->validate(['warehouse_id' => 'required|exists:warehouses,id']);
+
         if ($entrega->isDelivered()) {
             return back()->with('error', 'Esta entrega ya fue completada');
         }
 
-        DB::transaction(function () use ($entrega) {
-            $stock = Stock::where('product_id', $entrega->product_id)->first();
-
-            if ($stock) {
-                if ($stock->quantity < $entrega->quantity) {
-                    throw new \Exception('Stock insuficiente para completar la entrega');
-                }
-                // quantity se actualiza via MovimientoService
-
-                $this->movimientoService->registrar(
-                    $stock, StockMovement::TYPE_DELIVERY_EXIT,
-                    $entrega->quantity, $entrega
-                );
-            }
-
-            $entrega->markAsDelivered();
-        });
+        try {
+            $this->deliveryService->markDelivered(
+                $entrega,
+                (int) $request->warehouse_id,
+                auth()->id(),
+            );
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
 
         return back()->with('success', 'Entrega marcada como completada');
     }
@@ -105,7 +107,7 @@ class EntregaController extends Controller
     public function cancelar(Delivery $entrega)
     {
         if ($entrega->isDelivered()) {
-            return back()->with('error', 'No se puede cancelar una entrega ya completada');
+            return back()->with('error', 'No se puede cancelar una entrega ya completada. Use revertir desde la venta.');
         }
 
         $entrega->update(['status' => Delivery::STATUS_CANCELLED]);
@@ -113,21 +115,24 @@ class EntregaController extends Controller
         return back()->with('success', 'Entrega cancelada');
     }
 
+    public function updateWarehouse(Request $request, Delivery $entrega)
+    {
+        if ($entrega->isDelivered()) {
+            return back()->with('error', 'No se puede cambiar el almacén de una entrega ya completada.');
+        }
+
+        $request->validate(['warehouse_id' => 'required|exists:warehouses,id']);
+        $entrega->update(['warehouse_id' => $request->warehouse_id]);
+
+        return back()->with('success', 'Almacén de entrega actualizado.');
+    }
+
     public function destroy(Delivery $entrega)
     {
         DB::transaction(function () use ($entrega) {
             if ($entrega->isDelivered()) {
-                $stock = Stock::where('product_id', $entrega->product_id)->first();
-                if ($stock) {
-                    // quantity se actualiza via MovimientoService
-                    $this->movimientoService->registrar(
-                        $stock, StockMovement::TYPE_RETURN,
-                        $entrega->quantity, $entrega, null,
-                        'Reversión por eliminación de entrega'
-                    );
-                }
+                $this->deliveryService->revert($entrega, 'Reversión por eliminación de entrega');
             }
-
             $entrega->delete();
         });
 

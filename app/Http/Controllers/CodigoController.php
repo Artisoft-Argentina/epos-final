@@ -5,28 +5,39 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Services\CodigoService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Inertia\Inertia;
 
 class CodigoController extends Controller
 {
     public function __construct(protected CodigoService $codigoService) {}
 
-    public function generarCodigos(Product $articulo)
+    public function generarCodigos(Product $product)
     {
-        return response()->json($this->codigoService->generarEtiquetaCompleta($articulo));
+        $data = $this->codigoService->generarEtiquetaCompleta($product);
+
+        $pdf = Pdf::loadView('pdf.etiqueta-producto', [
+            'product'       => $product,
+            'codigo_barras' => $data['codigo_barras'],
+            'codigo_qr'     => $data['codigo_qr'],
+            'imagen_barras' => $data['imagen_barras'],
+            'imagen_qr'     => $data['imagen_qr'],
+        ])->setPaper([0, 0, 226.77, 396.85]); // ~80x140mm vertical
+
+        return $pdf->stream("etiqueta-{$product->sku}.pdf");
     }
 
-    public function generarCodigoBarras(Product $articulo)
+    public function generarCodigoBarras(Product $product)
     {
-        $codigo = $this->codigoService->generarCodigoBarras($articulo);
+        $codigo = $this->codigoService->generarCodigoBarras($product);
         $imagen = $this->codigoService->generarImagenCodigoBarras($codigo);
 
         return response($imagen)->header('Content-Type', 'image/png');
     }
 
-    public function generarCodigoQR(Product $articulo)
+    public function generarCodigoQR(Product $product)
     {
-        $codigo = $this->codigoService->generarCodigoQR($articulo);
+        $codigo = $this->codigoService->generarCodigoQR($product);
         $imagen = $this->codigoService->generarImagenQR($codigo);
 
         return response($imagen)->header('Content-Type', 'image/svg+xml');
@@ -57,13 +68,17 @@ class CodigoController extends Controller
 
     public function imprimirEtiquetas(Request $request)
     {
-        $etiquetas = collect($request->input('articulos', []))
+        $products = collect($request->input('articulos', []))
             ->map(fn($id) => Product::find($id))
-            ->filter()
-            ->map(fn($product) => $this->codigoService->generarEtiquetaCompleta($product))
-            ->values();
+            ->filter();
 
-        return Inertia::render('Codigos/ImprimirEtiquetas', ['etiquetas' => $etiquetas]);
+        $etiquetas = $products->map(fn($product) => $this->codigoService->generarEtiquetaCompleta($product))->values();
+
+        $pdf = Pdf::loadView('pdf.etiquetas-multiple', [
+            'etiquetas' => $etiquetas,
+        ])->setPaper('a4');
+
+        return $pdf->stream('etiquetas.pdf');
     }
 
     public function scanner()
