@@ -14,6 +14,7 @@ class ProductImage extends Model
         'product_id',
         'filename',
         'path',
+        'medium_path',
         'thumbnail_path',
         'is_primary',
         'sort_order',
@@ -25,7 +26,7 @@ class ProductImage extends Model
         'active'     => 'boolean',
     ];
 
-    protected $appends = ['url', 'url_thumb'];
+    protected $appends = ['url', 'url_medium', 'url_thumb'];
 
     public function product(): BelongsTo
     {
@@ -35,6 +36,11 @@ class ProductImage extends Model
     public function getUrlAttribute(): string
     {
         return asset('storage/' . $this->path);
+    }
+
+    public function getUrlMediumAttribute(): ?string
+    {
+        return $this->medium_path ? asset('storage/' . $this->medium_path) : null;
     }
 
     public function getUrlThumbAttribute(): ?string

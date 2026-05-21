@@ -62,7 +62,7 @@ class ProductService
 
     public function deleteImage(ProductImage $image): void
     {
-        $this->imageService->deleteProductImage($image->path, $image->thumbnail_path);
+        $this->imageService->deleteProductImage($image->path, $image->medium_path, $image->thumbnail_path);
         $image->delete();
     }
 
@@ -129,6 +129,7 @@ class ProductService
             $product->images()->create([
                 'filename'       => $result['filename'],
                 'path'           => $result['path'],
+                'medium_path'    => $result['medium_path'],
                 'thumbnail_path' => $result['thumbnail_path'],
                 'is_primary'     => $currentCount === 0 && $index === $primaryIndex,
                 'sort_order'     => $currentCount + $index,

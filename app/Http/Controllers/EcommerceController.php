@@ -11,7 +11,7 @@ class EcommerceController extends Controller
 {
     public function index()
     {
-        $articulos = Product::with(['category', 'brand', 'images'])->paginate(12);
+        $articulos = Product::with(['category', 'brand', 'images' => fn($q) => $q->reorder()->orderByDesc('is_primary')->orderBy('sort_order')])->paginate(12);
 
         $cartCount = $this->getCartCount();
 
@@ -20,9 +20,9 @@ class EcommerceController extends Controller
 
     public function show(Product $articulo)
     {
-        $articulo->load(['category', 'brand', 'images']);
+        $articulo->load(['category', 'brand', 'images' => fn($q) => $q->reorder()->orderByDesc('is_primary')->orderBy('sort_order')]);
 
-        $relacionados = Product::with(['images'])
+        $relacionados = Product::with(['images' => fn($q) => $q->reorder()->orderByDesc('is_primary')->orderBy('sort_order')])
             ->where('category_id', $articulo->category_id)
             ->where('id', '!=', $articulo->id)
             ->limit(4)

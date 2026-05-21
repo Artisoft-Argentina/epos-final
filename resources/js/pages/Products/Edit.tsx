@@ -255,7 +255,7 @@ export default function Edit({ product, categories, brands, suppliers, priceList
                                             </div>
                                         </div>
                                     )}
-                                    <ImageUploadPreview onChange={handleImages} />
+                                    <ImageUploadPreview onChange={handleImages} maxFiles={5 - product.images.length} />
                                 </CardContent>
                             </Card>
                         </div>
