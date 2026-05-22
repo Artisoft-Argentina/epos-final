@@ -1,4 +1,5 @@
 import { Head, router } from '@inertiajs/react';
+import { usePermission } from '@/hooks/use-permission';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -27,6 +28,7 @@ interface Props {
 }
 
 export default function Show({ lista, articulos }: Props) {
+    const { can } = usePermission();
     const handleRegenerar = () => {
         if (confirm('¿Estás seguro de regenerar todos los precios?')) {
             router.post(`/listas-precios/${lista.id}/regenerar`, {}, {
@@ -68,13 +70,17 @@ export default function Show({ lista, articulos }: Props) {
                         </div>
                     </div>
                     <div className="flex gap-2">
-                        <Button variant="outline" onClick={handleRegenerar}>
-                            <RefreshCw className="w-4 h-4 mr-2" />
-                            Regenerar
-                        </Button>
-                        <Button onClick={handleGuardar}>
-                            Guardar Precios
-                        </Button>
+                        {can('listas-precios.regenerar') && (
+                            <Button variant="outline" onClick={handleRegenerar}>
+                                <RefreshCw className="w-4 h-4 mr-2" />
+                                Regenerar
+                            </Button>
+                        )}
+                        {can('listas-precios.update') && (
+                            <Button onClick={handleGuardar}>
+                                Guardar Precios
+                            </Button>
+                        )}
                     </div>
                 </div>
 

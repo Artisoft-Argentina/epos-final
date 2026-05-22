@@ -2,6 +2,7 @@ import { Head, Link } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Package, SquarePen } from 'lucide-react';
+import { usePermission } from '@/hooks/use-permission';
 
 interface Supplier {
     id: number;
@@ -41,6 +42,7 @@ interface Props {
 }
 
 export default function Show({ order }: Props) {
+    const { can } = usePermission();
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('es-AR', {
             style: 'currency',
@@ -71,14 +73,16 @@ export default function Show({ order }: Props) {
                         )}
                     </div>
                     <div className="ml-auto">
-                        <Link href={route('orders.edit', order.id)} className="inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent">
-                            <SquarePen className="h-4 w-4" />
-                            Editar
-                        </Link>
+                        {can('orders.edit') && (
+                            <Link href={route('orders.edit', order.id)} className="inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent">
+                                <SquarePen className="h-4 w-4" />
+                                Editar
+                            </Link>
+                        )}
                     </div>
                 </div>
                 
-                {!order.converted_to_inventory && (
+                {can('orders.convert-inventory') && !order.converted_to_inventory && (
                     <div className="mb-6">
                         <Link href={route('orders.convert-inventory', order.id)} method="post" as="button" className="inline-flex items-center justify-center gap-2 rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700">
                             <Package className="h-4 w-4" />

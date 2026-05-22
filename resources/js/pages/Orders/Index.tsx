@@ -6,6 +6,7 @@ import { DataTable, type Column } from '@/components/data-table';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
 import { ActionButton } from '@/components/action-button';
 import { Plus, Eye, SquarePen } from 'lucide-react';
+import { usePermission } from '@/hooks/use-permission';
 
 interface Order {
     id: number;
@@ -20,6 +21,7 @@ interface Order {
 interface Props { orders: Order[]; }
 
 export default function Index({ orders }: Props) {
+    const { can } = usePermission();
     const columns: Column<Order>[] = [
         {
             key: 'order_number',
@@ -61,13 +63,19 @@ export default function Index({ orders }: Props) {
             align: 'right',
             render: (row) => (
                 <div className="flex items-center gap-1">
-                    <Link href={route('orders.show', row.id)}>
-                        <ActionButton title="Ver"><Eye className="size-3.5" /></ActionButton>
-                    </Link>
-                    <Link href={route('orders.edit', row.id)}>
-                        <ActionButton title="Editar"><SquarePen className="size-3.5" /></ActionButton>
-                    </Link>
-                    <DeleteConfirmationDialog url={route('orders.destroy', row.id)} title="Eliminar Orden" description="¿Estás seguro de que deseas eliminar esta orden?" />
+                    {can('orders.show') && (
+                        <Link href={route('orders.show', row.id)}>
+                            <ActionButton title="Ver"><Eye className="size-3.5" /></ActionButton>
+                        </Link>
+                    )}
+                    {can('orders.edit') && (
+                        <Link href={route('orders.edit', row.id)}>
+                            <ActionButton title="Editar"><SquarePen className="size-3.5" /></ActionButton>
+                        </Link>
+                    )}
+                    {can('orders.destroy') && (
+                        <DeleteConfirmationDialog url={route('orders.destroy', row.id)} title="Eliminar Orden" description="¿Estás seguro de que deseas eliminar esta orden?" />
+                    )}
                 </div>
             ),
         },
@@ -80,9 +88,11 @@ export default function Index({ orders }: Props) {
                 <PageHeader
                     title="Órdenes de Compra"
                     actions={
-                        <Link href={route('orders.create')}>
-                            <Button><Plus className="size-4" /> Nueva Orden</Button>
-                        </Link>
+                        can('orders.create') && (
+                            <Link href={route('orders.create')}>
+                                <Button><Plus className="size-4" /> Nueva Orden</Button>
+                            </Link>
+                        )
                     }
                 />
                 <DataTable columns={columns} data={orders} keyExtractor={(row) => row.id} emptyMessage="No hay órdenes registradas." />

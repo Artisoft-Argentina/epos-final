@@ -1,4 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
+import { usePermission } from '@/hooks/use-permission';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,6 +13,7 @@ interface ListaPrecio { id: number; name: string; percentage: number; default_po
 interface Props { listas: ListaPrecio[]; }
 
 export default function Index({ listas }: Props) {
+    const { can } = usePermission();
     const columns: Column<ListaPrecio>[] = [
         {
             key: 'name',
@@ -35,13 +37,19 @@ export default function Index({ listas }: Props) {
             align: 'right',
             render: (row) => (
                 <div className="flex items-center gap-1">
-                    <Link href={route('listas-precios.show', row.id)}>
-                        <ActionButton title="Ver precios"><Eye className="size-3.5" /></ActionButton>
-                    </Link>
-                    <Link href={route('listas-precios.edit', row.id)}>
-                        <ActionButton title="Editar"><Edit className="size-3.5" /></ActionButton>
-                    </Link>
-                    <DeleteConfirmationDialog url={route('listas-precios.destroy', row.id)} title="Eliminar lista de precios" description={`¿Estás seguro de eliminar la lista ${row.name}?`} />
+                    {can('listas-precios.show') && (
+                        <Link href={route('listas-precios.show', row.id)}>
+                            <ActionButton title="Ver precios"><Eye className="size-3.5" /></ActionButton>
+                        </Link>
+                    )}
+                    {can('listas-precios.edit') && (
+                        <Link href={route('listas-precios.edit', row.id)}>
+                            <ActionButton title="Editar"><Edit className="size-3.5" /></ActionButton>
+                        </Link>
+                    )}
+                    {can('listas-precios.destroy') && (
+                        <DeleteConfirmationDialog url={route('listas-precios.destroy', row.id)} title="Eliminar lista de precios" description={`¿Estás seguro de eliminar la lista ${row.name}?`} />
+                    )}
                 </div>
             ),
         },
@@ -54,9 +62,11 @@ export default function Index({ listas }: Props) {
                 <PageHeader
                     title="Listas de Precios"
                     actions={
-                        <Link href={route('listas-precios.create')}>
-                            <Button><Plus className="size-4" /> Nueva Lista</Button>
-                        </Link>
+                        can('listas-precios.create') && (
+                            <Link href={route('listas-precios.create')}>
+                                <Button><Plus className="size-4" /> Nueva Lista</Button>
+                            </Link>
+                        )
                     }
                 />
                 <DataTable columns={columns} data={listas} keyExtractor={(row) => row.id} emptyMessage="No hay listas de precios creadas." />

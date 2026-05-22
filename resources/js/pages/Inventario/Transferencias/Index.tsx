@@ -7,6 +7,7 @@ import { DataTable, type Column } from '@/components/data-table';
 import { Pagination } from '@/components/pagination';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Eye, ArrowLeftRight } from 'lucide-react';
+import { usePermission } from '@/hooks/use-permission';
 
 interface Warehouse {
     id: number;
@@ -37,6 +38,8 @@ const statusLabels: Record<string, { label: string; variant: 'default' | 'second
 };
 
 export default function Index({ transfers, warehouses, filters }: Props) {
+    const { can } = usePermission();
+
     const applyFilter = (key: string, value: string) => {
         const next = value === 'all' ? undefined : value || undefined;
         router.get(route('transferencias.index'), { ...filters, [key]: next }, { preserveState: true });
@@ -78,9 +81,11 @@ export default function Index({ transfers, warehouses, filters }: Props) {
             header: '',
             align: 'right',
             render: (row) => (
-                <Link href={route('transferencias.show', row.id)}>
-                    <Button variant="ghost" size="sm"><Eye className="size-4" /></Button>
-                </Link>
+                can('transferencias.show') && (
+                    <Link href={route('transferencias.show', row.id)}>
+                        <Button variant="ghost" size="sm"><Eye className="size-4" /></Button>
+                    </Link>
+                )
             ),
         },
     ];
@@ -93,9 +98,11 @@ export default function Index({ transfers, warehouses, filters }: Props) {
                     title="Transferencias entre Almacenes"
                     description="Movimiento de mercadería entre depósitos."
                     actions={
-                        <Link href={route('transferencias.create')}>
-                            <Button><Plus className="size-4" /> Nueva Transferencia</Button>
-                        </Link>
+                        can('transferencias.create') && (
+                            <Link href={route('transferencias.create')}>
+                                <Button><Plus className="size-4" /> Nueva Transferencia</Button>
+                            </Link>
+                        )
                     }
                 />
                 <div className="flex gap-3">

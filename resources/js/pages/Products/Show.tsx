@@ -12,6 +12,7 @@ import {
     Barcode, QrCode, Printer, Warehouse, TrendingUp, TrendingDown,
     ArrowLeftRight, AlertTriangle, PackageX,
 } from 'lucide-react';
+import { usePermission } from '@/hooks/use-permission';
 
 interface ProductImage { id: number; url: string; url_thumb: string | null; is_primary: boolean; }
 interface StockMovement {
@@ -92,6 +93,7 @@ function DataRow({ label, value }: { label: string; value: React.ReactNode }) {
 }
 
 export default function Show({ product, movements }: Props) {
+    const { can } = usePermission();
     const qty = product.stock?.quantity ?? null;
     const min = product.min_stock;
     const stockAlert = qty === null ? null
@@ -294,19 +296,23 @@ export default function Show({ product, movements }: Props) {
 
                                 {/* Acciones */}
                                 <div className="flex items-center gap-2 pt-1">
-                                    <Button
-                                        variant={product.active ? 'destructive-soft' : 'outline'}
-                                        size="sm"
-                                        onClick={handleToggleActive}
-                                    >
-                                        <Power className="size-4" />
-                                        {product.active ? 'Desactivar' : 'Activar'}
-                                    </Button>
-                                    <Link href={route('products.edit', product.id)}>
-                                        <Button size="sm">
-                                            <Edit className="size-4" /> Editar
+                                    {can('products.toggle-active') && (
+                                        <Button
+                                            variant={product.active ? 'destructive-soft' : 'outline'}
+                                            size="sm"
+                                            onClick={handleToggleActive}
+                                        >
+                                            <Power className="size-4" />
+                                            {product.active ? 'Desactivar' : 'Activar'}
                                         </Button>
-                                    </Link>
+                                    )}
+                                    {can('products.edit') && (
+                                        <Link href={route('products.edit', product.id)}>
+                                            <Button size="sm">
+                                                <Edit className="size-4" /> Editar
+                                            </Button>
+                                        </Link>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -441,11 +447,13 @@ export default function Show({ product, movements }: Props) {
                                         </p>
                                         <img src={route('products.qr', product.id)} alt="Código QR" className="size-32" />
                                     </div>
-                                    <a href={route('products.codes', product.id)} target="_blank" rel="noreferrer" className="w-full">
-                                        <Button variant="outline" className="w-full">
-                                            <Printer className="size-4" /> Imprimir Etiqueta
-                                        </Button>
-                                    </a>
+                                    {can('products.print-labels') && (
+                                        <a href={route('products.codes', product.id)} target="_blank" rel="noreferrer" className="w-full">
+                                            <Button variant="outline" className="w-full">
+                                                <Printer className="size-4" /> Imprimir Etiqueta
+                                            </Button>
+                                        </a>
+                                    )}
                                 </CardContent>
                             </Card>
                         </div>

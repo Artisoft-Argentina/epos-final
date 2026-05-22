@@ -12,7 +12,7 @@ interface PointOfSale {
 
 export function PointOfSaleSelector() {
     const { pointsOfSale, activePointOfSaleId, auth } = usePage<any>().props;
-    const isVendedor = auth?.user?.role?.role === 'vendedor';
+    const isVendedor = auth?.user?.is_vendedor ?? false;
 
     if (!pointsOfSale || pointsOfSale.length === 0) return null;
 

@@ -9,6 +9,7 @@ import { ActionButton } from '@/components/action-button';
 import { Pagination } from '@/components/pagination';
 import { Plus, Eye, ShoppingCart, Search } from 'lucide-react';
 import { useState } from 'react';
+import { usePermission } from '@/hooks/use-permission';
 
 interface Presupuesto {
     id: number;
@@ -22,6 +23,7 @@ interface Presupuesto {
 interface Props { presupuestos: { data: Presupuesto[]; links: any; meta: any }; }
 
 export default function Index({ presupuestos }: Props) {
+    const { can } = usePermission();
     const page = usePage<any>();
     const [search, setSearch] = useState('');
 
@@ -68,13 +70,19 @@ export default function Index({ presupuestos }: Props) {
             align: 'right',
             render: (row) => (
                 <div className="flex items-center gap-1">
-                    <ActionButton title="Convertir a venta" onClick={() => convertirAVenta(row.id)}>
-                        <ShoppingCart className="size-3.5" />
-                    </ActionButton>
-                    <Link href={route('presupuestos.show', row.id)}>
-                        <ActionButton title="Ver"><Eye className="size-3.5" /></ActionButton>
-                    </Link>
-                    <DeleteConfirmationDialog url={route('presupuestos.destroy', row.id)} title="Eliminar presupuesto" description={`¿Está seguro que desea eliminar el presupuesto #${row.quote_number}?`} />
+                    {can('presupuestos.convertir-venta') && (
+                        <ActionButton title="Convertir a venta" onClick={() => convertirAVenta(row.id)}>
+                            <ShoppingCart className="size-3.5" />
+                        </ActionButton>
+                    )}
+                    {can('presupuestos.show') && (
+                        <Link href={route('presupuestos.show', row.id)}>
+                            <ActionButton title="Ver"><Eye className="size-3.5" /></ActionButton>
+                        </Link>
+                    )}
+                    {can('presupuestos.destroy') && (
+                        <DeleteConfirmationDialog url={route('presupuestos.destroy', row.id)} title="Eliminar presupuesto" description={`¿Está seguro que desea eliminar el presupuesto #${row.quote_number}?`} />
+                    )}
                 </div>
             ),
         },
@@ -87,9 +95,11 @@ export default function Index({ presupuestos }: Props) {
                 <PageHeader
                     title="Presupuestos"
                     actions={
-                        <Link href={route('presupuestos.create')}>
-                            <Button><Plus className="size-4" /> Nuevo Presupuesto</Button>
-                        </Link>
+                        can('presupuestos.create') && (
+                            <Link href={route('presupuestos.create')}>
+                                <Button><Plus className="size-4" /> Nuevo Presupuesto</Button>
+                            </Link>
+                        )
                     }
                 />
                 <div className="max-w-sm">

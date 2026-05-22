@@ -16,7 +16,7 @@ return [
         'admin.dashboard',
         'dashboard.export',
 
-        // Usuarios y roles (solo superadmin en la práctica, pero incluidos por completitud)
+        // Usuarios y roles
         'users.index',
         'users.create',
         'users.store',
@@ -102,7 +102,7 @@ return [
         'almacenes.update',
         'almacenes.destroy',
 
-        // Puntos de venta, transferencias admin, listas de precios
+        // Puntos de venta, transferencias, listas de precios
         'puntos-venta.index',
         'puntos-venta.create',
         'puntos-venta.store',
@@ -111,6 +111,11 @@ return [
         'puntos-venta.update',
         'puntos-venta.destroy',
         'puntos-venta.set-active',
+        'transferencias.index',
+        'transferencias.create',
+        'transferencias.store',
+        'transferencias.show',
+        'transferencias.destroy',
         'transferencias.dispatch',
         'transferencias.receive',
         'transferencias.cancel',
@@ -122,31 +127,179 @@ return [
         'listas-precios.update',
         'listas-precios.destroy',
         'listas-precios.regenerar',
+
+        // Ventas, presupuestos, clientes (compartido con vendedor)
+        'ventas.index',
+        'ventas.create',
+        'ventas.store',
+        'ventas.show',
+        'ventas.edit',
+        'ventas.update',
+        'ventas.destroy',
+        'presupuestos.index',
+        'presupuestos.create',
+        'presupuestos.store',
+        'presupuestos.show',
+        'presupuestos.edit',
+        'presupuestos.update',
+        'presupuestos.destroy',
+        'presupuestos.convertir-venta',
+        'customers.index',
+        'customers.create',
+        'customers.store',
+        'customers.show',
+        'customers.edit',
+        'customers.update',
+        'customers.toggle-active',
+        'customers.export-excel',
+        'customers.export-pdf',
+        'scanner.index',
+        'scanner.buscar',
+        'afip.authorize',
+        'afip.consultar-cuit',
+        'facturas.pdf',
+
+        // Pagos y entregas
+        'pagos.create',
+        'pagos.store',
+        'pagos.destroy',
+        'entregas.index',
+        'entregas.create',
+        'entregas.store',
+        'entregas.marcar-entregada',
+        'entregas.cancelar',
+        'entregas.update-warehouse',
+        'entregas.destroy',
+
+        // IA y asistentes
+        'chat.index',
+        'chat.send',
+        'asistente-compras.index',
+        'asistente-compras.process',
+        'asistente-compras.add-inventory',
+
+        // Settings
+        'profile.edit',
+        'profile.update',
+        'profile.destroy',
+        'password.edit',
+        'password.update',
+        'appearance',
+        'telegram',
+        'telegram.verify',
+        'afip.settings',
+        'afip.upload',
+        'afip.health',
+        'mercadopago.settings',
+        'mercadopago.update',
+        'design-system',
     ],
 
     'vendedor' => [
-        // Rutas abiertas (no can:), listadas como referencia/documentación
-        // 'ventas.index', 'ventas.create', 'ventas.store', 'ventas.show', 'ventas.edit', 'ventas.update', 'ventas.destroy',
-        // 'presupuestos.index', 'presupuestos.create', 'presupuestos.store', 'presupuestos.show', 'presupuestos.edit', 'presupuestos.update', 'presupuestos.destroy',
-        // 'scanner.index', 'scanner.buscar',
-        // 'customers.index', 'customers.create', 'customers.store', 'customers.show', 'customers.edit', 'customers.update',
-        // 'transferencias.index', 'transferencias.create', 'transferencias.store', 'transferencias.show', 'transferencias.destroy',
-        // 'pagos.create', 'pagos.store', 'pagos.destroy',
-        // 'entregas.index', 'entregas.create', 'entregas.store', 'entregas.show', 'entregas.marcar-entregada', 'entregas.cancelar', 'entregas.update-warehouse', 'entregas.destroy',
-        // 'chat.index', 'chat.send',
-        // 'profile.edit', 'profile.update', 'profile.destroy',
-        // 'password.edit', 'password.update',
+        'user.dashboard',
+
+        // Ventas y presupuestos
+        'ventas.index',
+        'ventas.create',
+        'ventas.store',
+        'ventas.show',
+        'ventas.edit',
+        'ventas.update',
+        'ventas.destroy',
+        'presupuestos.index',
+        'presupuestos.create',
+        'presupuestos.store',
+        'presupuestos.show',
+        'presupuestos.edit',
+        'presupuestos.update',
+        'presupuestos.destroy',
+        'presupuestos.convertir-venta',
+
+        // Clientes
+        'customers.index',
+        'customers.create',
+        'customers.store',
+        'customers.show',
+        'customers.edit',
+        'customers.update',
+        'customers.toggle-active',
+        'customers.export-excel',
+        'customers.export-pdf',
+
+        // Inventario (lectura)
+        'inventarios.index',
+        'inventarios.show',
+        'products.stock-by-warehouse',
+
+        // Transferencias
+        'transferencias.index',
+        'transferencias.create',
+        'transferencias.store',
+        'transferencias.show',
+        'transferencias.destroy',
+
+        // Pagos y entregas
+        'pagos.create',
+        'pagos.store',
+        'pagos.destroy',
+        'entregas.index',
+        'entregas.create',
+        'entregas.store',
+        'entregas.marcar-entregada',
+        'entregas.cancelar',
+        'entregas.update-warehouse',
+        'entregas.destroy',
+
+        // Scanner
+        'scanner.index',
+        'scanner.buscar',
+
+        // AFIP y facturas
+        'afip.authorize',
+        'afip.consultar-cuit',
+        'facturas.pdf',
+
+        // IA
+        'chat.index',
+        'chat.send',
+
+        // Settings personales
+        'profile.edit',
+        'profile.update',
+        'profile.destroy',
+        'password.edit',
+        'password.update',
+        'appearance',
     ],
 
     'cliente' => [
-        // Rutas abiertas (no can:), listadas como referencia/documentación
-        // 'dashboard',
-        // 'client.dashboard', 'client.profile', 'client.profile.update',
-        // 'shop.index', 'shop.show',
-        // 'cart.add', 'cart.index', 'cart.clear', 'cart.update', 'cart.remove',
-        // 'checkout.index', 'checkout.payment', 'checkout.success', 'checkout.failure', 'checkout.pending',
-        // 'user.purchases', 'payment.status',
-        // 'profile.edit', 'profile.update', 'profile.destroy',
-        // 'password.edit', 'password.update',
+        'dashboard',
+        'client.dashboard',
+        'client.profile',
+        'client.profile.update',
+
+        // E-commerce
+        'shop.index',
+        'shop.show',
+        'cart.add',
+        'cart.index',
+        'cart.clear',
+        'cart.update',
+        'cart.remove',
+        'checkout.index',
+        'checkout.payment',
+        'checkout.success',
+        'checkout.failure',
+        'checkout.pending',
+        'user.purchases',
+        'payment.status',
+
+        // Settings personales
+        'profile.edit',
+        'profile.update',
+        'profile.destroy',
+        'password.edit',
+        'password.update',
+        'appearance',
     ],
 ];

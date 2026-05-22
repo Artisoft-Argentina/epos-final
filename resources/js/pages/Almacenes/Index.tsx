@@ -1,4 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
+import { usePermission } from '@/hooks/use-permission';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -22,6 +23,7 @@ interface Warehouse {
 interface Props { warehouses: { data: Warehouse[]; links: any; meta: any }; }
 
 export default function Index({ warehouses }: Props) {
+    const { can } = usePermission();
     const columns: Column<Warehouse>[] = [
         {
             key: 'name',
@@ -44,10 +46,12 @@ export default function Index({ warehouses }: Props) {
             align: 'right',
             render: (row) => (
                 <div className="flex items-center justify-end gap-1">
-                    <Link href={route('almacenes.edit', row.id)}>
-                        <ActionButton title="Editar"><Edit className="size-3.5" /></ActionButton>
-                    </Link>
-                    {!row.is_default && (
+                    {can('almacenes.edit') && (
+                        <Link href={route('almacenes.edit', row.id)}>
+                            <ActionButton title="Editar"><Edit className="size-3.5" /></ActionButton>
+                        </Link>
+                    )}
+                    {can('almacenes.destroy') && !row.is_default && (
                         <DeleteConfirmationDialog
                             url={route('almacenes.destroy', row.id)}
                             title="Eliminar almacén"
@@ -67,9 +71,11 @@ export default function Index({ warehouses }: Props) {
                     title="Almacenes"
                     description="Depósitos físicos donde vive el inventario."
                     actions={
-                        <Link href={route('almacenes.create')}>
-                            <Button><Plus className="size-4" /> Nuevo Almacén</Button>
-                        </Link>
+                        can('almacenes.create') && (
+                            <Link href={route('almacenes.create')}>
+                                <Button><Plus className="size-4" /> Nuevo Almacén</Button>
+                            </Link>
+                        )
                     }
                 />
                 <DataTable
