@@ -13,12 +13,12 @@ class RoleSeeder extends Seeder
         $permissions = config('custom.permissions');
 
         foreach ($permissions as $role_name => $values) {
-            $role = Role::findOrCreate($role_name);
+            $role = Role::findOrCreate($role_name, 'web');
 
             $validPermissions = collect($values)->filter()->unique();
 
             foreach ($validPermissions as $permissionName) {
-                Permission::findOrCreate($permissionName);
+                Permission::findOrCreate($permissionName, 'web');
             }
 
             $role->syncPermissions($validPermissions->toArray());

@@ -55,7 +55,7 @@ class HandleInertiaRequests extends Middleware
                     ? ($user?->tour_completed ?? true)
                     : true,
                 'permissions' => fn () => $isTenant && $user
-                    ? $user->getPermissionNames()->toArray()
+                    ? $user->getAllPermissions()->pluck('name')->toArray()
                     : [],
                 'roles' => fn () => $isTenant && $user
                     ? $user->roles->map(fn ($r) => ['id' => $r->id, 'name' => $r->name])->toArray()

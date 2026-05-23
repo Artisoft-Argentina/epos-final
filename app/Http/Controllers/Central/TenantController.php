@@ -74,14 +74,14 @@ class TenantController extends Controller
         // 2. Asignar subdominio
         $tenant->domains()->create(['domain' => $subdomain]);
 
-        // 3. Crear roles y primer usuario admin dentro del tenant
+        // 3. Crear roles, permisos y primer usuario admin dentro del tenant
         tenancy()->initialize($tenant);
 
         try {
-            $superadminRole = Role::firstOrCreate(['name' => 'superadmin', 'guard_name' => 'web']);
-            Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
-            Role::firstOrCreate(['name' => 'vendedor', 'guard_name' => 'web']);
-            Role::firstOrCreate(['name' => 'cliente', 'guard_name' => 'web']);
+            // Crear roles y asignar todos los permisos desde config/custom/permissions.php
+            (new \Database\Seeders\RoleSeeder())->run();
+
+            $superadminRole = Role::findByName('superadmin', 'web');
 
             // Datos comunes a todos los tenants
             (new \Database\Seeders\StatesSeeder())->run();
