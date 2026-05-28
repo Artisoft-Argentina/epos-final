@@ -1,6 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { PageHeader } from '@/components/page-header';
 import { DataTable, type Column } from '@/components/data-table';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
@@ -8,7 +9,7 @@ import { ActionButton } from '@/components/action-button';
 import { Pagination } from '@/components/pagination';
 import { Plus, Edit } from 'lucide-react';
 
-interface Role { id: number; name: string; guard_name: string; }
+interface Role { id: number; name: string; guard_name: string; permissions_count: number; }
 interface Props { roles: { data: Role[]; links: any; meta: any }; }
 
 export default function Index({ roles }: Props) {
@@ -19,9 +20,9 @@ export default function Index({ roles }: Props) {
             render: (row) => <span className="font-medium text-foreground">{row.name}</span>,
         },
         {
-            key: 'guard_name',
-            header: 'Guard',
-            render: (row) => <span className="text-muted-foreground">{row.guard_name}</span>,
+            key: 'permissions_count',
+            header: 'Permisos',
+            render: (row) => <Badge variant="secondary">{row.permissions_count}</Badge>,
         },
         {
             key: 'actions',
