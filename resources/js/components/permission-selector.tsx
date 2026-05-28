@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 
 interface Props {
@@ -9,44 +10,44 @@ interface Props {
 }
 
 const MODULE_LABELS: Record<string, string> = {
-    'activity-log': 'Activity Log',
-    'admin': 'Dashboard Admin',
-    'afip': 'AFIP / ARCA',
-    'almacenes': 'Almacenes',
-    'appearance': 'Apariencia',
+    'activity-log':      'Activity Log',
+    'admin':             'Dashboard Admin',
+    'afip':              'AFIP / ARCA',
+    'almacenes':         'Almacenes',
+    'appearance':        'Apariencia',
     'asistente-compras': 'Asistente Compras',
-    'brands': 'Marcas',
-    'cart': 'Carrito',
-    'categories': 'Categorías',
-    'chat': 'Chat IA',
-    'checkout': 'Checkout',
-    'client': 'Portal Cliente',
-    'customers': 'Clientes',
-    'dashboard': 'Dashboard',
-    'design-system': 'Design System',
-    'empresa': 'Empresa',
-    'entregas': 'Entregas',
-    'facturas': 'Facturas',
-    'inventarios': 'Inventarios',
-    'listas-precios': 'Listas de Precios',
-    'mercadopago': 'MercadoPago',
-    'orders': 'Órdenes',
-    'pagos': 'Pagos',
-    'password': 'Contraseña',
-    'payment': 'Pagos Ecommerce',
-    'presupuestos': 'Presupuestos',
-    'products': 'Productos',
-    'profile': 'Perfil',
-    'puntos-venta': 'Puntos de Venta',
-    'roles': 'Roles',
-    'scanner': 'Scanner',
-    'shop': 'Tienda',
-    'suppliers': 'Proveedores',
-    'telegram': 'Telegram',
-    'transferencias': 'Transferencias',
-    'user': 'Dashboard Usuario',
-    'users': 'Usuarios',
-    'ventas': 'Ventas',
+    'brands':            'Marcas',
+    'cart':              'Carrito',
+    'categories':        'Categorías',
+    'chat':              'Chat IA',
+    'checkout':          'Checkout',
+    'client':            'Portal Cliente',
+    'customers':         'Clientes',
+    'dashboard':         'Dashboard',
+    'design-system':     'Design System',
+    'empresa':           'Empresa',
+    'entregas':          'Entregas',
+    'facturas':          'Facturas',
+    'inventarios':       'Inventarios',
+    'listas-precios':    'Listas de Precios',
+    'mercadopago':       'MercadoPago',
+    'orders':            'Órdenes',
+    'pagos':             'Pagos',
+    'password':          'Contraseña',
+    'payment':           'Pagos Ecommerce',
+    'presupuestos':      'Presupuestos',
+    'products':          'Productos',
+    'profile':           'Perfil',
+    'puntos-venta':      'Puntos de Venta',
+    'roles':             'Roles',
+    'scanner':           'Scanner',
+    'shop':              'Tienda',
+    'suppliers':         'Proveedores',
+    'telegram':          'Telegram',
+    'transferencias':    'Transferencias',
+    'user':              'Dashboard Usuario',
+    'users':             'Usuarios',
+    'ventas':            'Ventas',
 };
 
 function getModule(permission: string): string {
@@ -66,11 +67,17 @@ export function PermissionSelector({ permissions, selected, onChange }: Props) {
             if (!map.has(mod)) map.set(mod, []);
             map.get(mod)!.push(p);
         }
-        return Array.from(map.entries()).sort((a, b) => moduleLabel(a[0]).localeCompare(moduleLabel(b[0])));
+        return Array.from(map.entries()).sort((a, b) =>
+            moduleLabel(a[0]).localeCompare(moduleLabel(b[0]))
+        );
     }, [permissions]);
 
     const toggle = (perm: string) => {
-        onChange(selected.includes(perm) ? selected.filter(p => p !== perm) : [...selected, perm]);
+        onChange(
+            selected.includes(perm)
+                ? selected.filter(p => p !== perm)
+                : [...selected, perm]
+        );
     };
 
     const toggleGroup = (perms: string[]) => {
@@ -83,37 +90,45 @@ export function PermissionSelector({ permissions, selected, onChange }: Props) {
     };
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-3">
             {groups.map(([module, perms]) => {
-                const allChecked = perms.every(p => selected.includes(p));
-                const someChecked = perms.some(p => selected.includes(p));
+                const selectedCount = perms.filter(p => selected.includes(p)).length;
+                const allChecked = selectedCount === perms.length;
+                const groupId = `group-${module}`;
+
                 return (
-                    <div key={module} className="rounded-lg border p-4">
-                        <div className="mb-3 flex items-center gap-2">
+                    <div key={module} className="rounded-lg border border-border bg-card">
+                        {/* Group header */}
+                        <div className="flex items-center gap-3 border-b border-border px-4 py-3">
                             <Checkbox
-                                id={`group-${module}`}
+                                id={groupId}
                                 checked={allChecked}
-                                data-state={someChecked && !allChecked ? 'indeterminate' : undefined}
                                 onCheckedChange={() => toggleGroup(perms)}
                             />
-                            <label htmlFor={`group-${module}`} className="cursor-pointer text-sm font-semibold">
+                            <Label htmlFor={groupId} className="cursor-pointer text-sm font-medium text-foreground">
                                 {moduleLabel(module)}
-                            </label>
+                            </Label>
                             <Badge variant="secondary" className="ml-auto text-xs">
-                                {perms.filter(p => selected.includes(p)).length}/{perms.length}
+                                {selectedCount}/{perms.length}
                             </Badge>
                         </div>
-                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+
+                        {/* Permissions grid */}
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-2 p-4 sm:grid-cols-3">
                             {perms.map(perm => {
+                                const permId = `perm-${perm}`;
                                 const action = perm.includes('.') ? perm.slice(perm.indexOf('.') + 1) : perm;
                                 return (
-                                    <label key={perm} className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 text-xs hover:bg-muted">
+                                    <div key={perm} className="flex items-center gap-2">
                                         <Checkbox
+                                            id={permId}
                                             checked={selected.includes(perm)}
                                             onCheckedChange={() => toggle(perm)}
                                         />
-                                        <span className="text-muted-foreground">{action}</span>
-                                    </label>
+                                        <Label htmlFor={permId} className="cursor-pointer text-xs text-muted-foreground font-normal">
+                                            {action}
+                                        </Label>
+                                    </div>
                                 );
                             })}
                         </div>
