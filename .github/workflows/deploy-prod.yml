@@ -8,8 +8,25 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/${{ github.repository }}:latest
+
       - name: 🚀 Deploy to VPS
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -19,16 +36,13 @@ jobs:
           port: 22
           command_timeout: 30m
           script: |
-            # Fix git ownership
-            git config --global --add safe.directory /var/www/html/prod
-
             cd /var/www/html/prod
 
-            echo "📥 Pulling latest changes from main branch..."
-            git pull origin main
+            echo "📥 Pulling image from GHCR..."
+            docker pull ghcr.io/${{ github.repository }}:latest
 
-            echo "🐳 Rebuilding Docker containers..."
-            make prod-build && make prod-up
+            echo "🐳 Restarting containers..."
+            APP_IMAGE=ghcr.io/${{ github.repository }}:latest make prod-up
 
             echo "✅ Deployment completed successfully!"
 

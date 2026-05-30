@@ -12,6 +12,7 @@
 
 services:
   app:
+    image: ${APP_IMAGE:-ghcr.io/artisoft-argentina/epos-final:latest}
     build:
       context: .
       dockerfile: Dockerfile.prod
