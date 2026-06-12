@@ -7,6 +7,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { DataTable, type Column } from '@/components/data-table';
 import { PageHeader } from '@/components/page-header';
 import { Download, FileText, Edit, Mail, Phone, Smartphone, MapPin, User, Building2, Wallet, TrendingDown, CreditCard, ShoppingBag, ChevronRight, Receipt, StickyNote } from 'lucide-react';
+import { usePermission } from '@/hooks/use-permission';
 
 interface Payment { id: number; amount: number; }
 interface Sale {
@@ -54,6 +55,7 @@ function InfoRow({ icon: Icon, label, value }: { icon: React.ElementType; label:
 }
 
 export default function Show({ customer, sales, summary }: Props) {
+    const { can } = usePermission();
 
     const address = [customer.address, customer.city?.name, customer.state?.name, customer.zip_code]
         .filter(Boolean).join(', ');
@@ -136,15 +138,21 @@ export default function Show({ customer, sales, summary }: Props) {
                             <Badge variant={customer.active ? 'success' : 'secondary'} dot>
                                 {customer.active ? 'Activo' : 'Inactivo'}
                             </Badge>
-                            <a href={route('customers.export-excel', customer.id)}>
-                                <Button variant="outline" size="sm"><Download className="size-4" /> Excel</Button>
-                            </a>
-                            <a href={route('customers.export-pdf', customer.id)}>
-                                <Button variant="outline" size="sm"><FileText className="size-4" /> PDF</Button>
-                            </a>
-                            <Link href={route('customers.edit', customer.id)}>
-                                <Button size="sm"><Edit className="size-4" /> Editar</Button>
-                            </Link>
+                            {can('customers.export-excel') && (
+                                <a href={route('customers.export-excel', customer.id)}>
+                                    <Button variant="outline" size="sm"><Download className="size-4" /> Excel</Button>
+                                </a>
+                            )}
+                            {can('customers.export-pdf') && (
+                                <a href={route('customers.export-pdf', customer.id)}>
+                                    <Button variant="outline" size="sm"><FileText className="size-4" /> PDF</Button>
+                                </a>
+                            )}
+                            {can('customers.edit') && (
+                                <Link href={route('customers.edit', customer.id)}>
+                                    <Button size="sm"><Edit className="size-4" /> Editar</Button>
+                                </Link>
+                            )}
                         </div>
                     }
                 />

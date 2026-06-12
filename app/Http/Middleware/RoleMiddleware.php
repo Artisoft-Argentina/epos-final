@@ -14,7 +14,7 @@ class RoleMiddleware
             return redirect()->route('login');
         }
 
-        $userRole = auth()->user()->role?->role;
+        $userRole = auth()->user()->primaryRole()?->name;
         
         if (!$userRole || !in_array($userRole, $roles)) {
             abort(403, 'No tienes permisos para acceder a esta sección.');

@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
 use Inertia\Response;
+use Spatie\Permission\Models\Role;
 
 class TenantController extends Controller
 {
@@ -73,14 +74,14 @@ class TenantController extends Controller
         // 2. Asignar subdominio
         $tenant->domains()->create(['domain' => $subdomain]);
 
-        // 3. Crear roles y primer usuario admin dentro del tenant
+        // 3. Crear roles, permisos y primer usuario admin dentro del tenant
         tenancy()->initialize($tenant);
 
         try {
-            $superadminRole = \App\Models\Role::firstOrCreate(['role' => 'superadmin'], ['permission' => '*', 'description' => 'Super Administrador']);
-            \App\Models\Role::firstOrCreate(['role' => 'admin'],      ['permission' => '*', 'description' => 'Administrador']);
-            \App\Models\Role::firstOrCreate(['role' => 'vendedor'], ['permission' => '',  'description' => 'Vendedor']);
-            \App\Models\Role::firstOrCreate(['role' => 'cliente'],  ['permission' => '',  'description' => 'Cliente']);
+            // Crear roles y asignar todos los permisos desde config/custom/permissions.php
+            (new \Database\Seeders\RoleSeeder())->run();
+
+            $superadminRole = Role::findByName('superadmin', 'web');
 
             // Datos comunes a todos los tenants
             (new \Database\Seeders\StatesSeeder())->run();
@@ -89,8 +90,7 @@ class TenantController extends Controller
                 'name'     => $request->admin_name,
                 'email'    => $request->admin_email,
                 'password' => Hash::make($request->admin_password),
-                'role_id'  => $superadminRole->id,
-            ]);
+            ])->assignRole($superadminRole);
 
             // Pre-poblar configuración de la empresa con los datos del alta
             \App\Models\Setting::create([

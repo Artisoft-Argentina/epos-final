@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus, Edit, Package, AlertTriangle, SlidersHorizontal, History, Warehouse as WarehouseIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { useEffect, useState } from 'react';
+import { usePermission } from '@/hooks/use-permission';
 
 interface Stock {
     id: number;
@@ -47,8 +48,7 @@ interface AdjustState {
 
 export default function Index({ inventarios, warehouses, selected_warehouse_id }: Props) {
     const page = usePage<any>();
-    const userRole = page.props.auth?.user?.role?.role;
-    const isAdmin = userRole === 'admin' || userRole === 'superadmin';
+    const { can } = usePermission();
     const [adjustModal, setAdjustModal] = useState<AdjustState | null>(null);
     const [adjusting, setAdjusting] = useState(false);
 
@@ -129,12 +129,12 @@ export default function Index({ inventarios, warehouses, selected_warehouse_id }
                 const diff = row.calculated_quantity - row.quantity;
                 return (
                     <div className="flex items-center gap-1">
-                        {isAdmin && diff !== 0 && (
+                        {can('inventarios.reconcile') && diff !== 0 && (
                             <ActionButton variant="outline" title="Conciliar" className="border-warning/30 text-warning hover:bg-warning-soft" onClick={() => router.post(route('inventarios.reconcile', row.id))}>
                                 <AlertTriangle className="size-3.5" />
                             </ActionButton>
                         )}
-                        {isAdmin && (
+                        {can('inventarios.adjust') && (
                             <ActionButton title="Ajuste manual" onClick={() => setAdjustModal({ stockId: row.id, productName: row.product?.name ?? '-', type: 'entry', quantity: '', reason: '' })}>
                                 <SlidersHorizontal className="size-3.5" />
                             </ActionButton>
@@ -142,14 +142,18 @@ export default function Index({ inventarios, warehouses, selected_warehouse_id }
                         <Link href={route('products.movements', row.product_id) + '?from=inventarios'}>
                             <ActionButton title="Movimientos"><History className="size-3.5" /></ActionButton>
                         </Link>
-                        <Link href={route('inventarios.edit', row.id)}>
-                            <ActionButton title="Editar"><Edit className="size-3.5" /></ActionButton>
-                        </Link>
-                        <DeleteConfirmationDialog
-                            url={route('inventarios.destroy', row.id)}
-                            title="Eliminar inventario"
-                            description={`¿Está seguro que desea eliminar el inventario de ${row.product?.name}?`}
-                        />
+                        {can('inventarios.edit') && (
+                            <Link href={route('inventarios.edit', row.id)}>
+                                <ActionButton title="Editar"><Edit className="size-3.5" /></ActionButton>
+                            </Link>
+                        )}
+                        {can('inventarios.destroy') && (
+                            <DeleteConfirmationDialog
+                                url={route('inventarios.destroy', row.id)}
+                                title="Eliminar inventario"
+                                description={`¿Está seguro que desea eliminar el inventario de ${row.product?.name}?`}
+                            />
+                        )}
                     </div>
                 );
             },
@@ -164,14 +168,16 @@ export default function Index({ inventarios, warehouses, selected_warehouse_id }
                     title="Inventarios"
                     actions={
                         <>
-                            {isAdmin && hasAnyDiff && (
+                            {can('inventarios.reconcile-all') && hasAnyDiff && (
                                 <Button variant="outline" className="border-warning/30 text-warning hover:bg-warning-soft" onClick={() => router.post(route('inventarios.reconcile-all'))}>
                                     <AlertTriangle className="size-4" /> Conciliar Todo
                                 </Button>
                             )}
-                            <Link href={route('inventarios.create')}>
-                                <Button><Plus className="size-4" /> Nuevo Inventario</Button>
-                            </Link>
+                            {can('inventarios.create') && (
+                                <Link href={route('inventarios.create')}>
+                                    <Button><Plus className="size-4" /> Nuevo Inventario</Button>
+                                </Link>
+                            )}
                         </>
                     }
                 />

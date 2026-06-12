@@ -3,17 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\PointOfSale;
-use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
     public function index()
     {
         return Inertia::render('Users/Index', [
-            'users' => User::with(['role', 'pointOfSale'])->paginate(10),
+            'users' => User::with(['roles', 'pointOfSale'])->paginate(10),
         ]);
     }
 
@@ -31,17 +31,20 @@ class UserController extends Controller
             'name'             => 'required|string|max:255',
             'email'            => 'required|string|email|max:255|unique:users',
             'password'         => 'required|string|min:8',
-            'role_id'          => 'nullable|exists:roles,id',
+            'role_id'          => 'required|exists:roles,id',
             'point_of_sale_id' => 'nullable|exists:points_of_sale,id',
         ]);
 
-        User::create([
+        $role = Role::find($request->role_id);
+
+        $user = User::create([
             'name'             => $request->name,
             'email'            => $request->email,
             'password'         => bcrypt($request->password),
-            'role_id'          => $request->role_id,
-            'point_of_sale_id' => $this->resolvePosId($request),
+            'point_of_sale_id' => $this->resolvePosId($request, $role),
         ]);
+
+        $user->assignRole($role->name);
 
         return redirect()->route('users.index');
     }
@@ -49,7 +52,7 @@ class UserController extends Controller
     public function edit(User $user)
     {
         return Inertia::render('Users/Edit', [
-            'user'        => $user->load('pointOfSale'),
+            'user'        => $user->load(['pointOfSale', 'roles']),
             'roles'       => Role::all(),
             'puntosVenta' => PointOfSale::active()->orderBy('is_default', 'desc')->orderBy('pos_number')->get(['id', 'name', 'pos_number', 'is_default']),
         ]);
@@ -64,12 +67,17 @@ class UserController extends Controller
             'point_of_sale_id' => 'nullable|exists:points_of_sale,id',
         ]);
 
+        $role = $request->role_id ? Role::find($request->role_id) : null;
+
         $user->update([
             'name'             => $request->name,
             'email'            => $request->email,
-            'role_id'          => $request->role_id,
-            'point_of_sale_id' => $this->resolvePosId($request),
+            'point_of_sale_id' => $this->resolvePosId($request, $role),
         ]);
+
+        if ($role) {
+            $user->syncRoles($role->name);
+        }
 
         return redirect()->route('users.index');
     }
@@ -78,10 +86,9 @@ class UserController extends Controller
      * PV asignado solo se persiste para vendedores.
      * Para admin/superadmin/cliente queda null.
      */
-    private function resolvePosId(Request $request): ?int
+    private function resolvePosId(Request $request, ?Role $role): ?int
     {
-        $role = $request->role_id ? Role::find($request->role_id) : null;
-        if ($role?->role === 'vendedor') {
+        if ($role && $role->name === 'vendedor') {
             abort_if(! $request->point_of_sale_id, 422, 'Los vendedores deben tener un punto de venta asignado.');
             return (int) $request->point_of_sale_id;
         }

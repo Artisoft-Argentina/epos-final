@@ -11,6 +11,7 @@ import { ActionButton } from '@/components/action-button';
 import { Pagination } from '@/components/pagination';
 import { Plus, Search, FileText, Edit, Power, Users, UserCheck, UserPlus } from 'lucide-react';
 import { useState, useRef } from 'react';
+import { usePermission } from '@/hooks/use-permission';
 
 interface Customer {
     id: number;
@@ -54,6 +55,8 @@ const TAX_STATUS_OPTIONS = [
 export default function Index({ customers, filters, kpis }: Props) {
     const [search, setSearch] = useState(filters.search || '');
     const timeoutRef = useRef<NodeJS.Timeout>();
+
+    const { can } = usePermission();
 
     const applyFilter = (params: Record<string, string>) => {
         router.get(route('customers.index'), { ...filters, ...params }, { preserveState: true, replace: true });
@@ -140,23 +143,29 @@ export default function Index({ customers, filters, kpis }: Props) {
             header: 'Acciones',
             render: (row) => (
                 <div className="flex items-center gap-1">
-                    <Link href={route('customers.show', row.id)}>
-                        <ActionButton title="Ver Detalle">
-                            <FileText className="size-3.5" />
+                    {can('customers.show') && (
+                        <Link href={route('customers.show', row.id)}>
+                            <ActionButton title="Ver Detalle">
+                                <FileText className="size-3.5" />
+                            </ActionButton>
+                        </Link>
+                    )}
+                    {can('customers.edit') && (
+                        <Link href={route('customers.edit', row.id)}>
+                            <ActionButton title="Editar">
+                                <Edit className="size-3.5" />
+                            </ActionButton>
+                        </Link>
+                    )}
+                    {can('customers.toggle-active') && (
+                        <ActionButton
+                            title={row.active ? 'Desactivar' : 'Activar'}
+                            onClick={() => handleToggleActive(row)}
+                            variant={row.active ? 'destructive-soft' : 'outline'}
+                        >
+                            <Power className="size-3.5" />
                         </ActionButton>
-                    </Link>
-                    <Link href={route('customers.edit', row.id)}>
-                        <ActionButton title="Editar">
-                            <Edit className="size-3.5" />
-                        </ActionButton>
-                    </Link>
-                    <ActionButton
-                        title={row.active ? 'Desactivar' : 'Activar'}
-                        onClick={() => handleToggleActive(row)}
-                        variant={row.active ? 'destructive-soft' : 'outline'}
-                    >
-                        <Power className="size-3.5" />
-                    </ActionButton>
+                    )}
                 </div>
             ),
         },
@@ -170,9 +179,11 @@ export default function Index({ customers, filters, kpis }: Props) {
                     title="Clientes"
                     description="Gestioná tu cartera de clientes"
                     actions={
-                        <Link href={route('customers.create')}>
-                            <Button><Plus className="size-4" /> Nuevo Cliente</Button>
-                        </Link>
+                        can('customers.create') && (
+                            <Link href={route('customers.create')}>
+                                <Button><Plus className="size-4" /> Nuevo Cliente</Button>
+                            </Link>
+                        )
                     }
                 />
 

@@ -13,6 +13,7 @@ import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialo
 import { Pagination } from '@/components/pagination';
 import { Plus, Search, Printer, Eye, Edit, Power, Package, PackageCheck, AlertTriangle, PackageX } from 'lucide-react';
 import { useState, useRef } from 'react';
+import { usePermission } from '@/hooks/use-permission';
 
 interface Category { id: number; name: string; }
 interface Brand { id: number; name: string; }
@@ -50,6 +51,7 @@ export default function Index({ products, filters, categories, brands, suppliers
     const [search, setSearch] = useState(filters.search ?? '');
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
     const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+    const { can } = usePermission();
 
     const applyFilter = (params: Record<string, string>) =>
         router.get(route('products.index'), { ...filters, ...params }, { preserveState: true, replace: true });
@@ -191,24 +193,32 @@ export default function Index({ products, filters, categories, brands, suppliers
             header: 'Acciones',
             render: (row) => (
                 <div className="flex items-center gap-1">
-                    <Link href={route('products.show', row.id)}>
-                        <ActionButton title="Ver detalle"><Eye className="size-3.5" /></ActionButton>
-                    </Link>
-                    <Link href={route('products.edit', row.id)}>
-                        <ActionButton title="Editar"><Edit className="size-3.5" /></ActionButton>
-                    </Link>
-                    <ActionButton
-                        title={row.active ? 'Desactivar' : 'Activar'}
-                        onClick={() => handleToggleActive(row)}
-                        variant={row.active ? 'destructive-soft' : 'outline'}
-                    >
-                        <Power className="size-3.5" />
-                    </ActionButton>
-                    <DeleteConfirmationDialog
-                        url={route('products.destroy', row.id)}
-                        title="Eliminar producto"
-                        description={`¿Estás seguro que querés eliminar "${row.name}"? Esta acción no se puede deshacer.`}
-                    />
+                    {can('products.show') && (
+                        <Link href={route('products.show', row.id)}>
+                            <ActionButton title="Ver detalle"><Eye className="size-3.5" /></ActionButton>
+                        </Link>
+                    )}
+                    {can('products.edit') && (
+                        <Link href={route('products.edit', row.id)}>
+                            <ActionButton title="Editar"><Edit className="size-3.5" /></ActionButton>
+                        </Link>
+                    )}
+                    {can('products.toggle-active') && (
+                        <ActionButton
+                            title={row.active ? 'Desactivar' : 'Activar'}
+                            onClick={() => handleToggleActive(row)}
+                            variant={row.active ? 'destructive-soft' : 'outline'}
+                        >
+                            <Power className="size-3.5" />
+                        </ActionButton>
+                    )}
+                    {can('products.destroy') && (
+                        <DeleteConfirmationDialog
+                            url={route('products.destroy', row.id)}
+                            title="Eliminar producto"
+                            description={`¿Estás seguro que querés eliminar "${row.name}"? Esta acción no se puede deshacer.`}
+                        />
+                    )}
                 </div>
             ),
         },
@@ -231,15 +241,17 @@ export default function Index({ products, filters, categories, brands, suppliers
                     description="Gestioná el catálogo de productos"
                     actions={
                         <>
-                            {selectedIds.length > 0 && (
+                            {can('products.print-labels') && selectedIds.length > 0 && (
                                 <Button variant="outline" onClick={handlePrintLabels}>
                                     <Printer className="size-4" />
                                     Imprimir etiquetas ({selectedIds.length})
                                 </Button>
                             )}
-                            <Link href={route('products.create')}>
-                                <Button><Plus className="size-4" /> Nuevo Producto</Button>
-                            </Link>
+                            {can('products.create') && (
+                                <Link href={route('products.create')}>
+                                    <Button><Plus className="size-4" /> Nuevo Producto</Button>
+                                </Link>
+                            )}
                         </>
                     }
                 />

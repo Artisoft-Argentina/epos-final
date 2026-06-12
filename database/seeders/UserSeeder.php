@@ -2,35 +2,38 @@
 
 namespace Database\Seeders;
 
-use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Spatie\Permission\Models\Role;
 
 class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        $roles = Role::all();
+        Role::firstOrCreate(['name' => 'superadmin', 'guard_name' => 'web']);
+        Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
+        Role::firstOrCreate(['name' => 'vendedor', 'guard_name' => 'web']);
+        Role::firstOrCreate(['name' => 'cliente', 'guard_name' => 'web']);
 
-        User::create([
+        $user = User::create([
             'name' => 'Super Admin',
             'email' => 'superadmin@mail.com',
             'password' => bcrypt('asdf1234'),
-            'role_id' => $roles->where('role', 'superadmin')->first()->id,
         ]);
+        $user->assignRole('superadmin');
 
-        User::create([
+        $user = User::create([
             'name' => 'Admin',
             'email' => 'admin@mail.com',
             'password' => bcrypt('asdf1234'),
-            'role_id' => $roles->where('role', 'admin')->first()->id,
         ]);
+        $user->assignRole('admin');
 
-        User::create([
+        $user = User::create([
             'name' => 'Vendedor',
             'email' => 'vendedor@mail.com',
             'password' => bcrypt('asdf1234'),
-            'role_id' => $roles->where('role', 'vendedor')->first()->id,
         ]);
+        $user->assignRole('vendedor');
     }
 }

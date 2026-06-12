@@ -28,6 +28,9 @@ chmod 2755 /tmp/nginx
 echo "==> Limpiando cache de configuración..."
 rm -f bootstrap/cache/packages.php bootstrap/cache/services.php
 
+echo "==> Creando Roles y Permisos..."
+php artisan app:create-roles-and-permissions --force 2>/dev/null || true
+
 if [ -z "$(grep -E '^APP_KEY=base64:' /var/www/html/.env 2>/dev/null)" ]; then
     echo "==> Generando APP_KEY..."
     php artisan key:generate --force 2>/dev/null || true

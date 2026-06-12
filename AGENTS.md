@@ -245,3 +245,7 @@ El orden de CI (`lint.yml`) es: **Pint → Prettier → ESLint**.
 - Sombras: `shadow-sm` en cards, nunca sombras custom.
 - Spacing: múltiplos de 4 (`gap-4`, `gap-6`, `p-4`, `p-6`).
 - Tipografía: Instrument Sans (definida en `app.css`, no importar manualmente).
+
+### Reglas
+- Nunca hagas commits, pull, ni push.
+- Cada planificación que hagas, guardala.

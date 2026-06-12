@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeftRight, Truck, PackageCheck, X } from 'lucide-react';
+import { usePermission } from '@/hooks/use-permission';
 
 interface Product {
     id: number;
@@ -54,6 +55,7 @@ const statusConfig: Record<string, { label: string; variant: 'default' | 'second
 };
 
 export default function Show({ transfer }: Props) {
+    const { can } = usePermission();
     const s = statusConfig[transfer.status];
 
     const handleDispatch = () => {
@@ -153,25 +155,25 @@ export default function Show({ transfer }: Props) {
 
                 {/* Acciones según estado */}
                 <div className="flex gap-2">
-                    {transfer.status === 'draft' && (
-                        <>
-                            <Button onClick={handleDispatch}>
-                                <Truck className="size-4 mr-1" /> Despachar
-                            </Button>
-                            <Button variant="destructive" onClick={handleCancel}>
-                                <X className="size-4 mr-1" /> Cancelar
-                            </Button>
-                        </>
+                    {transfer.status === 'draft' && can('transferencias.dispatch') && (
+                        <Button onClick={handleDispatch}>
+                            <Truck className="size-4 mr-1" /> Despachar
+                        </Button>
                     )}
-                    {transfer.status === 'in_transit' && (
-                        <>
-                            <Button onClick={handleReceive}>
-                                <PackageCheck className="size-4 mr-1" /> Confirmar Recepción
-                            </Button>
-                            <Button variant="destructive" onClick={handleCancel}>
-                                <X className="size-4 mr-1" /> Cancelar
-                            </Button>
-                        </>
+                    {transfer.status === 'draft' && can('transferencias.cancel') && (
+                        <Button variant="destructive" onClick={handleCancel}>
+                            <X className="size-4 mr-1" /> Cancelar
+                        </Button>
+                    )}
+                    {transfer.status === 'in_transit' && can('transferencias.receive') && (
+                        <Button onClick={handleReceive}>
+                            <PackageCheck className="size-4 mr-1" /> Confirmar Recepción
+                        </Button>
+                    )}
+                    {transfer.status === 'in_transit' && can('transferencias.cancel') && (
+                        <Button variant="destructive" onClick={handleCancel}>
+                            <X className="size-4 mr-1" /> Cancelar
+                        </Button>
                     )}
                     <Button variant="outline" onClick={() => window.history.back()}>Volver</Button>
                 </div>

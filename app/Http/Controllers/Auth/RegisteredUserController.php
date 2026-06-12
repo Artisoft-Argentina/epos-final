@@ -40,8 +40,8 @@ class RegisteredUserController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'role_id' => 4, // Cliente por defecto
         ]);
+        $user->assignRole('cliente');
 
         // Crear cliente automáticamente
         \App\Models\Cliente::create([

@@ -2,35 +2,26 @@
 
 namespace Database\Seeders;
 
-use App\Models\Role;
 use Illuminate\Database\Seeder;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 class RoleSeeder extends Seeder
 {
     public function run(): void
     {
-        Role::create([
-            'role' => 'superadmin',
-            'permission' => 'all',
-            'description' => 'Super Administrador con todos los permisos',
-        ]);
+        $permissions = config('custom.permissions');
 
-        Role::create([
-            'role' => 'admin',
-            'permission' => 'manage_users,manage_products',
-            'description' => 'Administrador con permisos de gestión',
-        ]);
+        foreach ($permissions as $role_name => $values) {
+            $role = Role::findOrCreate($role_name, 'web');
 
-        Role::create([
-            'role' => 'vendedor',
-            'permission' => 'view_products,create_sales',
-            'description' => 'Vendedor con permisos de ventas',
-        ]);
+            $validPermissions = collect($values)->filter()->unique();
 
-        Role::create([
-            'role' => 'cliente',
-            'permission' => 'view_shop,create_orders',
-            'description' => 'Cliente del e-commerce',
-        ]);
+            foreach ($validPermissions as $permissionName) {
+                Permission::findOrCreate($permissionName, 'web');
+            }
+
+            $role->syncPermissions($validPermissions->toArray());
+        }
     }
 }

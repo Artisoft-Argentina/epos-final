@@ -7,11 +7,13 @@ import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialo
 import { ActionButton } from '@/components/action-button';
 import { Pagination } from '@/components/pagination';
 import { Plus, Edit } from 'lucide-react';
+import { usePermission } from '@/hooks/use-permission';
 
 interface Supplier { id: number; business_name: string; tax_id: string; address: string; phone: string; email?: string; }
 interface Props { suppliers: { data: Supplier[]; links: any; meta: any }; }
 
 export default function Index({ suppliers }: Props) {
+    const { can } = usePermission();
 
     const columns: Column<Supplier>[] = [
         {
@@ -45,10 +47,14 @@ export default function Index({ suppliers }: Props) {
             align: 'right',
             render: (row) => (
                 <div className="flex items-center gap-1">
-                    <Link href={route('suppliers.edit', row.id)}>
-                        <ActionButton title="Editar"><Edit className="size-3.5" /></ActionButton>
-                    </Link>
-                    <DeleteConfirmationDialog url={route('suppliers.destroy', row.id)} title="Eliminar proveedor" description={`¿Está seguro que desea eliminar el proveedor ${row.business_name}?`} />
+                    {can('suppliers.edit') && (
+                        <Link href={route('suppliers.edit', row.id)}>
+                            <ActionButton title="Editar"><Edit className="size-3.5" /></ActionButton>
+                        </Link>
+                    )}
+                    {can('suppliers.destroy') && (
+                        <DeleteConfirmationDialog url={route('suppliers.destroy', row.id)} title="Eliminar proveedor" description={`¿Está seguro que desea eliminar el proveedor ${row.business_name}?`} />
+                    )}
                 </div>
             ),
         },
@@ -61,9 +67,11 @@ export default function Index({ suppliers }: Props) {
                 <PageHeader
                     title="Proveedores"
                     actions={
-                        <Link href={route('suppliers.create')}>
-                            <Button><Plus className="size-4" /> Nuevo Proveedor</Button>
-                        </Link>
+                        can('suppliers.create') && (
+                            <Link href={route('suppliers.create')}>
+                                <Button><Plus className="size-4" /> Nuevo Proveedor</Button>
+                            </Link>
+                        )
                     }
                 />
                 <DataTable columns={columns} data={suppliers.data} keyExtractor={(row) => row.id} emptyMessage="No hay proveedores registrados." />
