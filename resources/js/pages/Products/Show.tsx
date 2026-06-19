@@ -43,8 +43,8 @@ interface Product {
     name: string;
     description: string | null;
     unit: string;
-    price: string;
-    cost: string | null;
+    cost: string;
+    markup_percent: string | null;
     tax_rate: string;
     min_stock: number;
     supplier_code: string | null;
@@ -243,7 +243,7 @@ export default function Show({ product, movements }: Props) {
                                             </div>
                                             <p className="text-xs text-muted-foreground">Precio base</p>
                                         </div>
-                                        <p className="text-lg font-bold tabular-nums text-foreground">{fmt(product.price)}</p>
+                                        <p className="text-lg font-bold tabular-nums text-foreground">{fmt(product.cost)}</p>
                                     </div>
                                     <div className="rounded-lg bg-muted/40 border border-border px-4 py-3">
                                         <div className="flex items-center gap-2 mb-1">
@@ -360,7 +360,7 @@ export default function Show({ product, movements }: Props) {
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="px-6 py-4">
-                                    <DataRow label="Precio base" value={fmt(product.price)} />
+                                    <DataRow label="Costo" value={fmt(product.cost)} />
                                     <DataRow label="Costo de compra" value={product.cost ? fmt(product.cost) : '—'} />
                                     <DataRow label="Alícuota IVA" value={`${product.tax_rate}%`} />
                                     <DataRow label="Unidad" value={product.unit} />

@@ -13,6 +13,7 @@ return new class extends Migration
             $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
             $table->foreignId('price_list_id')->constrained('price_lists')->cascadeOnDelete();
             $table->decimal('price', 12, 2);
+            $table->boolean('is_manual')->default(false);
             $table->softDeletes();
             $table->boolean('active')->default(true);
             $table->timestamps();

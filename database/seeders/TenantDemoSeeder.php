@@ -95,14 +95,14 @@ class TenantDemoSeeder extends Seeder
         $defaultSupplier  = $suppliers[0];
 
         return collect($catalog)->map(function ($row, $idx) use ($brandsByName, $categoriesByName, $defaultSupplier) {
-            [$name, $sku, $price, $catName, $brandName] = $row;
+            [$name, $sku, $cost, $catName, $brandName] = $row;
             return Product::firstOrCreate(
                 ['sku' => $sku],
                 [
                     'name'          => $name,
                     'description'   => $name . ' - producto demo',
                     'unit'          => 'UN',
-                    'price'         => $price,
+                    'cost'          => $cost,
                     'tax_rate'      => 21,
                     'min_stock'     => 5,
                     'brand_id'      => $brandsByName[$brandName]->id,

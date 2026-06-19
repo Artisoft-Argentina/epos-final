@@ -27,8 +27,8 @@ interface Product {
     name: string;
     description: string | null;
     unit: string;
-    price: string;
-    cost: string | null;
+    cost: string;
+    markup_percent: string | null;
     tax_rate: string;
     min_stock: number;
     brand_id: number | null;
@@ -58,8 +58,8 @@ export default function Edit({ product, categories, brands, suppliers, priceList
         name: product.name,
         description: product.description ?? '',
         unit: product.unit,
-        price: product.price,
-        cost: product.cost ?? '',
+        cost: product.cost,
+        markup_percent: product.markup_percent ?? '',
         tax_rate: product.tax_rate,
         min_stock: product.min_stock.toString(),
         brand_id: product.brand_id?.toString() ?? '',
@@ -153,11 +153,11 @@ export default function Edit({ product, categories, brands, suppliers, priceList
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="px-6 py-5 grid grid-cols-2 gap-5">
-                                    <FormField label="Precio base" htmlFor="price" error={errors.price} required>
-                                        <Input id="price" type="number" step="0.01" min="0" value={data.price} onChange={(e) => setData('price', e.target.value)} placeholder={product.price} error={errors.price} />
+                                    <FormField label="Costo" htmlFor="cost" error={errors.cost} required>
+                                        <Input id="cost" type="number" step="0.01" min="0" value={data.cost} onChange={(e) => setData('cost', e.target.value)} placeholder={product.cost} error={errors.cost} />
                                     </FormField>
-                                    <FormField label="Costo de compra" htmlFor="cost" error={errors.cost}>
-                                        <Input id="cost" type="number" step="0.01" min="0" value={data.cost} onChange={(e) => setData('cost', e.target.value)} placeholder={product.cost ?? '0.00'} error={errors.cost} />
+                                    <FormField label="% Ganancia" htmlFor="markup_percent" error={errors.markup_percent} hint="Opcional. Se usa como template para listas.">
+                                        <Input id="markup_percent" type="number" step="0.01" min="0" value={data.markup_percent} onChange={(e) => setData('markup_percent', e.target.value)} placeholder="Ej. 30" error={errors.markup_percent} />
                                     </FormField>
                                     <FormField label="Alícuota IVA (%)" htmlFor="tax_rate" error={errors.tax_rate} required>
                                         <Input id="tax_rate" type="number" step="0.01" min="0" value={data.tax_rate} onChange={(e) => setData('tax_rate', e.target.value)} placeholder={product.tax_rate} error={errors.tax_rate} />
@@ -191,7 +191,7 @@ export default function Edit({ product, categories, brands, suppliers, priceList
                                                 <span className="text-right">Precio final</span>
                                             </div>
                                             {priceLists.map((list) => {
-                                                const base  = parseFloat(data.price) || 0;
+                                                const base  = parseFloat(data.cost) || 0;
                                                 const pct   = parseFloat(list.percentage);
                                                 const final = base * (1 + pct / 100);
                                                 return (

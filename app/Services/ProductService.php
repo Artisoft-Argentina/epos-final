@@ -43,12 +43,12 @@ class ProductService
 
     public function update(Product $product, array $data, array $images = []): void
     {
-        $previousPrice = (float) $product->price;
+        $previousCost = (float) $product->cost;
 
         $product->update($data);
 
-        // Recalcular listas solo si cambió el precio base
-        if ((float) $product->fresh()->price !== $previousPrice) {
+        // Recalcular listas solo si cambió el costo
+        if ((float) $product->fresh()->cost !== $previousCost) {
             $this->syncPriceLists($product->fresh());
         }
 
@@ -88,7 +88,11 @@ class ProductService
         $lists = PriceList::where('active', true)->get();
 
         foreach ($lists as $list) {
-            $price = round((float) $product->price * (1 + ($list->percentage / 100)), 2);
+            $markup = $list->pricing_strategy === 'product'
+                ? ($product->markup_percent ?? $list->percentage)
+                : $list->percentage;
+
+            $price = round((float) $product->cost * (1 + ($markup / 100)), 2);
             $list->products()->syncWithoutDetaching([
                 $product->id => ['price' => $price],
             ]);
