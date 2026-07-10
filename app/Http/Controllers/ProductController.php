@@ -75,7 +75,7 @@ class ProductController extends Controller
             'categories' => Category::active()->orderBy('name')->get(['id', 'name']),
             'brands'     => Brand::active()->orderBy('name')->get(['id', 'name']),
             'suppliers'  => Supplier::orderBy('business_name')->get(['id', 'business_name']),
-            'priceLists' => PriceList::where('active', true)->orderBy('name')->get(['id', 'name', 'percentage']),
+            'priceLists' => PriceList::where('active', true)->orderBy('name')->get(['id', 'name', 'percentage', 'pricing_strategy']),
             'warehouses' => Warehouse::active()->orderBy('is_default', 'desc')->orderBy('name')->get(['id', 'name', 'is_default']),
         ]);
     }
@@ -112,7 +112,7 @@ class ProductController extends Controller
             'categories' => Category::active()->orderBy('name')->get(['id', 'name']),
             'brands'     => Brand::active()->orderBy('name')->get(['id', 'name']),
             'suppliers'  => Supplier::orderBy('business_name')->get(['id', 'business_name']),
-            'priceLists' => PriceList::where('active', true)->orderBy('name')->get(['id', 'name', 'percentage']),
+            'priceLists' => PriceList::where('active', true)->orderBy('name')->get(['id', 'name', 'percentage', 'pricing_strategy']),
         ]);
     }
 

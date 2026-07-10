@@ -17,7 +17,7 @@ import { useState } from 'react';
 interface Category { id: number; name: string; }
 interface Brand { id: number; name: string; }
 interface Supplier { id: number; business_name: string; }
-interface PriceList { id: number; name: string; percentage: string; }
+interface PriceList { id: number; name: string; percentage: string; pricing_strategy: 'list' | 'product'; }
 interface WarehouseOption { id: number; name: string; is_default: boolean; }
 interface Props { categories: Category[]; brands: Brand[]; suppliers: Supplier[]; priceLists: PriceList[]; warehouses: WarehouseOption[]; }
 
@@ -168,12 +168,21 @@ export default function Create({ categories, brands, suppliers, priceLists, ware
                                                 <span className="text-right">Precio final</span>
                                             </div>
                                             {priceLists.map((list) => {
-                                                const base  = parseFloat(data.cost) || 0;
-                                                const pct   = parseFloat(list.percentage);
-                                                const final = base * (1 + pct / 100);
+                                                const base   = parseFloat(data.cost) || 0;
+                                                const markup = parseFloat(data.markup_percent);
+                                                // strategy 'product' usa el markup del producto si existe; sino, el % de la lista
+                                                const pct    = list.pricing_strategy === 'product' && !isNaN(markup)
+                                                    ? markup
+                                                    : parseFloat(list.percentage);
+                                                const final  = base * (1 + pct / 100);
                                                 return (
                                                     <div key={list.id} className="grid grid-cols-3 px-2 py-2.5 rounded-md hover:bg-muted/40 transition-colors">
-                                                        <span className="text-sm font-medium text-foreground">{list.name}</span>
+                                                        <span className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+                                                            {list.name}
+                                                            <Badge variant={list.pricing_strategy === 'product' ? 'info' : 'outline'}>
+                                                                {list.pricing_strategy === 'product' ? 'Por producto' : 'Por lista'}
+                                                            </Badge>
+                                                        </span>
                                                         <span className="text-sm tabular-nums text-muted-foreground text-right">{pct >= 0 ? '+' : ''}{pct}%</span>
                                                         <span className="text-sm font-semibold tabular-nums text-foreground text-right">
                                                             {base > 0 ? fmt(final) : <span className="text-muted-foreground">—</span>}

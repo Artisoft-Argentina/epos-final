@@ -152,15 +152,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('transferencias/{transferencia}/cancel', [\App\Http\Controllers\StockTransferController::class, 'cancel'])->name('transferencias.cancel')->middleware('can:transferencias.cancel');
 
     // Listas de precios
-    Route::get('listas-precios', [\App\Http\Controllers\ListaPrecioController::class, 'index'])->name('listas-precios.index')->middleware('can:listas-precios.index');
-    Route::get('listas-precios/create', [\App\Http\Controllers\ListaPrecioController::class, 'create'])->name('listas-precios.create')->middleware('can:listas-precios.create');
-    Route::post('listas-precios', [\App\Http\Controllers\ListaPrecioController::class, 'store'])->name('listas-precios.store')->middleware('can:listas-precios.store');
-    Route::get('listas-precios/{listas_precio}', [\App\Http\Controllers\ListaPrecioController::class, 'show'])->name('listas-precios.show')->middleware('can:listas-precios.show');
-    Route::get('listas-precios/{listas_precio}/edit', [\App\Http\Controllers\ListaPrecioController::class, 'edit'])->name('listas-precios.edit')->middleware('can:listas-precios.edit');
-    Route::put('listas-precios/{listas_precio}', [\App\Http\Controllers\ListaPrecioController::class, 'update'])->name('listas-precios.update')->middleware('can:listas-precios.update');
-    Route::delete('listas-precios/{listas_precio}', [\App\Http\Controllers\ListaPrecioController::class, 'destroy'])->name('listas-precios.destroy')->middleware('can:listas-precios.destroy');
-    Route::post('listas-precios/{listas_precio}/regenerar', [\App\Http\Controllers\ListaPrecioController::class, 'regenerarPrecios'])->name('listas-precios.regenerar')->middleware('can:listas-precios.regenerar');
-    // });
+    Route::get('price-lists', [\App\Http\Controllers\PriceListController::class, 'index'])->name('price-lists.index')->middleware('can:price-lists.index');
+    Route::post('price-lists', [\App\Http\Controllers\PriceListController::class, 'store'])->name('price-lists.store')->middleware('can:price-lists.store');
+    Route::get('price-lists/{priceList}', [\App\Http\Controllers\PriceListController::class, 'show'])->name('price-lists.show')->middleware('can:price-lists.show');
+    Route::put('price-lists/{priceList}', [\App\Http\Controllers\PriceListController::class, 'update'])->name('price-lists.update')->middleware('can:price-lists.update');
+    Route::delete('price-lists/{priceList}', [\App\Http\Controllers\PriceListController::class, 'destroy'])->name('price-lists.destroy')->middleware('can:price-lists.destroy');
+    Route::post('price-lists/{priceList}/recalculate', [\App\Http\Controllers\PriceListController::class, 'recalculate'])->name('price-lists.recalculate')->middleware('can:price-lists.recalculate');
+    Route::post('price-lists/{priceList}/override-price', [\App\Http\Controllers\PriceListController::class, 'overridePrice'])->name('price-lists.override-price')->middleware('can:price-lists.override-price');
 
     // ── Rutas compartidas entre roles ───────────────────────────────────────
 

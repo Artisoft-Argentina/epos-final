@@ -31,9 +31,10 @@ interface PriceListItem {
     id: number;
     name: string;
     percentage: string;
+    pricing_strategy: 'list' | 'product';
     default_pos: boolean;
     default_ecommerce: boolean;
-    pivot: { price: string };
+    pivot: { price: string; is_manual: boolean };
 }
 
 interface Product {
@@ -397,19 +398,30 @@ export default function Show({ product, movements }: Props) {
                             <CardContent className="p-0">
                                 {product.price_lists.length > 0 ? (
                                     <div className="divide-y divide-border">
-                                        {product.price_lists.map((list) => (
-                                            <div key={list.id} className="flex items-center justify-between px-6 py-3">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-sm font-medium text-foreground">{list.name}</span>
-                                                    {list.default_pos && <Badge variant="info">POS</Badge>}
-                                                    {list.default_ecommerce && <Badge variant="pending">E-commerce</Badge>}
+                                        {product.price_lists.map((list) => {
+                                            // % efectivo: strategy 'product' usa el markup del producto si está seteado;
+                                            // si no, cae al % de la lista (default).
+                                            const fromProduct = list.pricing_strategy === 'product'
+                                                && product.markup_percent !== null && product.markup_percent !== '';
+                                            const effectivePct = fromProduct ? Number(product.markup_percent) : Number(list.percentage);
+                                            const sign = effectivePct >= 0 ? '+' : '';
+                                            return (
+                                                <div key={list.id} className="flex items-center justify-between px-6 py-3">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-sm font-medium text-foreground">{list.name}</span>
+                                                        {list.default_pos && <Badge variant="info">POS</Badge>}
+                                                        {list.default_ecommerce && <Badge variant="pending">E-commerce</Badge>}
+                                                        {list.pivot.is_manual && <Badge variant="warning">Manual</Badge>}
+                                                    </div>
+                                                    <div className="flex items-center gap-4">
+                                                        <span className="text-xs text-muted-foreground">
+                                                            {sign}{effectivePct}%{fromProduct && ' (producto)'}
+                                                        </span>
+                                                        <span className="text-sm font-semibold tabular-nums text-foreground">{fmt(list.pivot.price)}</span>
+                                                    </div>
                                                 </div>
-                                                <div className="flex items-center gap-4">
-                                                    <span className="text-xs text-muted-foreground">+{list.percentage}%</span>
-                                                    <span className="text-sm font-semibold tabular-nums text-foreground">{fmt(list.pivot.price)}</span>
-                                                </div>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 ) : (
                                     <p className="px-6 py-5 text-sm text-muted-foreground">Este producto no está asignado a ninguna lista de precios.</p>
