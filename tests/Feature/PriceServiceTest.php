@@ -4,6 +4,7 @@ use App\Models\Category;
 use App\Models\PriceList;
 use App\Models\Product;
 use App\Models\User;
+use App\Http\Controllers\PriceListController;
 use App\Services\PriceService;
 use App\Services\ProductService;
 use Illuminate\Support\Facades\DB;
@@ -286,4 +287,55 @@ it('marca is_manual y registra historial al sobreescribir un precio', function (
         'old_value'     => 150,
         'new_value'     => 500,
     ]);
+});
+
+// ─── destroy (soft delete + invariantes) ──────────────────────────────────────
+
+it('bloquea eliminar la lista POS por defecto', function () {
+    $pos = makeList('POS', 0, 'list', defaultPos: true);
+    makeList('Web', 10, 'list'); // segunda activa para pasar el check de "última"
+
+    app(PriceListController::class)->destroy($pos);
+
+    expect($pos->fresh()->trashed())->toBeFalse();
+});
+
+it('bloquea eliminar la lista de ecommerce por defecto', function () {
+    makeList('POS', 0, 'list', defaultPos: true);
+    $eco = makeList('Web', 10, 'list');
+    $eco->update(['default_ecommerce' => true]);
+
+    app(PriceListController::class)->destroy($eco);
+
+    expect($eco->fresh()->trashed())->toBeFalse();
+});
+
+it('bloquea eliminar la última lista activa', function () {
+    $only = makeList('POS', 0, 'list'); // única activa (sin default para no chocar antes)
+
+    app(PriceListController::class)->destroy($only);
+
+    expect($only->fresh()->trashed())->toBeFalse();
+});
+
+it('soft-deletea la lista y sus precios sin borrarlos físicamente', function () {
+    makeList('POS', 0, 'list', defaultPos: true);
+    $extra = makeList('Distribuidor', 5, 'list');
+    $product = makeProduct(cost: 100);
+    $this->priceService->generateForProduct($product);
+
+    expect(pivotOf($product, $extra))->not->toBeNull();
+
+    app(PriceListController::class)->destroy($extra);
+
+    // La lista queda soft-deleted: fuera de las queries normales, presente con withTrashed
+    expect(PriceList::find($extra->id))->toBeNull();
+    expect(PriceList::withTrashed()->find($extra->id))->not->toBeNull();
+
+    // El pivot NO se borró físicamente: sigue existiendo con deleted_at seteado
+    expect(DB::table('price_list_products')->where('price_list_id', $extra->id)->count())->toBe(1);
+    expect(DB::table('price_list_products')->where('price_list_id', $extra->id)->whereNotNull('deleted_at')->count())->toBe(1);
+
+    // Y el precio ya no aparece entre las listas del producto (scope de la lista soft-deleted)
+    expect($product->fresh()->priceLists()->where('price_list_id', $extra->id)->exists())->toBeFalse();
 });

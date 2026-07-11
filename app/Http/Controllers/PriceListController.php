@@ -129,14 +129,28 @@ class PriceListController extends Controller
                 ->with('error', 'No se puede eliminar la última lista activa.');
         }
 
-        // Debe existir siempre una lista POS por defecto (R1)
+        // Deben existir siempre una lista POS y una de ecommerce por defecto (R1)
         if ($priceList->default_pos) {
             return redirect()->route('price-lists.index')
                 ->with('error', 'No se puede eliminar la lista POS por defecto. Asigná otra lista como predeterminada antes de eliminarla.');
         }
+        if ($priceList->default_ecommerce) {
+            return redirect()->route('price-lists.index')
+                ->with('error', 'No se puede eliminar la lista de ecommerce por defecto. Asigná otra lista como predeterminada antes de eliminarla.');
+        }
 
-        $priceList->products()->detach();
-        $priceList->delete();
+        // Soft delete de la lista y de sus precios: no se borra nada físicamente,
+        // los precios quedan conservados y son recuperables al restaurar la lista.
+        // Las lecturas por lista (Product::priceLists) ya excluyen la lista via su
+        // scope de SoftDeletes, así que los precios dejan de aparecer al instante.
+        DB::transaction(function () use ($priceList) {
+            DB::table('price_list_products')
+                ->where('price_list_id', $priceList->id)
+                ->whereNull('deleted_at')
+                ->update(['deleted_at' => now()]);
+
+            $priceList->delete();
+        });
 
         return redirect()->route('price-lists.index')->with('success', 'Lista de precios eliminada correctamente.');
     }

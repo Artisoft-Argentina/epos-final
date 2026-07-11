@@ -97,6 +97,10 @@ export default function Show({ product, movements }: Props) {
     const { can } = usePermission();
     const qty = product.stock?.quantity ?? null;
     const min = product.min_stock;
+
+    // Precio de venta de referencia: el de la lista default POS (fallback a la primera lista).
+    const defaultList = product.price_lists.find((l) => l.default_pos) ?? product.price_lists[0] ?? null;
+    const basePrice = defaultList ? Number(defaultList.pivot.price) : null;
     const stockAlert = qty === null ? null
         : qty === 0  ? 'none'
         : qty <= min ? 'low'
@@ -242,9 +246,10 @@ export default function Show({ product, movements }: Props) {
                                             <div className="size-6 rounded-full bg-primary/10 flex items-center justify-center">
                                                 <DollarSign className="size-3.5 text-primary" />
                                             </div>
-                                            <p className="text-xs text-muted-foreground">Precio base</p>
+                                            <p className="text-xs text-muted-foreground">Precio de venta</p>
                                         </div>
-                                        <p className="text-lg font-bold tabular-nums text-foreground">{fmt(product.cost)}</p>
+                                        <p className="text-lg font-bold tabular-nums text-foreground">{basePrice !== null ? fmt(basePrice) : '—'}</p>
+                                        {defaultList && <p className="text-xs text-muted-foreground truncate">{defaultList.name}</p>}
                                     </div>
                                     <div className="rounded-lg bg-muted/40 border border-border px-4 py-3">
                                         <div className="flex items-center gap-2 mb-1">
@@ -361,8 +366,9 @@ export default function Show({ product, movements }: Props) {
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="px-6 py-4">
-                                    <DataRow label="Costo" value={fmt(product.cost)} />
+                                    <DataRow label="Precio de venta" value={basePrice !== null ? fmt(basePrice) : '—'} />
                                     <DataRow label="Costo de compra" value={product.cost ? fmt(product.cost) : '—'} />
+                                    <DataRow label="% Ganancia" value={product.markup_percent ? `${product.markup_percent}%` : '—'} />
                                     <DataRow label="Alícuota IVA" value={`${product.tax_rate}%`} />
                                     <DataRow label="Unidad" value={product.unit} />
                                     {product.supplier_code && <DataRow label="Cód. proveedor" value={product.supplier_code} />}
