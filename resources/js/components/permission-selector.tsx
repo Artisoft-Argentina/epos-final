@@ -29,7 +29,7 @@ const MODULE_LABELS: Record<string, string> = {
     'entregas':          'Entregas',
     'facturas':          'Facturas',
     'inventarios':       'Inventarios',
-    'listas-precios':    'Listas de Precios',
+    'price-lists':       'Listas de Precios',
     'mercadopago':       'MercadoPago',
     'orders':            'Órdenes',
     'pagos':             'Pagos',

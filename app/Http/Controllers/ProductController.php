@@ -75,7 +75,7 @@ class ProductController extends Controller
             'categories' => Category::active()->orderBy('name')->get(['id', 'name']),
             'brands'     => Brand::active()->orderBy('name')->get(['id', 'name']),
             'suppliers'  => Supplier::orderBy('business_name')->get(['id', 'business_name']),
-            'priceLists' => PriceList::where('active', true)->orderBy('name')->get(['id', 'name', 'percentage']),
+            'priceLists' => PriceList::where('active', true)->orderBy('name')->get(['id', 'name', 'percentage', 'pricing_strategy']),
             'warehouses' => Warehouse::active()->orderBy('is_default', 'desc')->orderBy('name')->get(['id', 'name', 'is_default']),
         ]);
     }
@@ -112,7 +112,7 @@ class ProductController extends Controller
             'categories' => Category::active()->orderBy('name')->get(['id', 'name']),
             'brands'     => Brand::active()->orderBy('name')->get(['id', 'name']),
             'suppliers'  => Supplier::orderBy('business_name')->get(['id', 'business_name']),
-            'priceLists' => PriceList::where('active', true)->orderBy('name')->get(['id', 'name', 'percentage']),
+            'priceLists' => PriceList::where('active', true)->orderBy('name')->get(['id', 'name', 'percentage', 'pricing_strategy']),
         ]);
     }
 
@@ -195,8 +195,8 @@ class ProductController extends Controller
             'name'          => 'required|string|max:255',
             'description'   => 'nullable|string',
             'unit'          => 'required|string|max:50',
-            'price'         => 'required|numeric|min:0',
-            'cost'          => 'nullable|numeric|min:0',
+            'cost'          => 'required|numeric|min:0',
+            'markup_percent'=> 'nullable|numeric|min:0|max:999.99',
             'tax_rate'      => 'required|numeric|min:0',
             'min_stock'     => 'required|integer|min:0',
             'brand_id'      => 'nullable|exists:brands,id',

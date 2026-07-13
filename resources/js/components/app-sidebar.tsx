@@ -92,9 +92,9 @@ const mainNavItems: NavItem[] = [
     },
     {
         title: 'Listas de Precios',
-        href: '/listas-precios',
+        href: '/price-lists',
         icon: Tag,
-        permission: 'listas-precios.index',
+        permission: 'price-lists.index',
     },
     {
         title: 'Proveedores',

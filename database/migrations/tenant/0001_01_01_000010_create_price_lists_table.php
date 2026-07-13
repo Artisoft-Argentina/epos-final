@@ -12,6 +12,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');                              // nombre → name
             $table->decimal('percentage', 8, 2)->default(0);    // porcentaje → percentage
+            $table->enum('pricing_strategy', ['list', 'product'])->default('list');
             $table->boolean('default_pos')->default(false);
             $table->boolean('default_ecommerce')->default(false);
             $table->softDeletes();

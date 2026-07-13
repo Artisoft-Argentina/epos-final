@@ -26,7 +26,7 @@ interface Product {
     ean: string | null;
     name: string;
     unit: string;
-    price: string;
+    cost: string;
     min_stock: number;
     active: boolean;
     category: { name: string } | null;
@@ -140,10 +140,10 @@ export default function Index({ products, filters, categories, brands, suppliers
             ),
         },
         {
-            key: 'price',
-            header: 'Precio',
+            key: 'cost',
+            header: 'Costo',
             render: (row) => (
-                <span className="font-medium tabular-nums text-foreground">{fmt(row.price)}</span>
+                <span className="font-medium tabular-nums text-foreground">{fmt(row.cost)}</span>
             ),
         },
         {

@@ -21,8 +21,8 @@ class Product extends Model
         'name',
         'description',
         'unit',
-        'price',
         'cost',
+        'markup_percent',
         'tax_rate',
         'min_stock',
         'brand_id',
@@ -35,11 +35,11 @@ class Product extends Model
     ];
 
     protected $casts = [
-        'price'    => 'decimal:2',
-        'cost'     => 'decimal:2',
-        'tax_rate' => 'decimal:2',
-        'active'     => 'boolean',
-        'published'  => 'boolean',
+        'cost'           => 'decimal:2',
+        'markup_percent' => 'decimal:2',
+        'tax_rate'       => 'decimal:2',
+        'active'         => 'boolean',
+        'published'      => 'boolean',
     ];
 
     // ─── Scopes ───────────────────────────────────────────────────────────────
@@ -93,7 +93,7 @@ class Product extends Model
     public function priceLists(): BelongsToMany
     {
         return $this->belongsToMany(PriceList::class, 'price_list_products')
-                    ->withPivot('price')
+                    ->withPivot(['price', 'is_manual'])
                     ->withTimestamps();
     }
 
@@ -116,8 +116,10 @@ class Product extends Model
 
     public function getSalePriceAttribute(): float
     {
-        $list = $this->priceLists()->wherePivot('price', '>', 0)->first();
-        return $list ? (float) $list->pivot->price : (float) ($this->price ?? 0);
+        $list = $this->priceLists()->where('default_pos', true)->first()
+             ?? $this->priceLists()->first();
+
+        return $list ? (float) $list->pivot->price : 0.0;
     }
 
     /**

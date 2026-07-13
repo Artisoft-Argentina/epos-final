@@ -118,6 +118,7 @@ fresh:
 	$(COMPOSE) up -d
 	@echo "Esperando que PostgreSQL esté listo..."
 	@sleep 5
+	$(COMPOSE) exec app composer install --no-interaction
 	$(COMPOSE) exec app php artisan migrate:fresh --force
 	$(COMPOSE) exec app php artisan db:seed --force
 

@@ -2,19 +2,20 @@
 
 namespace App\Services;
 
-use App\Models\PriceList;
 use App\Models\Product;
 use App\Models\ProductImage;
 use App\Models\Stock;
 use App\Models\StockMovement;
 use App\Models\Warehouse;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Auth;
 
 class ProductService
 {
     public function __construct(
         private readonly ImageService $imageService,
-        private readonly MovimientoService $movimientoService
+        private readonly MovimientoService $movimientoService,
+        private readonly PriceService $priceService
     ) {}
 
     public function create(array $data, array $images = []): Product
@@ -36,20 +37,32 @@ class ProductService
         }
 
         $this->storeImages($product, $images, $primaryIndex);
-        $this->syncPriceLists($product);
+        $this->priceService->generateForProduct($product);
 
         return $product;
     }
 
     public function update(Product $product, array $data, array $images = []): void
     {
-        $previousPrice = (float) $product->price;
+        $previousCost   = (float) $product->cost;
+        $previousMarkup = $product->markup_percent;
 
-        $product->update($data);
+        // Persistir primero todos los campos menos el costo (incluye markup_percent,
+        // que PriceService necesita actualizado al recalcular). El costo lo aplica
+        // PriceService: recibe el valor previo en memoria para comparar, recalcular
+        // las listas no-manuales y registrar el historial.
+        $product->update(Arr::except($data, ['cost']));
 
-        // Recalcular listas solo si cambió el precio base
-        if ((float) $product->fresh()->price !== $previousPrice) {
-            $this->syncPriceLists($product->fresh());
+        $norm = fn ($v) => ($v === null || $v === '') ? null : number_format((float) $v, 2, '.', '');
+        $costChanged   = array_key_exists('cost', $data) && (float) $data['cost'] !== $previousCost;
+        $markupChanged = $norm($previousMarkup) !== $norm($product->markup_percent);
+
+        if ($costChanged) {
+            // updateCost recalcula todas las listas usando el markup ya actualizado.
+            $this->priceService->updateCost($product, (float) $data['cost'], Auth::user());
+        } elseif ($markupChanged) {
+            // Cambió solo el % de ganancia → recalcular las listas con strategy 'product'.
+            $this->priceService->recalculateProductPrices($product->fresh(), Auth::user());
         }
 
         $this->storeImages($product, $images);
@@ -82,18 +95,6 @@ class ProductService
     }
 
     // ─── Private ──────────────────────────────────────────────────────────────
-
-    private function syncPriceLists(Product $product): void
-    {
-        $lists = PriceList::where('active', true)->get();
-
-        foreach ($lists as $list) {
-            $price = round((float) $product->price * (1 + ($list->percentage / 100)), 2);
-            $list->products()->syncWithoutDetaching([
-                $product->id => ['price' => $price],
-            ]);
-        }
-    }
 
     private function initStock(Product $product, int $quantity, int $warehouseId): void
     {
