@@ -86,8 +86,8 @@ COPY docker/entrypoint.prod.sh /entrypoint.sh
 
 RUN chmod +x /entrypoint.sh
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD curl -f http://localhost/ || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+  CMD curl -f http://localhost/up || exit 1
 
 EXPOSE 80
 
