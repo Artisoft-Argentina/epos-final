@@ -10,6 +10,7 @@ import { ActionButton } from '@/components/action-button';
 import { Pagination } from '@/components/pagination';
 import { Plus, Eye, Edit, DollarSign, Package, FileText, Download, Search } from 'lucide-react';
 import { useState } from 'react';
+import { usePermission } from '@/hooks/use-permission';
 
 interface Sale {
     id: number;
@@ -44,6 +45,7 @@ function entregasPendientes(sale: Sale): number {
 
 export default function Index({ facturas }: Props) {
     const page = usePage<any>();
+    const { can } = usePermission();
     const [search, setSearch] = useState('');
 
     const filtered = facturas.data.filter((s) =>
@@ -95,15 +97,17 @@ export default function Index({ facturas }: Props) {
             align: 'right',
             render: (row) => (
                 <div className="flex items-center gap-1">
-                    <Link href={route('ventas.show', row.id)}>
-                        <ActionButton title="Ver"><Eye className="size-3.5" /></ActionButton>
-                    </Link>
-                    {!row.cae && (
+                    {can('ventas.show') && (
+                        <Link href={route('ventas.show', row.id)}>
+                            <ActionButton title="Ver"><Eye className="size-3.5" /></ActionButton>
+                        </Link>
+                    )}
+                    {can('ventas.edit') && !row.cae && (
                         <Link href={route('ventas.edit', row.id)}>
                             <ActionButton title="Editar"><Edit className="size-3.5" /></ActionButton>
                         </Link>
                     )}
-                    {entregasPendientes(row) > 0 && (
+                    {can('entregas.create') && entregasPendientes(row) > 0 && (
                         <Link href={route('entregas.index') + `?status=pending&sale_id=${row.id}`}>
                             <ActionButton
                                 title={`Marcar entregas (${entregasPendientes(row)} pendiente${entregasPendientes(row) !== 1 ? 's' : ''})`}
@@ -114,7 +118,7 @@ export default function Index({ facturas }: Props) {
                             </ActionButton>
                         </Link>
                     )}
-                    {!row.cae && (
+                    {can('afip.authorize') && !row.cae && (
                         <ActionButton title="Autorizar AFIP" onClick={() => router.post(route('afip.authorize', row.id))}>
                             <FileText className="size-3.5" />
                         </ActionButton>
@@ -124,16 +128,18 @@ export default function Index({ facturas }: Props) {
                             <ActionButton title="Descargar PDF"><Download className="size-3.5" /></ActionButton>
                         </a>
                     )}
-                    {row.payment_status === 'NO' && (
+                    {can('pagos.create') && row.payment_status === 'NO' && (
                         <Link href={route('pagos.create', row.id)}>
                             <ActionButton title="Registrar pago"><DollarSign className="size-3.5" /></ActionButton>
                         </Link>
                     )}
-                    <DeleteConfirmationDialog
-                        url={route('ventas.destroy', row.id)}
-                        title="Eliminar venta"
-                        description={`¿Está seguro que desea eliminar la venta #${row.invoice_number}? Esta acción restaurará el inventario.`}
-                    />
+                    {can('ventas.destroy') && (
+                        <DeleteConfirmationDialog
+                            url={route('ventas.destroy', row.id)}
+                            title="Eliminar venta"
+                            description={`¿Está seguro que desea eliminar la venta #${row.invoice_number}? Esta acción restaurará el inventario.`}
+                        />
+                    )}
                 </div>
             ),
         },
@@ -147,9 +153,11 @@ export default function Index({ facturas }: Props) {
                     title="Ventas"
                     description={`${facturas.data.length} ventas en el período`}
                     actions={
-                        <Link href={route('ventas.create')}>
-                            <Button><Plus className="size-4" /> Nueva Venta</Button>
-                        </Link>
+                        can('ventas.create') && (
+                            <Link href={route('ventas.create')}>
+                                <Button><Plus className="size-4" /> Nueva Venta</Button>
+                            </Link>
+                        )
                     }
                 />
 

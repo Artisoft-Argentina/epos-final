@@ -72,7 +72,7 @@ class MigrateExistingTenant extends Command
 
         try {
             $tables = [
-                'roles', 'users', 'password_reset_tokens',
+                'role_has_permissions', 'model_has_roles', 'model_has_permissions', 'roles', 'permissions', 'users', 'password_reset_tokens',
                 'settings', 'brands', 'categories', 'suppliers',
                 'products', 'product_images', 'stocks', 'stock_movements',
                 'orders', 'order_products', 'quotes', 'product_quotes',

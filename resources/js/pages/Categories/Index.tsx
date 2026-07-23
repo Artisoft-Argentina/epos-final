@@ -1,4 +1,5 @@
 import { Head, router, useForm } from '@inertiajs/react';
+import { usePermission } from '@/hooks/use-permission';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -36,6 +37,7 @@ export default function Index({ categories, filters }: Props) {
     const [modalOpen, setModalOpen] = useState(false);
     const [editing, setEditing] = useState<Category | null>(null);
     const [search, setSearch] = useState(filters.search || '');
+    const { can } = usePermission();
 
     const { data, setData, post, put, processing, errors, reset } = useForm({
         name: '',
@@ -94,27 +96,33 @@ export default function Index({ categories, filters }: Props) {
             header: 'Acciones',
             render: (row) => (
                 <div className="flex items-center gap-1">
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <span>
-                                <Switch
-                                    checked={row.active}
-                                    onCheckedChange={() =>
-                                        router.patch(route('categories.toggle-active', row.id), {}, { preserveScroll: true })
-                                    }
-                                />
-                            </span>
-                        </TooltipTrigger>
-                        <TooltipContent>{row.active ? 'Desactivar' : 'Activar'}</TooltipContent>
-                    </Tooltip>
-                    <ActionButton title="Editar" onClick={() => openEdit(row)}>
-                        <Edit className="size-3.5" />
-                    </ActionButton>
-                    <DeleteConfirmationDialog
-                        url={route('categories.destroy', row.id)}
-                        title="Eliminar categoría"
-                        description={`¿Está seguro que desea eliminar la categoría "${row.name}"?`}
-                    />
+                    {can('categories.toggle-active') && (
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <span>
+                                    <Switch
+                                        checked={row.active}
+                                        onCheckedChange={() =>
+                                            router.patch(route('categories.toggle-active', row.id), {}, { preserveScroll: true })
+                                        }
+                                    />
+                                </span>
+                            </TooltipTrigger>
+                            <TooltipContent>{row.active ? 'Desactivar' : 'Activar'}</TooltipContent>
+                        </Tooltip>
+                    )}
+                    {can('categories.edit') && (
+                        <ActionButton title="Editar" onClick={() => openEdit(row)}>
+                            <Edit className="size-3.5" />
+                        </ActionButton>
+                    )}
+                    {can('categories.destroy') && (
+                        <DeleteConfirmationDialog
+                            url={route('categories.destroy', row.id)}
+                            title="Eliminar categoría"
+                            description={`¿Está seguro que desea eliminar la categoría "${row.name}"?`}
+                        />
+                    )}
                 </div>
             ),
         },
@@ -128,9 +136,11 @@ export default function Index({ categories, filters }: Props) {
                     title="Categorías"
                     description="Administrá las categorías de los productos."
                     actions={
-                        <Button onClick={openCreate}>
-                            <Plus className="size-4" /> Nueva Categoría
-                        </Button>
+                        can('categories.create') && (
+                            <Button onClick={openCreate}>
+                                <Plus className="size-4" /> Nueva Categoría
+                            </Button>
+                        )
                     }
                 />
 

@@ -1,4 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
+import { usePermission } from '@/hooks/use-permission';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -33,6 +34,7 @@ interface Props {
 }
 
 export default function Index({ puntosVenta }: Props) {
+    const { can } = usePermission();
     const columns: Column<PuntoVenta>[] = [
         {
             key: 'name',
@@ -76,10 +78,12 @@ export default function Index({ puntosVenta }: Props) {
             align: 'right',
             render: (row) => (
                 <div className="flex items-center justify-end gap-1">
-                    <Link href={route('puntos-venta.edit', row.id)}>
-                        <ActionButton title="Editar"><Edit className="size-3.5" /></ActionButton>
-                    </Link>
-                    {!row.is_default && (
+                    {can('puntos-venta.edit') && (
+                        <Link href={route('puntos-venta.edit', row.id)}>
+                            <ActionButton title="Editar"><Edit className="size-3.5" /></ActionButton>
+                        </Link>
+                    )}
+                    {can('puntos-venta.destroy') && !row.is_default && (
                         <DeleteConfirmationDialog
                             url={route('puntos-venta.destroy', row.id)}
                             title="Eliminar punto de venta"
@@ -99,9 +103,11 @@ export default function Index({ puntosVenta }: Props) {
                     title="Puntos de Venta"
                     description="Cajas con numeración ARCA propia asociadas a un almacén."
                     actions={
-                        <Link href={route('puntos-venta.create')}>
-                            <Button><Plus className="size-4" /> Nuevo Punto de Venta</Button>
-                        </Link>
+                        can('puntos-venta.create') && (
+                            <Link href={route('puntos-venta.create')}>
+                                <Button><Plus className="size-4" /> Nuevo Punto de Venta</Button>
+                            </Link>
+                        )
                     }
                 />
                 <DataTable

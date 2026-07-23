@@ -12,6 +12,7 @@ import {
     Barcode, QrCode, Printer, Warehouse, TrendingUp, TrendingDown,
     ArrowLeftRight, AlertTriangle, PackageX,
 } from 'lucide-react';
+import { usePermission } from '@/hooks/use-permission';
 
 interface ProductImage { id: number; url: string; url_thumb: string | null; is_primary: boolean; }
 interface StockMovement {
@@ -30,9 +31,10 @@ interface PriceListItem {
     id: number;
     name: string;
     percentage: string;
+    pricing_strategy: 'list' | 'product';
     default_pos: boolean;
     default_ecommerce: boolean;
-    pivot: { price: string };
+    pivot: { price: string; is_manual: boolean };
 }
 
 interface Product {
@@ -42,8 +44,8 @@ interface Product {
     name: string;
     description: string | null;
     unit: string;
-    price: string;
-    cost: string | null;
+    cost: string;
+    markup_percent: string | null;
     tax_rate: string;
     min_stock: number;
     supplier_code: string | null;
@@ -92,8 +94,13 @@ function DataRow({ label, value }: { label: string; value: React.ReactNode }) {
 }
 
 export default function Show({ product, movements }: Props) {
+    const { can } = usePermission();
     const qty = product.stock?.quantity ?? null;
     const min = product.min_stock;
+
+    // Precio de venta de referencia: el de la lista default POS (fallback a la primera lista).
+    const defaultList = product.price_lists.find((l) => l.default_pos) ?? product.price_lists[0] ?? null;
+    const basePrice = defaultList ? Number(defaultList.pivot.price) : null;
     const stockAlert = qty === null ? null
         : qty === 0  ? 'none'
         : qty <= min ? 'low'
@@ -239,9 +246,10 @@ export default function Show({ product, movements }: Props) {
                                             <div className="size-6 rounded-full bg-primary/10 flex items-center justify-center">
                                                 <DollarSign className="size-3.5 text-primary" />
                                             </div>
-                                            <p className="text-xs text-muted-foreground">Precio base</p>
+                                            <p className="text-xs text-muted-foreground">Precio de venta</p>
                                         </div>
-                                        <p className="text-lg font-bold tabular-nums text-foreground">{fmt(product.price)}</p>
+                                        <p className="text-lg font-bold tabular-nums text-foreground">{basePrice !== null ? fmt(basePrice) : '—'}</p>
+                                        {defaultList && <p className="text-xs text-muted-foreground truncate">{defaultList.name}</p>}
                                     </div>
                                     <div className="rounded-lg bg-muted/40 border border-border px-4 py-3">
                                         <div className="flex items-center gap-2 mb-1">
@@ -294,19 +302,23 @@ export default function Show({ product, movements }: Props) {
 
                                 {/* Acciones */}
                                 <div className="flex items-center gap-2 pt-1">
-                                    <Button
-                                        variant={product.active ? 'destructive-soft' : 'outline'}
-                                        size="sm"
-                                        onClick={handleToggleActive}
-                                    >
-                                        <Power className="size-4" />
-                                        {product.active ? 'Desactivar' : 'Activar'}
-                                    </Button>
-                                    <Link href={route('products.edit', product.id)}>
-                                        <Button size="sm">
-                                            <Edit className="size-4" /> Editar
+                                    {can('products.toggle-active') && (
+                                        <Button
+                                            variant={product.active ? 'destructive-soft' : 'outline'}
+                                            size="sm"
+                                            onClick={handleToggleActive}
+                                        >
+                                            <Power className="size-4" />
+                                            {product.active ? 'Desactivar' : 'Activar'}
                                         </Button>
-                                    </Link>
+                                    )}
+                                    {can('products.edit') && (
+                                        <Link href={route('products.edit', product.id)}>
+                                            <Button size="sm">
+                                                <Edit className="size-4" /> Editar
+                                            </Button>
+                                        </Link>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -354,8 +366,9 @@ export default function Show({ product, movements }: Props) {
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="px-6 py-4">
-                                    <DataRow label="Precio base" value={fmt(product.price)} />
+                                    <DataRow label="Precio de venta" value={basePrice !== null ? fmt(basePrice) : '—'} />
                                     <DataRow label="Costo de compra" value={product.cost ? fmt(product.cost) : '—'} />
+                                    <DataRow label="% Ganancia" value={product.markup_percent ? `${product.markup_percent}%` : '—'} />
                                     <DataRow label="Alícuota IVA" value={`${product.tax_rate}%`} />
                                     <DataRow label="Unidad" value={product.unit} />
                                     {product.supplier_code && <DataRow label="Cód. proveedor" value={product.supplier_code} />}
@@ -391,19 +404,30 @@ export default function Show({ product, movements }: Props) {
                             <CardContent className="p-0">
                                 {product.price_lists.length > 0 ? (
                                     <div className="divide-y divide-border">
-                                        {product.price_lists.map((list) => (
-                                            <div key={list.id} className="flex items-center justify-between px-6 py-3">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-sm font-medium text-foreground">{list.name}</span>
-                                                    {list.default_pos && <Badge variant="info">POS</Badge>}
-                                                    {list.default_ecommerce && <Badge variant="pending">E-commerce</Badge>}
+                                        {product.price_lists.map((list) => {
+                                            // % efectivo: strategy 'product' usa el markup del producto si está seteado;
+                                            // si no, cae al % de la lista (default).
+                                            const fromProduct = list.pricing_strategy === 'product'
+                                                && product.markup_percent !== null && product.markup_percent !== '';
+                                            const effectivePct = fromProduct ? Number(product.markup_percent) : Number(list.percentage);
+                                            const sign = effectivePct >= 0 ? '+' : '';
+                                            return (
+                                                <div key={list.id} className="flex items-center justify-between px-6 py-3">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-sm font-medium text-foreground">{list.name}</span>
+                                                        {list.default_pos && <Badge variant="info">POS</Badge>}
+                                                        {list.default_ecommerce && <Badge variant="pending">E-commerce</Badge>}
+                                                        {list.pivot.is_manual && <Badge variant="warning">Manual</Badge>}
+                                                    </div>
+                                                    <div className="flex items-center gap-4">
+                                                        <span className="text-xs text-muted-foreground">
+                                                            {sign}{effectivePct}%{fromProduct && ' (producto)'}
+                                                        </span>
+                                                        <span className="text-sm font-semibold tabular-nums text-foreground">{fmt(list.pivot.price)}</span>
+                                                    </div>
                                                 </div>
-                                                <div className="flex items-center gap-4">
-                                                    <span className="text-xs text-muted-foreground">+{list.percentage}%</span>
-                                                    <span className="text-sm font-semibold tabular-nums text-foreground">{fmt(list.pivot.price)}</span>
-                                                </div>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 ) : (
                                     <p className="px-6 py-5 text-sm text-muted-foreground">Este producto no está asignado a ninguna lista de precios.</p>
@@ -441,11 +465,13 @@ export default function Show({ product, movements }: Props) {
                                         </p>
                                         <img src={route('products.qr', product.id)} alt="Código QR" className="size-32" />
                                     </div>
-                                    <a href={route('products.codes', product.id)} target="_blank" rel="noreferrer" className="w-full">
-                                        <Button variant="outline" className="w-full">
-                                            <Printer className="size-4" /> Imprimir Etiqueta
-                                        </Button>
-                                    </a>
+                                    {can('products.print-labels') && (
+                                        <a href={route('products.codes', product.id)} target="_blank" rel="noreferrer" className="w-full">
+                                            <Button variant="outline" className="w-full">
+                                                <Printer className="size-4" /> Imprimir Etiqueta
+                                            </Button>
+                                        </a>
+                                    )}
                                 </CardContent>
                             </Card>
                         </div>

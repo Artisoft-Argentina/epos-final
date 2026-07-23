@@ -2,25 +2,26 @@ import { Head, useForm } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { FormField } from '@/components/form-field';
+import { PermissionSelector } from '@/components/permission-selector';
 
 interface Role {
     id: number;
-    role: string;
-    permission?: string;
-    description?: string;
+    name: string;
+    guard_name: string;
 }
 
 interface Props {
     role: Role;
+    permissions: string[];
+    rolePermissions: string[];
 }
 
-export default function Edit({ role }: Props) {
-    const { data, setData, put, processing, errors } = useForm({
-        role: role.role,
-        permission: role.permission || '',
-        description: role.description || '',
+export default function Edit({ role, permissions, rolePermissions }: Props) {
+    const { data, setData, put, processing, errors } = useForm<{ name: string; permissions: string[] }>({
+        name: role.name,
+        permissions: rolePermissions,
     });
 
     const submit = (e: React.FormEvent) => {
@@ -31,54 +32,41 @@ export default function Edit({ role }: Props) {
     return (
         <AppLayout>
             <Head title="Editar Rol" />
-            
-            <Card className="max-w-2xl">
-                <CardHeader>
-                    <CardTitle>Editar Rol</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <form onSubmit={submit} className="space-y-4">
-                        <div>
-                            <Label htmlFor="role">Rol</Label>
-                            <Input
-                                id="role"
-                                value={data.role}
-                                onChange={(e) => setData('role', e.target.value)}
-                                error={errors.role}
-                            />
-                        </div>
+            <div className="p-6">
+                <form onSubmit={submit} className="space-y-6 max-w-3xl">
+                    <Card>
+                        <CardHeader><CardTitle>Editar Rol</CardTitle></CardHeader>
+                        <CardContent className="space-y-4">
+                            <FormField label="Nombre del rol" htmlFor="name" error={errors.name}>
+                                <Input
+                                    id="name"
+                                    value={data.name}
+                                    onChange={(e) => setData('name', e.target.value)}
+                                    error={errors.name}
+                                />
+                            </FormField>
+                        </CardContent>
+                    </Card>
 
-                        <div>
-                            <Label htmlFor="permission">Permisos</Label>
-                            <Input
-                                id="permission"
-                                value={data.permission}
-                                onChange={(e) => setData('permission', e.target.value)}
-                                error={errors.permission}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Permisos</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <PermissionSelector
+                                permissions={permissions}
+                                selected={data.permissions}
+                                onChange={(val) => setData('permissions', val)}
                             />
-                        </div>
+                        </CardContent>
+                    </Card>
 
-                        <div>
-                            <Label htmlFor="description">Descripción</Label>
-                            <Input
-                                id="description"
-                                value={data.description}
-                                onChange={(e) => setData('description', e.target.value)}
-                                error={errors.description}
-                            />
-                        </div>
-
-                        <div className="flex gap-2">
-                            <Button type="submit" disabled={processing}>
-                                Actualizar
-                            </Button>
-                            <Button type="button" variant="outline" onClick={() => window.history.back()}>
-                                Cancelar
-                            </Button>
-                        </div>
-                    </form>
-                </CardContent>
-            </Card>
+                    <div className="flex gap-2">
+                        <Button type="submit" disabled={processing}>Actualizar Rol</Button>
+                        <Button type="button" variant="outline" onClick={() => window.history.back()}>Cancelar</Button>
+                    </div>
+                </form>
+            </div>
         </AppLayout>
     );
 }

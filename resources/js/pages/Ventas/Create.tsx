@@ -27,14 +27,13 @@ interface Articulo {
     id: number;
     name: string;
     sku: string;
-    price: number;
     category?: { id: number; name: string } | null;
     brand?: { id: number; name: string } | null;
     price_lists: { id: number; pivot: { price: number } }[];
     images: ProductImage[];
 }
 
-interface ListaPrecio {
+interface PriceList {
     id: number;
     name: string;
     percentage: number;
@@ -66,8 +65,8 @@ interface WarehouseStock {
 interface Props {
     clientes: Cliente[];
     articulos: Articulo[];
-    listasPrecios: ListaPrecio[];
-    listaDefaultPos: ListaPrecio | null;
+    listasPrecios: PriceList[];
+    listaDefaultPos: PriceList | null;
     puntosVenta?: PuntoVenta[];
     almacenes?: Almacen[];
 }
@@ -184,7 +183,7 @@ export default function Create({ clientes, articulos, listasPrecios, listaDefaul
             const precioLista = articulo.price_lists?.find(lp => lp.id.toString() === data.price_list_id);
             if (precioLista) return Number(precioLista.pivot.price);
         }
-        return Number(articulo.price);
+        return 0;
     };
 
     const recalcularPrecios = (nuevaListaId: string) => {
@@ -193,8 +192,8 @@ export default function Create({ clientes, articulos, listasPrecios, listaDefaul
                 const articulo = articulos.find(a => a.id.toString() === item.articulo_id);
                 if (articulo) {
                     const nuevoPrecio = nuevaListaId
-                        ? articulo.price_lists?.find(lp => lp.id.toString() === nuevaListaId)?.pivot.price || articulo.price
-                        : articulo.price;
+                        ? articulo.price_lists?.find(lp => lp.id.toString() === nuevaListaId)?.pivot.price ?? 0
+                        : 0;
                     return { ...item, precio: Number(nuevoPrecio) };
                 }
             }

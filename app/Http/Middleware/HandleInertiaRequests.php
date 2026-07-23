@@ -40,17 +40,35 @@ class HandleInertiaRequests extends Middleware
     {
         [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
 
+        $user = $request->user();
+        $isTenant = tenancy()->initialized;
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
             'quote' => ['message' => trim($message), 'author' => trim($author)],
             'auth' => [
-                'user' => tenancy()->initialized
-                    ? $request->user()?->load('role')
+                'user' => $isTenant
+                    ? $user?->loadMissing(['roles'])
                     : $request->user('central'),
-                'tour_completed' => tenancy()->initialized
-                    ? ($request->user()?->tour_completed ?? true)
+                'tour_completed' => $isTenant
+                    ? ($user?->tour_completed ?? true)
                     : true,
+                'permissions' => fn () => $isTenant && $user
+                    ? $user->getAllPermissions()->pluck('name')->toArray()
+                    : [],
+                'roles' => fn () => $isTenant && $user
+                    ? $user->roles->map(fn ($r) => ['id' => $r->id, 'name' => $r->name])->toArray()
+                    : [],
+                'is_vendedor' => fn () => $isTenant && $user
+                    ? $user->isVendedor()
+                    : false,
+                'is_admin' => fn () => $isTenant && $user
+                    ? $user->isAdmin()
+                    : false,
+                'is_superadmin' => fn () => $isTenant && $user
+                    ? $user->hasRole('superadmin')
+                    : false,
             ],
             'ziggy' => fn (): array => [
                 ...(new Ziggy())->toArray(),

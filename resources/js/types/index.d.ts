@@ -21,6 +21,7 @@ export interface NavItem {
     icon?: LucideIcon | null;
     isActive?: boolean;
     items?: NavItem[];
+    permission?: string;
 }
 
 export interface SharedData {
@@ -40,5 +41,11 @@ export interface User {
     email_verified_at: string | null;
     created_at: string;
     updated_at: string;
-    [key: string]: unknown; // This allows for additional properties...
+    permissions: string[];
+    roles: { id: number; name: string }[];
+    is_vendedor: boolean;
+    is_admin: boolean;
+    is_superadmin: boolean;
+    tour_completed?: boolean;
+    [key: string]: unknown;
 }

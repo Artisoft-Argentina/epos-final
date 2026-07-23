@@ -12,6 +12,7 @@
 
 services:
   app:
+    image: ${APP_IMAGE:-ghcr.io/artisoft-argentina/epos-final:latest}
     build:
       context: .
       dockerfile: Dockerfile.prod
@@ -21,7 +22,7 @@ services:
       - '${APP_PORT}:80'
     environment:
       - RUN_MIGRATIONS=true
-      - RUN_SEEDERS=true
+      - RUN_SEEDERS=false
     volumes:
       # public/build viene de la imagen (node-builder). NO montar como volumen:
       # un volumen existente ocultaría los assets nuevos tras un rebuild.

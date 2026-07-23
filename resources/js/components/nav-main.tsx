@@ -26,7 +26,7 @@ export function NavMain({ items = [] }: { items: NavItem[] }) {
                                         <SidebarMenuSub>
                                             {item.items.map((subItem) => (
                                                 <SidebarMenuSubItem key={subItem.title}>
-                                                    <SidebarMenuSubButton asChild isActive={subItem.href && page.url.startsWith(subItem.href)}>
+                                                    <SidebarMenuSubButton asChild isActive={!!(subItem.href && page.url.startsWith(subItem.href))}>
                                                         <Link href={subItem.href!} prefetch>
                                                             <span>{subItem.title}</span>
                                                         </Link>
@@ -42,7 +42,7 @@ export function NavMain({ items = [] }: { items: NavItem[] }) {
                     
                     return (
                         <SidebarMenuItem key={item.title}>
-                            <SidebarMenuButton asChild isActive={item.href && page.url.startsWith(item.href)} tooltip={{ children: item.title }}>
+                            <SidebarMenuButton asChild isActive={!!(item.href && page.url.startsWith(item.href))} tooltip={{ children: item.title }}>
                                 <Link href={item.href!} prefetch>
                                     {item.icon && <item.icon />}
                                     <span>{item.title}</span>

@@ -1,4 +1,5 @@
 import { Head, router, usePage } from '@inertiajs/react';
+import { usePermission } from '@/hooks/use-permission';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -65,6 +66,7 @@ export default function Index({ entregas, warehouses, selected_status, selected_
     const [stockByWarehouse, setStockByWarehouse] = useState<WarehouseStock[]>([]);
     const [selectedWarehouseId, setSelectedWarehouseId] = useState<string>('');
     const [submitting, setSubmitting] = useState(false);
+    const { can } = usePermission();
 
     useEffect(() => {
         if (page.props.flash?.success) toast.success(page.props.flash.success);
@@ -142,12 +144,16 @@ export default function Index({ entregas, warehouses, selected_status, selected_
             align: 'right',
             render: (row) => row.status !== 'pending' ? null : (
                 <div className="flex items-center justify-end gap-1">
-                    <ActionButton variant="outline" title="Marcar entregada" className="border-success/30 text-success hover:bg-success-soft" onClick={() => openMarkModal(row)}>
-                        <CheckCircle className="size-3.5" />
-                    </ActionButton>
-                    <ActionButton variant="destructive-soft" title="Cancelar entrega" onClick={() => cancelar(row.id)}>
-                        <XCircle className="size-3.5" />
-                    </ActionButton>
+                    {can('entregas.marcar-entregada') && (
+                        <ActionButton variant="outline" title="Marcar entregada" className="border-success/30 text-success hover:bg-success-soft" onClick={() => openMarkModal(row)}>
+                            <CheckCircle className="size-3.5" />
+                        </ActionButton>
+                    )}
+                    {can('entregas.cancelar') && (
+                        <ActionButton variant="destructive-soft" title="Cancelar entrega" onClick={() => cancelar(row.id)}>
+                            <XCircle className="size-3.5" />
+                        </ActionButton>
+                    )}
                 </div>
             ),
         },

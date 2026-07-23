@@ -17,7 +17,7 @@ import { useState } from 'react';
 interface Category { id: number; name: string; }
 interface Brand { id: number; name: string; }
 interface Supplier { id: number; business_name: string; }
-interface PriceList { id: number; name: string; percentage: string; }
+interface PriceList { id: number; name: string; percentage: string; pricing_strategy: 'list' | 'product'; }
 interface WarehouseOption { id: number; name: string; is_default: boolean; }
 interface Props { categories: Category[]; brands: Brand[]; suppliers: Supplier[]; priceLists: PriceList[]; warehouses: WarehouseOption[]; }
 
@@ -33,8 +33,8 @@ export default function Create({ categories, brands, suppliers, priceLists, ware
         name: '',
         description: '',
         unit: 'Unidad',
-        price: '',
         cost: '',
+        markup_percent: '',
         tax_rate: '21',
         min_stock: '0',
         brand_id: '',
@@ -130,11 +130,11 @@ export default function Create({ categories, brands, suppliers, priceLists, ware
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="px-6 py-5 grid grid-cols-2 gap-5">
-                                    <FormField label="Precio base" htmlFor="price" error={errors.price} required>
-                                        <Input id="price" type="number" step="0.01" min="0" value={data.price} onChange={(e) => setData('price', e.target.value)} placeholder="0.00" error={errors.price} />
-                                    </FormField>
-                                    <FormField label="Costo de compra" htmlFor="cost" error={errors.cost}>
+                                    <FormField label="Costo" htmlFor="cost" error={errors.cost} required>
                                         <Input id="cost" type="number" step="0.01" min="0" value={data.cost} onChange={(e) => setData('cost', e.target.value)} placeholder="0.00" error={errors.cost} />
+                                    </FormField>
+                                    <FormField label="% Ganancia" htmlFor="markup_percent" error={errors.markup_percent} hint="Opcional. Se usa como template para listas.">
+                                        <Input id="markup_percent" type="number" step="0.01" min="0" value={data.markup_percent} onChange={(e) => setData('markup_percent', e.target.value)} placeholder="Ej. 30" error={errors.markup_percent} />
                                     </FormField>
                                     <FormField label="Alícuota IVA (%)" htmlFor="tax_rate" error={errors.tax_rate} required>
                                         <Input id="tax_rate" type="number" step="0.01" min="0" value={data.tax_rate} onChange={(e) => setData('tax_rate', e.target.value)} placeholder="21" error={errors.tax_rate} />
@@ -168,12 +168,21 @@ export default function Create({ categories, brands, suppliers, priceLists, ware
                                                 <span className="text-right">Precio final</span>
                                             </div>
                                             {priceLists.map((list) => {
-                                                const base  = parseFloat(data.price) || 0;
-                                                const pct   = parseFloat(list.percentage);
-                                                const final = base * (1 + pct / 100);
+                                                const base   = parseFloat(data.cost) || 0;
+                                                const markup = parseFloat(data.markup_percent);
+                                                // strategy 'product' usa el markup del producto si existe; sino, el % de la lista
+                                                const pct    = list.pricing_strategy === 'product' && !isNaN(markup)
+                                                    ? markup
+                                                    : parseFloat(list.percentage);
+                                                const final  = base * (1 + pct / 100);
                                                 return (
                                                     <div key={list.id} className="grid grid-cols-3 px-2 py-2.5 rounded-md hover:bg-muted/40 transition-colors">
-                                                        <span className="text-sm font-medium text-foreground">{list.name}</span>
+                                                        <span className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+                                                            {list.name}
+                                                            <Badge variant={list.pricing_strategy === 'product' ? 'info' : 'outline'}>
+                                                                {list.pricing_strategy === 'product' ? 'Por producto' : 'Por lista'}
+                                                            </Badge>
+                                                        </span>
                                                         <span className="text-sm tabular-nums text-muted-foreground text-right">{pct >= 0 ? '+' : ''}{pct}%</span>
                                                         <span className="text-sm font-semibold tabular-nums text-foreground text-right">
                                                             {base > 0 ? fmt(final) : <span className="text-muted-foreground">—</span>}

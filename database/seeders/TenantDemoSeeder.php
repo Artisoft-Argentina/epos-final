@@ -12,6 +12,7 @@ use App\Models\StockMovement;
 use App\Models\Supplier;
 use App\Models\Warehouse;
 use App\Services\MovimientoService;
+use App\Services\PriceService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -25,6 +26,7 @@ class TenantDemoSeeder extends Seeder
             $suppliers  = $this->seedSuppliers();
             $this->seedPriceLists();
             $products   = $this->seedProducts($brands, $categories, $suppliers);
+            $this->seedProductPrices($products);
             $this->seedInitialStock($products);
             $this->seedCustomers();
         });
@@ -57,12 +59,23 @@ class TenantDemoSeeder extends Seeder
     private function seedPriceLists(): void
     {
         if (! PriceList::where('default_pos', true)->exists()) {
-            PriceList::create(['name' => 'Lista POS',   'percentage' => 0,  'default_pos' => true,  'default_ecommerce' => false, 'active' => true]);
+            PriceList::create(['name' => 'Lista POS', 'percentage' => 0, 'pricing_strategy' => 'list', 'default_pos' => true, 'default_ecommerce' => false, 'active' => true]);
         }
         if (! PriceList::where('default_ecommerce', true)->exists()) {
-            PriceList::create(['name' => 'Lista Web',   'percentage' => 10, 'default_pos' => false, 'default_ecommerce' => true,  'active' => true]);
+            PriceList::create(['name' => 'Lista Web', 'percentage' => 10, 'pricing_strategy' => 'list', 'default_pos' => false, 'default_ecommerce' => true, 'active' => true]);
         }
-        PriceList::firstOrCreate(['name' => 'Mayorista'], ['percentage' => -15, 'default_pos' => false, 'default_ecommerce' => false, 'active' => true]);
+        PriceList::firstOrCreate(['name' => 'Mayorista'], ['percentage' => -15, 'pricing_strategy' => 'product', 'default_pos' => false, 'default_ecommerce' => false, 'active' => true]);
+    }
+
+    private function seedProductPrices(array $products): void
+    {
+        $priceService = app(PriceService::class);
+
+        foreach ($products as $product) {
+            if ($product->priceLists()->count() === 0) {
+                $priceService->generateForProduct($product);
+            }
+        }
     }
 
     private function seedProducts(array $brands, array $categories, array $suppliers): array
@@ -95,14 +108,14 @@ class TenantDemoSeeder extends Seeder
         $defaultSupplier  = $suppliers[0];
 
         return collect($catalog)->map(function ($row, $idx) use ($brandsByName, $categoriesByName, $defaultSupplier) {
-            [$name, $sku, $price, $catName, $brandName] = $row;
+            [$name, $sku, $cost, $catName, $brandName] = $row;
             return Product::firstOrCreate(
                 ['sku' => $sku],
                 [
                     'name'          => $name,
                     'description'   => $name . ' - producto demo',
                     'unit'          => 'UN',
-                    'price'         => $price,
+                    'cost'          => $cost,
                     'tax_rate'      => 21,
                     'min_stock'     => 5,
                     'brand_id'      => $brandsByName[$brandName]->id,

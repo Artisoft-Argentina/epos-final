@@ -16,5 +16,12 @@ class AppServiceProvider extends ServiceProvider
         if (config('app.env') !== 'local') {
             URL::forceScheme('https');
         }
+
+        // Superadmin tiene acceso a todos los permisos automaticamente
+        \Illuminate\Support\Facades\Gate::before(function ($user, $ability) {
+            if ($user->hasRole('superadmin')) {
+                return true;
+            }
+        });
     }
 }

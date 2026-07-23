@@ -24,7 +24,7 @@ Sistema de gestión comercial **multi-tenant** para PyMEs argentinas. Cada empre
 | PHP | 8.4 | Runtime |
 | Laravel | 12 | Framework principal |
 | stancl/tenancy | 3.9 | Multi-tenancy (subdominio + DB separada por tenant) |
-| MySQL | 8.0 | Base de datos (una por tenant + central) |
+| PostgreSQL | 16 | Base de datos (una por tenant + central) |
 | Redis | 7 | Cache y sesiones |
 | Groq API | llama-3.3-70b | IA para procesamiento de PDFs |
 | smalot/pdfparser | — | Extracción de texto de PDFs |
@@ -57,7 +57,7 @@ Sistema de gestión comercial **multi-tenant** para PyMEs argentinas. Cada empre
 ## Arquitectura multi-tenant
 
 - **Identificación**: por subdominio (`empresa1.epos.lvh.me:3000`)
-- **Aislamiento**: cada tenant tiene su propia base de datos MySQL (`epos_<id>`)
+- **Aislamiento**: cada tenant tiene su propia base de datos PostgreSQL (`epos_<id>`)
 - **Dominio central**: `epos.lvh.me` (panel de superadmin)
 - **Bootstrappers activos**: DatabaseTenancyBootstrapper, CacheTenancyBootstrapper, QueueTenancyBootstrapper
 - **FilesystemTenancyBootstrapper**: deshabilitado (assets Vite compartidos)
@@ -344,7 +344,7 @@ El equipo tiene configurados los siguientes MCP servers (scope user):
 | `playwright` | Testing E2E, screenshots, interacción con el browser |
 | `testsprite` | Testing autónomo con IA |
 | `fetch` | Hacer requests HTTP a APIs externas |
-| `db` | Query directo a MySQL local (Docker, puerto 3307) |
+| `db` | Query directo a PostgreSQL local (Docker, puerto 5432) |
 | `logs` | Leer archivos en `storage/logs/` |
 | `sentry` | Ver y analizar errores de producción |
 

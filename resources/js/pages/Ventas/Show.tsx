@@ -6,6 +6,7 @@ import AppLayout from '@/layouts/app-layout';
 import { Head, Link, router } from '@inertiajs/react';
 import { ArrowLeft, DollarSign, Trash2, Package, CheckCircle, XCircle } from 'lucide-react';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
+import { usePermission } from '@/hooks/use-permission';
 
 interface Warehouse {
     id: number;
@@ -69,6 +70,7 @@ const metodoPagoLabels: Record<string, string> = {
 };
 
 export default function Show({ factura, warehouses }: Props) {
+    const { can } = usePermission();
     const totalPagado = factura.payments?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
     const saldoPendiente = Number(factura.total) - totalPagado;
 
@@ -107,12 +109,12 @@ export default function Show({ factura, warehouses }: Props) {
                         <Link href={route('ventas.index')}>
                             <Button variant="outline"><ArrowLeft className="w-4 h-4 mr-2" />Volver</Button>
                         </Link>
-                        {showDeliveryButton && (
+                        {can('entregas.create') && showDeliveryButton && (
                             <Link href={route('entregas.create', factura.id)}>
                                 <Button variant="outline"><Package className="w-4 h-4 mr-2" />Registrar Entrega</Button>
                             </Link>
                         )}
-                        {saldoPendiente > 0 && (
+                        {can('pagos.create') && saldoPendiente > 0 && (
                             <Link href={route('pagos.create', factura.id)}>
                                 <Button><DollarSign className="w-4 h-4 mr-2" />Registrar Pago</Button>
                             </Link>
@@ -195,12 +197,14 @@ export default function Show({ factura, warehouses }: Props) {
                                                 <td className="p-2">{new Date(payment.payment_date).toLocaleDateString()}</td>
                                                 <td className="p-2">{payment.notes || '-'}</td>
                                                 <td className="p-2 text-right">
-                                                    <DeleteConfirmationDialog
-                                                        url={route('pagos.destroy', payment.id)}
-                                                        title="Eliminar pago"
-                                                        description={`¿Está seguro que desea eliminar este pago de $${Number(payment.amount).toFixed(2)}?`}
-                                                        trigger={<Button variant="outline" size="sm"><Trash2 className="w-4 h-4" /></Button>}
-                                                    />
+                                                    {can('pagos.destroy') && (
+                                                        <DeleteConfirmationDialog
+                                                            url={route('pagos.destroy', payment.id)}
+                                                            title="Eliminar pago"
+                                                            description={`¿Está seguro que desea eliminar este pago de $${Number(payment.amount).toFixed(2)}?`}
+                                                            trigger={<Button variant="outline" size="sm"><Trash2 className="w-4 h-4" /></Button>}
+                                                        />
+                                                    )}
                                                 </td>
                                             </tr>
                                         ))}
@@ -269,7 +273,7 @@ export default function Show({ factura, warehouses }: Props) {
                                                 </td>
                                                 <td className="p-2 text-sm">{new Date(delivery.delivery_date).toLocaleDateString()}</td>
                                                 <td className="p-2 text-right">
-                                                    {delivery.status === 'pending' && (
+                                                    {delivery.status === 'pending' && can('entregas.marcar-entregada') && (
                                                         <div className="flex items-center justify-end gap-1">
                                                             <Button
                                                                 variant="outline"
@@ -281,18 +285,20 @@ export default function Show({ factura, warehouses }: Props) {
                                                             >
                                                                 <CheckCircle className="w-4 h-4" />
                                                             </Button>
-                                                            <Button
-                                                                variant="outline"
-                                                                size="sm"
-                                                                className="text-destructive border-destructive/20 hover:bg-destructive/5"
-                                                                onClick={() => cancelarEntrega(delivery.id)}
-                                                                title="Cancelar"
-                                                            >
-                                                                <XCircle className="w-4 h-4" />
-                                                            </Button>
+                                                            {can('entregas.cancelar') && (
+                                                                <Button
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                    className="text-destructive border-destructive/20 hover:bg-destructive/5"
+                                                                    onClick={() => cancelarEntrega(delivery.id)}
+                                                                    title="Cancelar"
+                                                                >
+                                                                    <XCircle className="w-4 h-4" />
+                                                                </Button>
+                                                            )}
                                                         </div>
                                                     )}
-                                                    {delivery.status === 'delivered' && (
+                                                    {delivery.status === 'delivered' && can('entregas.destroy') && (
                                                         <DeleteConfirmationDialog
                                                             url={route('entregas.destroy', delivery.id)}
                                                             title="Revertir entrega"

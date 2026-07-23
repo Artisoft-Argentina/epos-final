@@ -14,7 +14,7 @@ interface User {
     name: string;
     email: string;
     created_at: string;
-    role?: { role: string };
+    roles?: { name: string }[];
     point_of_sale?: { id: number; name: string; pos_number: number } | null;
 }
 interface Props { users: { data: User[]; links: any; meta: any }; }
@@ -39,11 +39,14 @@ export default function Index({ users }: Props) {
         {
             key: 'role',
             header: 'Rol',
-            render: (row) => (
-                <Badge variant={roleVariant[row.role?.role ?? ''] ?? 'secondary'}>
-                    {row.role?.role || 'Sin rol'}
-                </Badge>
-            ),
+            render: (row) => {
+                const roleName = row.roles?.[0]?.name ?? '';
+                return (
+                    <Badge variant={roleVariant[roleName] ?? 'secondary'}>
+                        {roleName || 'Sin rol'}
+                    </Badge>
+                );
+            },
         },
         {
             key: 'pos',

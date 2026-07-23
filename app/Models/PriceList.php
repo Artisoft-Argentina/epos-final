@@ -13,6 +13,7 @@ class PriceList extends Model
     protected $fillable = [
         'name',
         'percentage',
+        'pricing_strategy',
         'default_pos',
         'default_ecommerce',
         'active',
@@ -28,17 +29,7 @@ class PriceList extends Model
     public function products(): BelongsToMany
     {
         return $this->belongsToMany(Product::class, 'price_list_products')
-                    ->withPivot('price')
+                    ->withPivot(['price', 'is_manual'])
                     ->withTimestamps();
-    }
-
-    public function generatePrices(): void
-    {
-        foreach (Product::all() as $product) {
-            $price = ($product->price ?? 0) * (1 + ($this->percentage / 100));
-            $this->products()->syncWithoutDetaching([
-                $product->id => ['price' => $price],
-            ]);
-        }
     }
 }
