@@ -43,6 +43,9 @@ jobs:
             set -e
             cd /var/www/html/dev
             IMG=ghcr.io/artisoft-argentina/epos-final:dev
+            echo "🔄 Sincronizando compose/config..."
+            git config --global --add safe.directory /var/www/html/dev
+            git pull origin dev
             echo "📥 Pulling image from GHCR..."
             docker pull $IMG
             echo "🐳 Restarting containers..."

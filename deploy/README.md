@@ -140,6 +140,9 @@ jobs:
             set -e
             cd /var/www/html/dev
             IMG=ghcr.io/artisoft-argentina/epos-final:dev
+            echo "🔄 Sincronizando compose/config..."
+            git config --global --add safe.directory /var/www/html/dev
+            git pull origin dev
             echo "📥 Pulling image from GHCR..."
             docker pull $IMG
             echo "🐳 Restarting containers..."
@@ -206,6 +209,8 @@ jobs:
             set -e
             cd /var/www/html/qa
             IMG=ghcr.io/artisoft-argentina/epos-final:qa
+            git config --global --add safe.directory /var/www/html/qa
+            git pull origin qa
             docker pull $IMG
             APP_IMAGE=$IMG docker compose -f docker-compose.prod.yml up -d --force-recreate --wait
             docker compose -f docker-compose.prod.yml exec -T app php artisan tenants:migrate --force
@@ -622,13 +627,11 @@ Postgres queda cerrado a internet. Conectá con el **túnel SSH** que trae DBeav
 
 ## Apéndice A — Adaptar dev/qa (una sola vez)
 
-Los VPS de dev/qa ya tienen el repo en `/var/www/html/{dev,qa}`. Como los workflows ya no hacen `git pull`, tras mergear estos cambios hay que actualizar el compose una vez:
+Los VPS de dev/qa ya tienen el repo en `/var/www/html/{dev,qa}`. Los workflows hacen `git pull` en cada deploy, así que el compose y la config se sincronizan **solos** — no hay que actualizarlos a mano. Lo único one-time es el login a GHCR, para poder bajar la imagen privada:
 
 ```bash
-# en el VPS de dev/qa, por cada ambiente
-cd /var/www/html/dev            # y luego /var/www/html/qa
-git pull origin dev             # trae docker-compose.prod.yml con RUN_SEEDERS=false
-docker login ghcr.io -u TU_USUARIO_GITHUB   # una vez, para poder bajar la imagen
+# en el VPS de dev/qa, una sola vez
+echo "TU_PAT" | docker login ghcr.io -u TU_USUARIO_GITHUB --password-stdin   # PAT con read:packages
 ```
 
-A partir de ahí, cada push a `dev`/`qa` despliega vía GHCR con migraciones incrementales.
+A partir de ahí, cada push a `dev`/`qa` despliega vía GHCR con migraciones incrementales, sincronizando el compose por `git pull`.
