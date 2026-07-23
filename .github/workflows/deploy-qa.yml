@@ -2,14 +2,35 @@ name: Deploy to Hostinger VPS (QA)
 
 on:
   push:
-    branches:
-      - qa
+    branches: [qa]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    
+    permissions:
+      contents: read
+      packages: write
     steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set lowercase image name
+        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
+
+      - name: Build and push image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.prod
+          push: true
+          tags: ${{ env.IMAGE }}:qa
+
       - name: 🚀 Deploy to VPS
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -19,17 +40,18 @@ jobs:
           port: 22
           command_timeout: 30m
           script: |
-            # Fix git ownership
-            git config --global --add safe.directory /var/www/html/qa
-
+            set -e
             cd /var/www/html/qa
-
-            echo "📥 Pulling latest changes from qa branch..."
+            IMG=ghcr.io/artisoft-argentina/epos-final:qa
+            echo "🔄 Sincronizando compose/config..."
+            git config --global --add safe.directory /var/www/html/qa
             git pull origin qa
-
-            echo "🐳 Rebuilding Docker containers..."
-            make prod-build && make prod-up
-
+            echo "📥 Pulling image from GHCR..."
+            docker pull $IMG
+            echo "🐳 Restarting containers..."
+            APP_IMAGE=$IMG docker compose -f docker-compose.prod.yml up -d --force-recreate --wait
+            echo "🗄️  Migrando bases de tenants..."
+            docker compose -f docker-compose.prod.yml exec -T app php artisan tenants:migrate --force
             echo "✅ Deployment completed successfully!"
 
       - name: Notify
