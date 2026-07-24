@@ -13,7 +13,12 @@ class DatabaseSeeder extends Seeder
         // ── BD CENTRAL ───────────────────────────────────────────────────
         $this->call(CentralAdminSeeder::class);
 
-        // ── TENANT DE EJEMPLO ────────────────────────────────────────────
+        // El tenant de ejemplo y los datos demo solo se siembran fuera de producción.
+        if (app()->isProduction()) {
+            return;
+        }
+
+        // ── TENANT DE EJEMPLO (solo dev/qa) ──────────────────────────────
         $centralDomain = env('CENTRAL_DOMAIN', 'epos.lvh.me');
         $subdomain     = 'principal.' . $centralDomain;
         $tenantDb      = env('TENANCY_DB_PREFIX', 'epos_') . 'principal';
