@@ -36,7 +36,7 @@ jobs:
           push: true
           tags: |
             ${{ env.IMAGE }}:prod
-            ${{ env.IMAGE }}:sha-${{ github.sha }}    # tag inmutable → rollback
+            ${{ env.IMAGE }}:sha-${{ github.sha }}
 
   deploy:
     needs: build
