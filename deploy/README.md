@@ -263,9 +263,10 @@ jobs:
           context: .
           file: ./Dockerfile.prod
           push: true
+          # :prod = mutable (siempre el último); :sha-xxx = inmutable, para rollback
           tags: |
             ${{ env.IMAGE }}:prod
-            ${{ env.IMAGE }}:sha-${{ github.sha }}    # tag inmutable → rollback
+            ${{ env.IMAGE }}:sha-${{ github.sha }}
 
   deploy:
     needs: build
