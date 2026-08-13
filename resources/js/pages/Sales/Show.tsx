@@ -110,7 +110,7 @@ export default function Show({ factura, warehouses }: Props) {
                         <p className="text-gray-600">Detalles de la venta</p>
                     </div>
                     <div className="flex gap-2">
-                        <Link href={route('ventas.index')}>
+                        <Link href={route('sales.index')}>
                             <Button variant="outline"><ArrowLeft className="w-4 h-4 mr-2" />Volver</Button>
                         </Link>
                         {can('entregas.create') && showDeliveryButton && (
@@ -125,7 +125,7 @@ export default function Show({ factura, warehouses }: Props) {
                         )}
                         {can('ventas.destroy') && !cancelada && !factura.cae && (
                             <ConfirmActionDialog
-                                url={route('ventas.cancel', factura.id)}
+                                url={route('sales.cancel', factura.id)}
                                 method="patch"
                                 title="Cancelar venta"
                                 description={`¿Cancelar la venta #${factura.invoice_number}? Se restaurará el inventario entregado y se acreditará lo pagado al cliente. El registro no se elimina.`}

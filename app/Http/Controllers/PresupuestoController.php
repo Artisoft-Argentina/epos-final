@@ -136,7 +136,7 @@ class PresupuestoController extends Controller
             return $sale;
         });
 
-        return redirect()->route('ventas.show', $sale->id)
+        return redirect()->route('sales.show', $sale->id)
             ->with('success', "Presupuesto #{$presupuesto->quote_number} convertido a Factura #{$sale->invoice_number} exitosamente");
     }
 }

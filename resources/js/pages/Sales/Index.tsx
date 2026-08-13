@@ -98,12 +98,12 @@ export default function Index({ facturas }: Props) {
             render: (row) => (
                 <div className="flex items-center gap-1">
                     {can('ventas.show') && (
-                        <Link href={route('ventas.show', row.id)}>
+                        <Link href={route('sales.show', row.id)}>
                             <ActionButton title="Ver"><Eye className="size-3.5" /></ActionButton>
                         </Link>
                     )}
                     {can('ventas.edit') && !row.cae && !isCancelled(row.payment_status) && (
-                        <Link href={route('ventas.edit', row.id)}>
+                        <Link href={route('sales.edit', row.id)}>
                             <ActionButton title="Editar"><Edit className="size-3.5" /></ActionButton>
                         </Link>
                     )}
@@ -135,7 +135,7 @@ export default function Index({ facturas }: Props) {
                     )}
                     {can('ventas.destroy') && !isCancelled(row.payment_status) && (
                         <ConfirmActionDialog
-                            url={route('ventas.cancel', row.id)}
+                            url={route('sales.cancel', row.id)}
                             method="patch"
                             title="Cancelar venta"
                             description={`¿Cancelar la venta #${row.invoice_number}? Se restaurará el inventario entregado y se acreditará lo pagado al cliente. El registro no se elimina.`}
@@ -162,7 +162,7 @@ export default function Index({ facturas }: Props) {
                     description={`${facturas.data.length} ventas en el período`}
                     actions={
                         can('ventas.create') && (
-                            <Link href={route('ventas.create')}>
+                            <Link href={route('sales.create')}>
                                 <Button><Plus className="size-4" /> Nueva Venta</Button>
                             </Link>
                         )

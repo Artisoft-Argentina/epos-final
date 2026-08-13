@@ -13,7 +13,7 @@ class PagoController extends Controller
     public function create(Sale $factura)
     {
         if ($factura->isCancelled()) {
-            return redirect()->route('ventas.index')->with('error', 'No se pueden registrar pagos en una venta cancelada.');
+            return redirect()->route('sales.index')->with('error', 'No se pueden registrar pagos en una venta cancelada.');
         }
 
         return Inertia::render('Pagos/Create', [
@@ -24,7 +24,7 @@ class PagoController extends Controller
     public function store(StorePaymentRequest $request, Sale $factura)
     {
         if ($factura->isCancelled()) {
-            return redirect()->route('ventas.index')->with('error', 'No se pueden registrar pagos en una venta cancelada.');
+            return redirect()->route('sales.index')->with('error', 'No se pueden registrar pagos en una venta cancelada.');
         }
 
         $data = $request->validated();
@@ -61,7 +61,7 @@ class PagoController extends Controller
             return back()->withInput()->withErrors(['amount' => $e->getMessage()]);
         }
 
-        return redirect()->route('ventas.index')->with('success', 'Pago registrado exitosamente');
+        return redirect()->route('sales.index')->with('success', 'Pago registrado exitosamente');
     }
 
     public function destroy(SalePayment $pago)
@@ -78,6 +78,6 @@ class PagoController extends Controller
             $lockedSale->recalcPaymentStatus();
         });
 
-        return redirect()->route('ventas.index')->with('success', 'Pago eliminado exitosamente');
+        return redirect()->route('sales.index')->with('success', 'Pago eliminado exitosamente');
     }
 }

@@ -117,7 +117,7 @@ class EntregaController extends Controller
             return back()->with('error', $e->getMessage());
         }
 
-        return redirect()->route('ventas.index')->with('success', 'Entrega registrada y stock descontado exitosamente');
+        return redirect()->route('sales.index')->with('success', 'Entrega registrada y stock descontado exitosamente');
     }
 
     public function marcarEntregada(Request $request, Delivery $entrega)

@@ -190,13 +190,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('scanner/buscar', [\App\Http\Controllers\CodigoController::class, 'buscarPorCodigo'])->name('scanner.buscar')->middleware('can:scanner.buscar');
 
     // Ventas
-    Route::get('ventas', [\App\Http\Controllers\VentaController::class, 'index'])->name('ventas.index')->middleware('can:ventas.index');
-    Route::get('ventas/create', [\App\Http\Controllers\VentaController::class, 'create'])->name('ventas.create')->middleware('can:ventas.create');
-    Route::post('ventas', [\App\Http\Controllers\VentaController::class, 'store'])->name('ventas.store')->middleware('can:ventas.store');
-    Route::get('ventas/{venta}', [\App\Http\Controllers\VentaController::class, 'show'])->name('ventas.show')->middleware('can:ventas.show');
-    Route::get('ventas/{venta}/edit', [\App\Http\Controllers\VentaController::class, 'edit'])->name('ventas.edit')->middleware('can:ventas.edit');
-    Route::put('ventas/{venta}', [\App\Http\Controllers\VentaController::class, 'update'])->name('ventas.update')->middleware('can:ventas.update');
-    Route::patch('ventas/{venta}/cancel', [\App\Http\Controllers\VentaController::class, 'cancel'])->name('ventas.cancel')->middleware('can:ventas.destroy');
+    Route::get('ventas', [\App\Http\Controllers\SaleController::class, 'index'])->name('sales.index')->middleware('can:ventas.index');
+    Route::get('ventas/create', [\App\Http\Controllers\SaleController::class, 'create'])->name('sales.create')->middleware('can:ventas.create');
+    Route::post('ventas', [\App\Http\Controllers\SaleController::class, 'store'])->name('sales.store')->middleware('can:ventas.store');
+    Route::get('ventas/{venta}', [\App\Http\Controllers\SaleController::class, 'show'])->name('sales.show')->middleware('can:ventas.show');
+    Route::get('ventas/{venta}/edit', [\App\Http\Controllers\SaleController::class, 'edit'])->name('sales.edit')->middleware('can:ventas.edit');
+    Route::put('ventas/{venta}', [\App\Http\Controllers\SaleController::class, 'update'])->name('sales.update')->middleware('can:ventas.update');
+    Route::patch('ventas/{venta}/cancel', [\App\Http\Controllers\SaleController::class, 'cancel'])->name('sales.cancel')->middleware('can:ventas.destroy');
 
     // Presupuestos
     Route::get('presupuestos', [\App\Http\Controllers\PresupuestoController::class, 'index'])->name('presupuestos.index')->middleware('can:presupuestos.index');
@@ -208,7 +208,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('presupuestos/{presupuesto}', [\App\Http\Controllers\PresupuestoController::class, 'destroy'])->name('presupuestos.destroy')->middleware('can:presupuestos.destroy');
     Route::post('presupuestos/{presupuesto}/convertir-venta', [\App\Http\Controllers\PresupuestoController::class, 'convertirAVenta'])->name('presupuestos.convertir-venta')->middleware('can:presupuestos.convertir-venta');
 
-    Route::post('afip/authorize/{factura}', [\App\Http\Controllers\VentaController::class, 'autorizarAfip'])->name('afip.authorize')->middleware('can:afip.authorize');
+    Route::post('afip/authorize/{factura}', [\App\Http\Controllers\SaleController::class, 'autorizarAfip'])->name('afip.authorize')->middleware('can:afip.authorize');
 
     // Pagos
     Route::get('facturas/{factura}/pagos/create', [\App\Http\Controllers\PagoController::class, 'create'])->name('pagos.create')->middleware('can:pagos.create');

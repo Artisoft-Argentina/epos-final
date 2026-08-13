@@ -265,7 +265,7 @@ export default function Create({ customers, products, priceLists, defaultPosList
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(route('ventas.store'));
+        post(route('sales.store'));
     };
 
     return (

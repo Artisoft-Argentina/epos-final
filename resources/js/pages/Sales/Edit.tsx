@@ -46,7 +46,7 @@ export default function Edit({ factura }: Props) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        put(route('ventas.update', factura.id));
+        put(route('sales.update', factura.id));
     };
 
     return (
@@ -55,7 +55,7 @@ export default function Edit({ factura }: Props) {
 
             <div className="p-6">
                 <div className="flex items-center gap-4 mb-6">
-                    <Link href={route('ventas.index')}>
+                    <Link href={route('sales.index')}>
                         <Button variant="outline" size="sm">
                             <ArrowLeft className="w-4 h-4 mr-2" />
                             Volver

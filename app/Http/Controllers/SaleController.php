@@ -14,7 +14,7 @@ use App\Http\Requests\StoreSaleRequest;
 use App\Http\Requests\UpdateSaleRequest;
 use Inertia\Inertia;
 
-class VentaController extends Controller
+class SaleController extends Controller
 {
     public function __construct(
         private readonly SaleService $saleService,
@@ -30,7 +30,7 @@ class VentaController extends Controller
                   ->where('point_of_sale_id', $user->point_of_sale_id);
         }
 
-        return Inertia::render('Ventas/Index', [
+        return Inertia::render('Sales/Index', [
             'facturas' => $query->paginate(5),
         ]);
     }
@@ -45,7 +45,7 @@ class VentaController extends Controller
         $priceLists      = PriceList::all();
         $defaultPosList  = $priceLists->where('default_pos', true)->first();
 
-        return Inertia::render('Ventas/Create', [
+        return Inertia::render('Sales/Create', [
             'customers'      => Customer::all(),
             'products'       => Product::with(['category', 'brand', 'priceLists', 'images'])->get(),
             'priceLists'     => $priceLists,
@@ -63,12 +63,12 @@ class VentaController extends Controller
             return back()->withInput()->with('error', $e->getMessage());
         }
 
-        return redirect()->route('ventas.index')->with('success', 'Venta realizada exitosamente');
+        return redirect()->route('sales.index')->with('success', 'Venta realizada exitosamente');
     }
 
     public function show(Sale $venta)
     {
-        return Inertia::render('Ventas/Show', [
+        return Inertia::render('Sales/Show', [
             'factura'    => $venta->load(['customer', 'user', 'products', 'payments', 'deliveries.product', 'deliveries.warehouse']),
             'warehouses' => Warehouse::active()->orderBy('is_default', 'desc')->orderBy('name')->get(['id', 'name']),
         ]);
@@ -77,14 +77,14 @@ class VentaController extends Controller
     public function edit(Sale $venta)
     {
         if ($venta->isCancelled()) {
-            return redirect()->route('ventas.index')->with('error', 'No se puede editar una venta cancelada');
+            return redirect()->route('sales.index')->with('error', 'No se puede editar una venta cancelada');
         }
 
         if ($venta->cae) {
-            return redirect()->route('ventas.index')->with('error', 'No se puede editar una factura ya autorizada en AFIP');
+            return redirect()->route('sales.index')->with('error', 'No se puede editar una factura ya autorizada en AFIP');
         }
 
-        return Inertia::render('Ventas/Edit', [
+        return Inertia::render('Sales/Edit', [
             'factura' => $venta->load(['customer', 'user', 'products']),
         ]);
     }
@@ -94,10 +94,10 @@ class VentaController extends Controller
         try {
             $this->saleService->update($venta, $request->validated());
         } catch (\RuntimeException $e) {
-            return redirect()->route('ventas.index')->with('error', $e->getMessage());
+            return redirect()->route('sales.index')->with('error', $e->getMessage());
         }
 
-        return redirect()->route('ventas.index')->with('success', 'Factura actualizada exitosamente');
+        return redirect()->route('sales.index')->with('success', 'Factura actualizada exitosamente');
     }
 
     public function cancel(Sale $venta)
@@ -108,7 +108,7 @@ class VentaController extends Controller
             return back()->with('error', $e->getMessage());
         }
 
-        return redirect()->route('ventas.index')->with('success', 'Venta cancelada exitosamente');
+        return redirect()->route('sales.index')->with('success', 'Venta cancelada exitosamente');
     }
 
     public function autorizarAfip(Sale $factura)
@@ -118,14 +118,14 @@ class VentaController extends Controller
             $resultado   = $afipService->autorizarFactura($factura);
 
             if ($resultado['success']) {
-                return redirect()->route('ventas.index')
+                return redirect()->route('sales.index')
                     ->with('success', 'Factura autorizada en AFIP correctamente. CAE: ' . $resultado['cae']);
             }
 
-            return redirect()->route('ventas.index')
+            return redirect()->route('sales.index')
                 ->with('error', 'Error al autorizar en AFIP: ' . $resultado['error']);
         } catch (\Exception $e) {
-            return redirect()->route('ventas.index')
+            return redirect()->route('sales.index')
                 ->with('error', 'Error al autorizar en AFIP: ' . $e->getMessage());
         }
     }
