@@ -24,7 +24,7 @@ class DashboardController extends Controller
 
         $facturasImpagas = Sale::whereDate('date', '>=', $fechaInicio)
             ->whereDate('date', '<=', $fechaFin)
-            ->where('payment_status', 'NO')
+            ->whereIn('payment_status', \App\Enums\PaymentStatus::owingCases())
             ->with('payments')
             ->get();
 
@@ -79,7 +79,7 @@ class DashboardController extends Controller
 
         $facturasImpagas = Sale::whereDate('date', '>=', $fechaInicio)
             ->whereDate('date', '<=', $fechaFin)
-            ->where('payment_status', 'NO')
+            ->whereIn('payment_status', \App\Enums\PaymentStatus::owingCases())
             ->with('payments')
             ->get();
 

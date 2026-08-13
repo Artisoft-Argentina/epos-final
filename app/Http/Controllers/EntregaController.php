@@ -61,13 +61,50 @@ class EntregaController extends Controller
             'observaciones'             => 'nullable|string',
         ]);
 
+        if ($factura->isCancelled()) {
+            return back()->with('error', 'No se pueden registrar entregas de una venta cancelada.');
+        }
+
         try {
             DB::transaction(function () use ($request, $factura) {
+                // Lock sobre la venta: serializa doble submit / concurrencia.
+                $sale = Sale::lockForUpdate()->findOrFail($factura->id);
+
+                if ($sale->isCancelled()) {
+                    throw new \RuntimeException('No se pueden registrar entregas de una venta cancelada.');
+                }
+
+                // Cantidades vendidas y ya entregadas por producto.
+                $soldByProduct = $sale->products()->get()
+                    ->groupBy('id')
+                    ->map(fn ($rows) => (int) $rows->sum(fn ($p) => (int) $p->pivot->quantity));
+
+                $deliveredByProduct = $sale->deliveries()
+                    ->where('status', Delivery::STATUS_DELIVERED)
+                    ->get()
+                    ->groupBy('product_id')
+                    ->map(fn ($rows) => (int) $rows->sum('quantity'));
+
+                $requestedByProduct = [];
+
                 foreach ($request->entregas as $entregaData) {
+                    $productId = (int) $entregaData['articulo_id'];
+                    $quantity  = (int) $entregaData['cantidad'];
+
+                    $requestedByProduct[$productId] = ($requestedByProduct[$productId] ?? 0) + $quantity;
+
+                    $sold             = (int) ($soldByProduct[$productId] ?? 0);
+                    $delivered        = (int) ($deliveredByProduct[$productId] ?? 0);
+                    $pendingToDeliver = $sold - $delivered;
+
+                    if ($requestedByProduct[$productId] > $pendingToDeliver) {
+                        throw new \RuntimeException("No se puede entregar más de lo pendiente (pendiente: {$pendingToDeliver}).");
+                    }
+
                     $this->deliveryService->create(
-                        $factura,
-                        (int) $entregaData['articulo_id'],
-                        (int) $entregaData['cantidad'],
+                        $sale,
+                        $productId,
+                        $quantity,
                         (int) $entregaData['warehouse_id'],
                         Delivery::STATUS_DELIVERED,
                         \Carbon\Carbon::parse($request->fecha_entrega),
@@ -86,6 +123,10 @@ class EntregaController extends Controller
     public function marcarEntregada(Request $request, Delivery $entrega)
     {
         $request->validate(['warehouse_id' => 'required|exists:warehouses,id']);
+
+        if ($entrega->sale && $entrega->sale->isCancelled()) {
+            return back()->with('error', 'No se pueden entregar ítems de una venta cancelada.');
+        }
 
         if ($entrega->isDelivered()) {
             return back()->with('error', 'Esta entrega ya fue completada');

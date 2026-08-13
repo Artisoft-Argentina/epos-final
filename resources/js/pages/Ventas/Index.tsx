@@ -5,12 +5,13 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { PageHeader } from '@/components/page-header';
 import { DataTable, type Column } from '@/components/data-table';
-import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
+import { ConfirmActionDialog } from '@/components/confirm-action-dialog';
 import { ActionButton } from '@/components/action-button';
 import { Pagination } from '@/components/pagination';
-import { Plus, Eye, Edit, DollarSign, Package, FileText, Download, Search } from 'lucide-react';
+import { Plus, Eye, Edit, DollarSign, Package, FileText, Download, Search, Ban } from 'lucide-react';
 import { useState } from 'react';
 import { usePermission } from '@/hooks/use-permission';
+import { paymentStatusMeta, isOwing, isCancelled } from '@/lib/payment-status';
 
 interface Sale {
     id: number;
@@ -85,11 +86,10 @@ export default function Index({ facturas }: Props) {
         {
             key: 'payment_status',
             header: 'Estado',
-            render: (row) => (
-                <Badge variant={row.payment_status === 'SI' ? 'success' : 'warning'}>
-                    {row.payment_status === 'SI' ? 'Pagada' : 'Pendiente'}
-                </Badge>
-            ),
+            render: (row) => {
+                const meta = paymentStatusMeta(row.payment_status);
+                return <Badge variant={meta.variant}>{meta.label}</Badge>;
+            },
         },
         {
             key: 'actions',
@@ -102,12 +102,12 @@ export default function Index({ facturas }: Props) {
                             <ActionButton title="Ver"><Eye className="size-3.5" /></ActionButton>
                         </Link>
                     )}
-                    {can('ventas.edit') && !row.cae && (
+                    {can('ventas.edit') && !row.cae && !isCancelled(row.payment_status) && (
                         <Link href={route('ventas.edit', row.id)}>
                             <ActionButton title="Editar"><Edit className="size-3.5" /></ActionButton>
                         </Link>
                     )}
-                    {can('entregas.create') && entregasPendientes(row) > 0 && (
+                    {can('entregas.create') && !isCancelled(row.payment_status) && entregasPendientes(row) > 0 && (
                         <Link href={route('entregas.index') + `?status=pending&sale_id=${row.id}`}>
                             <ActionButton
                                 title={`Marcar entregas (${entregasPendientes(row)} pendiente${entregasPendientes(row) !== 1 ? 's' : ''})`}
@@ -118,7 +118,7 @@ export default function Index({ facturas }: Props) {
                             </ActionButton>
                         </Link>
                     )}
-                    {can('afip.authorize') && !row.cae && (
+                    {can('afip.authorize') && !row.cae && !isCancelled(row.payment_status) && (
                         <ActionButton title="Autorizar AFIP" onClick={() => router.post(route('afip.authorize', row.id))}>
                             <FileText className="size-3.5" />
                         </ActionButton>
@@ -128,16 +128,24 @@ export default function Index({ facturas }: Props) {
                             <ActionButton title="Descargar PDF"><Download className="size-3.5" /></ActionButton>
                         </a>
                     )}
-                    {can('pagos.create') && row.payment_status === 'NO' && (
+                    {can('pagos.create') && isOwing(row.payment_status) && (
                         <Link href={route('pagos.create', row.id)}>
                             <ActionButton title="Registrar pago"><DollarSign className="size-3.5" /></ActionButton>
                         </Link>
                     )}
-                    {can('ventas.destroy') && (
-                        <DeleteConfirmationDialog
-                            url={route('ventas.destroy', row.id)}
-                            title="Eliminar venta"
-                            description={`¿Está seguro que desea eliminar la venta #${row.invoice_number}? Esta acción restaurará el inventario.`}
+                    {can('ventas.destroy') && !isCancelled(row.payment_status) && (
+                        <ConfirmActionDialog
+                            url={route('ventas.cancel', row.id)}
+                            method="patch"
+                            title="Cancelar venta"
+                            description={`¿Cancelar la venta #${row.invoice_number}? Se restaurará el inventario entregado y se acreditará lo pagado al cliente. El registro no se elimina.`}
+                            confirmLabel="Cancelar venta"
+                            processingLabel="Cancelando..."
+                            trigger={
+                                <ActionButton title="Cancelar venta" variant="destructive-soft">
+                                    <Ban className="size-3.5" />
+                                </ActionButton>
+                            }
                         />
                     )}
                 </div>

@@ -4,17 +4,21 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, Trash2, Save, X, Package, Camera, Search, Minus, User, ListOrdered, ScanLine, Warehouse as WarehouseIcon, AlertTriangle, ArrowRightLeft } from 'lucide-react';
-import { useState, useRef, useEffect } from 'react';
+import { Combobox } from '@/components/ui/combobox';
+import { MoneyInput } from '@/components/ui/money-input';
+import { FormField } from '@/components/form-field';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Plus, Trash2, Save, X, Package, Camera, Search, Minus, ListOrdered, ScanLine, Warehouse as WarehouseIcon, AlertTriangle, ArrowRightLeft } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import QRScanner from '@/components/QRScanner';
 
-interface Cliente {
+interface Customer {
     id: number;
     business_name: string;
     fantasy_name?: string | null;
+    tax_status?: string | null;
 }
 
 interface ProductImage {
@@ -23,7 +27,7 @@ interface ProductImage {
     is_primary: boolean;
 }
 
-interface Articulo {
+interface Product {
     id: number;
     name: string;
     sku: string;
@@ -41,7 +45,7 @@ interface PriceList {
     default_ecommerce: boolean;
 }
 
-interface PuntoVenta {
+interface PointOfSale {
     id: number;
     name: string;
     pos_number: number;
@@ -49,7 +53,7 @@ interface PuntoVenta {
     warehouse?: { id: number; name: string };
 }
 
-interface Almacen {
+interface Warehouse {
     id: number;
     name: string;
     is_default: boolean;
@@ -62,51 +66,87 @@ interface WarehouseStock {
     is_pos_warehouse: boolean;
 }
 
-interface Props {
-    clientes: Cliente[];
-    articulos: Articulo[];
-    listasPrecios: PriceList[];
-    listaDefaultPos: PriceList | null;
-    puntosVenta?: PuntoVenta[];
-    almacenes?: Almacen[];
-}
-
-interface ArticuloVenta {
-    articulo_id: string;
-    cantidad: number;
-    precio: number;
+interface SaleItem {
+    product_id: string;
+    quantity: number;
+    price: number;
     warehouse_id: string;
 }
 
-export default function Create({ clientes, articulos, listasPrecios, listaDefaultPos, puntosVenta = [], almacenes = [] }: Props) {
-    const page = usePage<any>();
-    const activePosId = page.props.activePointOfSaleId as number | null;
-    const activePos = puntosVenta.find((p) => p.id === activePosId) ?? puntosVenta[0];
-    const defaultWarehouseId = activePos?.warehouse_id ?? almacenes.find((a) => a.is_default)?.id ?? almacenes[0]?.id ?? null;
+interface Props {
+    customers: Customer[];
+    products: Product[];
+    priceLists: PriceList[];
+    defaultPosList: PriceList | null;
+    pointsOfSale?: PointOfSale[];
+    warehouses?: Warehouse[];
+}
+
+interface PageProps {
+    activePointOfSaleId: number | null;
+    [key: string]: unknown;
+}
+
+const fmt = (n: number): string => `$${Number(n).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+/** Deriva la letra de comprobante (A/B) según la condición IVA del cliente. */
+function resolveVoucherLetter(taxStatus?: string | null): 'A' | 'B' {
+    if (!taxStatus) return 'B';
+    const code = taxStatus.trim().toUpperCase();
+    if (code === 'RI' || code === 'MO') return 'A';
+    if (code === 'CF' || code === 'EX') return 'B';
+    const lower = taxStatus.toLowerCase();
+    if (lower.includes('responsable inscripto') || lower.includes('monotributo')) return 'A';
+    return 'B';
+}
+
+export default function Create({ customers, products, priceLists, defaultPosList, pointsOfSale = [], warehouses = [] }: Props) {
+    const page = usePage<PageProps>();
+    const activePosId = page.props.activePointOfSaleId;
+    const activePos = pointsOfSale.find((p) => p.id === activePosId) ?? pointsOfSale[0];
+    const defaultWarehouseId = activePos?.warehouse_id ?? warehouses.find((w) => w.is_default)?.id ?? warehouses[0]?.id ?? null;
+
     const [stockByProduct, setStockByProduct] = useState<Record<string, WarehouseStock[]>>({});
-    const [articulosVenta, setArticulosVenta] = useState<ArticuloVenta[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
-    const [filteredArticulos, setFilteredArticulos] = useState<Articulo[]>([]);
+    const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
     const [showDropdown, setShowDropdown] = useState(false);
     const [isScanning, setIsScanning] = useState(false);
-    const [montoPagoInput, setMontoPagoInput] = useState('');
     const searchInputRef = useRef<HTMLInputElement>(null);
 
     const { data, setData, post, processing, errors } = useForm({
         customer_id: '',
-        articulos: [] as ArticuloVenta[],
-        total: 0,
+        items: [] as SaleItem[],
         surcharge: 0,
         additional_discount: 0,
         payment_method: 'efectivo',
         payment_amount: 0,
         auto_payment: true,
         auto_delivery: true,
-        price_list_id: listaDefaultPos?.id?.toString() || '',
+        price_list_id: defaultPosList?.id?.toString() || '',
     });
 
-    const addArticulo = () => {
-        setArticulosVenta([...articulosVenta, { articulo_id: '', cantidad: 1, precio: 0, warehouse_id: defaultWarehouseId ? String(defaultWarehouseId) : '' }]);
+    const items = data.items;
+
+    const subtotal = useMemo(() => items.reduce((sum, item) => sum + item.quantity * item.price, 0), [items]);
+    const total = useMemo(
+        () => subtotal + Number(data.surcharge) - Number(data.additional_discount),
+        [subtotal, data.surcharge, data.additional_discount],
+    );
+
+    // Fuente única de verdad: si el pago es automático, sigue al total (sin setTimeout).
+    useEffect(() => {
+        if (data.auto_payment) {
+            setData('payment_amount', total);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [total, data.auto_payment]);
+
+    const priceForProduct = (product: Product): number => {
+        if (data.price_list_id) {
+            const listed = product.price_lists?.find((lp) => lp.id.toString() === data.price_list_id);
+            if (listed) return Number(listed.pivot.price);
+        }
+        return 0;
     };
 
     const fetchStockForProduct = async (productId: string) => {
@@ -115,117 +155,83 @@ export default function Create({ clientes, articulos, listasPrecios, listaDefaul
             const url = route('products.stock-by-warehouse', productId) + (activePos ? `?pos_warehouse_id=${activePos.warehouse_id}` : '');
             const res = await fetch(url, { headers: { Accept: 'application/json' } });
             if (res.ok) {
-                const data: WarehouseStock[] = await res.json();
-                setStockByProduct((prev) => ({ ...prev, [productId]: data }));
+                const stock: WarehouseStock[] = await res.json();
+                setStockByProduct((prev) => ({ ...prev, [productId]: stock }));
             }
         } catch (e) {
             console.error('Error fetching stock:', e);
         }
     };
 
-    const removeArticulo = (index: number) => {
-        const newItems = articulosVenta.filter((_, i) => i !== index);
-        setArticulosVenta(newItems);
-        updateTotal(newItems);
+    const addEmptyItem = () => {
+        setData('items', [
+            ...items,
+            { product_id: '', quantity: 1, price: 0, warehouse_id: defaultWarehouseId ? String(defaultWarehouseId) : '' },
+        ]);
     };
 
-    const updateArticulo = (index: number, field: keyof ArticuloVenta, value: any) => {
-        const newItems = [...articulosVenta];
-        newItems[index] = { ...newItems[index], [field]: value };
-
-        if (field === 'articulo_id') {
-            const articulo = articulos.find(a => a.id.toString() === value);
-            if (articulo) {
-                newItems[index].precio = getPrecioArticulo(articulo);
-                fetchStockForProduct(value);
-            }
-        }
-
-        setArticulosVenta(newItems);
-        updateTotal(newItems);
+    const removeItem = (index: number) => {
+        setData('items', items.filter((_, i) => i !== index));
     };
 
-    const updateTotal = (items: ArticuloVenta[]) => {
-        const subtotal = items.reduce((sum, item) => sum + (item.cantidad * item.precio), 0);
-        const total = subtotal + data.surcharge - data.additional_discount;
-        setData('total', total);
-        setData('articulos', items);
-        if (data.auto_payment) {
-            setData('payment_amount', total);
-        }
+    const updateItem = (index: number, patch: Partial<SaleItem>) => {
+        const next = items.map((item, i) => (i === index ? { ...item, ...patch } : item));
+        setData('items', next);
     };
 
-    const updateTotalWithAdjustments = () => {
-        const subtotal = articulosVenta.reduce((sum, item) => sum + (item.cantidad * item.precio), 0);
-        const total = subtotal + data.surcharge - data.additional_discount;
-        setData('total', total);
-        if (data.auto_payment) {
-            setData('payment_amount', total);
+    const selectProductForLine = (index: number, productId: string) => {
+        const product = products.find((p) => p.id.toString() === productId);
+        updateItem(index, { product_id: productId, price: product ? priceForProduct(product) : 0 });
+        if (product) fetchStockForProduct(productId);
+    };
+
+    const addProductFromSearch = (product: Product) => {
+        const productId = product.id.toString();
+        fetchStockForProduct(productId);
+        const existingIndex = items.findIndex((item) => item.product_id === productId);
+        if (existingIndex >= 0) {
+            updateItem(existingIndex, { quantity: items[existingIndex].quantity + 1 });
+        } else {
+            setData('items', [
+                ...items,
+                {
+                    product_id: productId,
+                    quantity: 1,
+                    price: priceForProduct(product),
+                    warehouse_id: defaultWarehouseId ? String(defaultWarehouseId) : '',
+                },
+            ]);
         }
+        setSearchTerm('');
+        setShowDropdown(false);
+        searchInputRef.current?.focus();
     };
 
     const handleSearch = (value: string) => {
         setSearchTerm(value);
         if (value.length > 0) {
-            const filtered = articulos.filter(articulo =>
-                articulo.name.toLowerCase().includes(value.toLowerCase()) ||
-                articulo.sku.toLowerCase().includes(value.toLowerCase())
+            const term = value.toLowerCase();
+            setFilteredProducts(
+                products.filter((p) => p.name.toLowerCase().includes(term) || p.sku.toLowerCase().includes(term)),
             );
-            setFilteredArticulos(filtered);
             setShowDropdown(true);
         } else {
             setShowDropdown(false);
         }
     };
 
-    const getPrecioArticulo = (articulo: Articulo) => {
-        if (data.price_list_id) {
-            const precioLista = articulo.price_lists?.find(lp => lp.id.toString() === data.price_list_id);
-            if (precioLista) return Number(precioLista.pivot.price);
-        }
-        return 0;
-    };
-
-    const recalcularPrecios = (nuevaListaId: string) => {
-        const itemsActualizados = articulosVenta.map(item => {
-            if (item.articulo_id) {
-                const articulo = articulos.find(a => a.id.toString() === item.articulo_id);
-                if (articulo) {
-                    const nuevoPrecio = nuevaListaId
-                        ? articulo.price_lists?.find(lp => lp.id.toString() === nuevaListaId)?.pivot.price ?? 0
-                        : 0;
-                    return { ...item, precio: Number(nuevoPrecio) };
-                }
-            }
-            return item;
-        });
-        setArticulosVenta(itemsActualizados);
-        updateTotal(itemsActualizados);
-    };
-
-    const addArticuloFromSearch = (articulo: Articulo) => {
-        const productId = articulo.id.toString();
-        fetchStockForProduct(productId);
-        const existingIndex = articulosVenta.findIndex(item => item.articulo_id === productId);
-        if (existingIndex >= 0) {
-            const newItems = [...articulosVenta];
-            newItems[existingIndex].cantidad += 1;
-            setArticulosVenta(newItems);
-            updateTotal(newItems);
-        } else {
-            const newItem: ArticuloVenta = {
-                articulo_id: productId,
-                cantidad: 1,
-                precio: getPrecioArticulo(articulo),
-                warehouse_id: defaultWarehouseId ? String(defaultWarehouseId) : '',
-            };
-            const newItems = [...articulosVenta, newItem];
-            setArticulosVenta(newItems);
-            updateTotal(newItems);
-        }
-        setSearchTerm('');
-        setShowDropdown(false);
-        searchInputRef.current?.focus();
+    const changePriceList = (priceListId: string) => {
+        setData((prev) => ({
+            ...prev,
+            price_list_id: priceListId,
+            items: prev.items.map((item) => {
+                if (!item.product_id) return item;
+                const product = products.find((p) => p.id.toString() === item.product_id);
+                if (!product) return item;
+                const listed = priceListId ? product.price_lists?.find((lp) => lp.id.toString() === priceListId) : undefined;
+                return { ...item, price: listed ? Number(listed.pivot.price) : 0 };
+            }),
+        }));
     };
 
     const handleScanResult = async (codigo: string) => {
@@ -238,10 +244,10 @@ export default function Create({ clientes, articulos, listasPrecios, listaDefaul
                 body: JSON.stringify({ codigo }),
             });
             if (response.ok) {
-                const data = await response.json();
-                if (data.articulo) {
-                    const found = articulos.find(a => a.id === data.articulo.id);
-                    if (found) addArticuloFromSearch(found);
+                const result = await response.json();
+                if (result.articulo) {
+                    const found = products.find((p) => p.id === result.articulo.id);
+                    if (found) addProductFromSearch(found);
                 }
             }
         } catch (error) {
@@ -249,7 +255,13 @@ export default function Create({ clientes, articulos, listasPrecios, listaDefaul
         }
     };
 
-    const subtotal = articulosVenta.reduce((sum, item) => sum + item.cantidad * item.precio, 0);
+    const selectedCustomer = customers.find((c) => c.id.toString() === data.customer_id);
+    const voucherLetter = resolveVoucherLetter(selectedCustomer?.tax_status);
+
+    const hasEmptyLine = items.some((item) => !item.product_id);
+    const partialPayment = data.payment_amount < total && data.payment_amount > 0;
+    const itemErrorKeys = Object.keys(errors).filter((k) => k.startsWith('items'));
+    const canSubmit = !processing && !!data.customer_id && items.length > 0 && !hasEmptyLine && data.payment_amount <= total;
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -261,86 +273,82 @@ export default function Create({ clientes, articulos, listasPrecios, listaDefaul
             <Head title="Nueva Venta" />
 
             <form onSubmit={submit} className="flex h-[calc(100vh-4rem)] flex-col overflow-hidden lg:flex-row">
-                {/* LEFT PANEL — Search + Cart Items */}
+                {/* LEFT PANEL — Cliente + búsqueda + carrito */}
                 <div className="flex flex-1 flex-col overflow-hidden p-4 md:p-6">
-                    {/* Header: Cliente + Lista + Actions */}
+                    {/* Header: Cliente + Lista + acciones */}
                     <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end">
                         <div className="flex-1">
-                            <Label className="text-xs text-muted-foreground">Cliente</Label>
-                            <Select value={data.customer_id} onValueChange={(value) => setData('customer_id', value)}>
-                                <SelectTrigger className="mt-1">
-                                    <User className="text-muted-foreground mr-2 size-4" />
-                                    <SelectValue placeholder="Seleccionar cliente" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {clientes.map((c) => (
-                                        <SelectItem key={c.id} value={c.id.toString()}>{c.fantasy_name || c.business_name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            {errors.customer_id && <p className="mt-1 text-xs text-destructive">{errors.customer_id}</p>}
+                            <FormField label="Cliente" required error={errors.customer_id}>
+                                <Combobox
+                                    options={customers.map((c) => ({ value: c.id.toString(), label: c.fantasy_name || c.business_name }))}
+                                    value={data.customer_id}
+                                    onValueChange={(value) => setData('customer_id', value)}
+                                    placeholder="Seleccionar cliente"
+                                    searchPlaceholder="Buscar cliente..."
+                                    emptyMessage="No se encontraron clientes."
+                                    error={errors.customer_id}
+                                />
+                            </FormField>
                         </div>
                         <div className="flex-1">
-                            <Label className="text-xs text-muted-foreground">Lista de Precios</Label>
-                            <Select value={data.price_list_id} onValueChange={(value) => { setData('price_list_id', value); recalcularPrecios(value); }}>
-                                <SelectTrigger className="mt-1">
-                                    <ListOrdered className="text-muted-foreground mr-2 size-4" />
-                                    <SelectValue placeholder="Seleccionar lista" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {listasPrecios.map((l) => (
-                                        <SelectItem key={l.id} value={l.id.toString()}>
-                                            {l.name} {l.default_pos && '(POS)'}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            <FormField label="Lista de Precios">
+                                <Select value={data.price_list_id} onValueChange={changePriceList}>
+                                    <SelectTrigger>
+                                        <ListOrdered className="text-muted-foreground mr-2 size-4" />
+                                        <SelectValue placeholder="Seleccionar lista" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {priceLists.map((l) => (
+                                            <SelectItem key={l.id} value={l.id.toString()}>
+                                                {l.name} {l.default_pos && '(POS)'}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </FormField>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 pb-0.5">
                             <Button type="button" variant="outline" size="icon" onClick={() => setIsScanning(true)} title="Escanear QR">
                                 <Camera className="size-4" />
                             </Button>
-                            <Button type="button" variant="outline" size="icon" onClick={addArticulo} title="Agregar línea manual">
+                            <Button type="button" variant="outline" size="icon" onClick={addEmptyItem} title="Agregar línea manual">
                                 <Plus className="size-4" />
                             </Button>
                         </div>
                     </div>
 
-                    {/* Search Bar */}
+                    {/* Buscador */}
                     <div className="relative mb-4">
-                        <Search className="text-muted-foreground absolute left-3 top-1/2 size-4 -translate-y-1/2" />
                         <Input
                             ref={searchInputRef}
                             type="text"
+                            startIcon={<Search className="size-4" />}
                             placeholder="Buscar artículo por código o nombre..."
                             value={searchTerm}
                             onChange={(e) => handleSearch(e.target.value)}
-                            className="pl-10"
                         />
-                        {showDropdown && filteredArticulos.length > 0 && (
-                            <div className="absolute z-10 mt-1 w-full overflow-auto rounded-lg border bg-card shadow-lg max-h-72">
-                                {filteredArticulos.map((articulo) => {
-                                    const img = articulo.images?.find(i => i.is_primary) || articulo.images?.[0];
+                        {showDropdown && filteredProducts.length > 0 && (
+                            <div className="absolute z-10 mt-1 max-h-72 w-full overflow-auto rounded-lg border bg-card shadow-lg">
+                                {filteredProducts.map((product) => {
+                                    const img = product.images?.find((i) => i.is_primary) || product.images?.[0];
                                     return (
                                         <div
-                                            key={articulo.id}
+                                            key={product.id}
                                             className="flex cursor-pointer items-center gap-3 px-4 py-2.5 transition-colors hover:bg-accent"
-                                            onClick={() => addArticuloFromSearch(articulo)}
+                                            onClick={() => addProductFromSearch(product)}
                                         >
                                             {img ? (
-                                                <img src={`/storage/${img.path}`} alt={articulo.name} className="size-10 shrink-0 rounded-lg object-cover" />
+                                                <img src={`/storage/${img.path}`} alt={product.name} className="size-10 shrink-0 rounded-lg object-cover" />
                                             ) : (
                                                 <div className="bg-muted flex size-10 shrink-0 items-center justify-center rounded-lg">
                                                     <Package className="text-muted-foreground size-5" />
                                                 </div>
                                             )}
                                             <div className="min-w-0 flex-1">
-                                                <p className="truncate text-sm font-medium">{articulo.name}</p>
-                                                <p className="text-muted-foreground text-xs">{articulo.sku} · {articulo.category?.name}</p>
+                                                <p className="truncate text-sm font-medium">{product.name}</p>
+                                                <p className="text-muted-foreground text-xs">{product.sku} · {product.category?.name}</p>
                                             </div>
-                                            <span className="text-primary shrink-0 text-sm font-bold tabular-nums">
-                                                ${getPrecioArticulo(articulo).toFixed(2)}
-                                            </span>
+                                            <span className="text-primary shrink-0 text-sm font-bold tabular-nums">{fmt(priceForProduct(product))}</span>
                                         </div>
                                     );
                                 })}
@@ -348,51 +356,57 @@ export default function Create({ clientes, articulos, listasPrecios, listaDefaul
                         )}
                     </div>
 
-                    {/* Cart Items List */}
+                    {itemErrorKeys.length > 0 && (
+                        <Alert variant="destructive" className="mb-3">
+                            <AlertTriangle className="size-4" />
+                            <AlertDescription>Revisá los artículos: hay líneas con datos inválidos.</AlertDescription>
+                        </Alert>
+                    )}
+
+                    {/* Lista de items */}
                     <div className="flex-1 space-y-2 overflow-y-auto pr-1">
-                        {articulosVenta.length === 0 && (
+                        {items.length === 0 && (
                             <div className="text-muted-foreground flex h-full flex-col items-center justify-center gap-2">
                                 <ScanLine className="size-10 opacity-30" />
                                 <p className="text-sm">Buscá o escaneá un artículo para comenzar</p>
                             </div>
                         )}
-                        {articulosVenta.map((item, index) => {
-                            const articulo = articulos.find(a => a.id.toString() === item.articulo_id);
-                            const img = articulo?.images?.find(i => i.is_primary) || articulo?.images?.[0];
-                            const stocks = stockByProduct[item.articulo_id] ?? [];
+                        {items.map((item, index) => {
+                            const product = products.find((p) => p.id.toString() === item.product_id);
+                            const img = product?.images?.find((i) => i.is_primary) || product?.images?.[0];
+                            const stocks = stockByProduct[item.product_id] ?? [];
                             const selectedStock = stocks.find((s) => String(s.warehouse_id) === item.warehouse_id);
                             const stockHere = selectedStock?.quantity ?? 0;
-                            const insufficient = item.articulo_id && item.cantidad > stockHere;
-                            const otherStock = stocks.filter((s) => String(s.warehouse_id) !== item.warehouse_id && s.quantity >= item.cantidad);
+                            const insufficient = !!item.product_id && item.quantity > stockHere;
+                            const otherStock = stocks.filter((s) => String(s.warehouse_id) !== item.warehouse_id && s.quantity >= item.quantity);
+                            const lineError = errors[`items.${index}.price` as keyof typeof errors] || errors[`items.${index}.quantity` as keyof typeof errors] || errors[`items.${index}.product_id` as keyof typeof errors];
 
                             return (
                                 <div key={index} className="group rounded-xl border bg-card p-3 transition-colors hover:border-primary/20">
                                     <div className="flex items-center gap-3">
-                                        {/* Image */}
                                         {img ? (
-                                            <img src={`/storage/${img.path}`} alt={articulo?.name} className="size-12 shrink-0 rounded-lg object-cover" />
+                                            <img src={`/storage/${img.path}`} alt={product?.name} className="size-12 shrink-0 rounded-lg object-cover" />
                                         ) : (
                                             <div className="bg-muted flex size-12 shrink-0 items-center justify-center rounded-lg">
                                                 <Package className="text-muted-foreground size-5" />
                                             </div>
                                         )}
 
-                                        {/* Info + Select (if no articulo selected) */}
                                         <div className="min-w-0 flex-1">
-                                            {articulo ? (
+                                            {product ? (
                                                 <>
-                                                    <p className="truncate text-sm font-semibold">{articulo.name}</p>
-                                                    <p className="text-muted-foreground text-xs">{articulo.sku}</p>
+                                                    <p className="truncate text-sm font-semibold">{product.name}</p>
+                                                    <p className="text-muted-foreground text-xs">{product.sku}</p>
                                                 </>
                                             ) : (
-                                                <Select value={item.articulo_id} onValueChange={(v) => updateArticulo(index, 'articulo_id', v)}>
+                                                <Select value={item.product_id} onValueChange={(v) => selectProductForLine(index, v)}>
                                                     <SelectTrigger className="h-8 text-xs">
                                                         <SelectValue placeholder="Seleccionar artículo" />
                                                     </SelectTrigger>
                                                     <SelectContent>
-                                                        {articulos.map((a) => (
-                                                            <SelectItem key={a.id} value={a.id.toString()}>
-                                                                {a.sku} - {a.name}
+                                                        {products.map((p) => (
+                                                            <SelectItem key={p.id} value={p.id.toString()}>
+                                                                {p.sku} - {p.name}
                                                             </SelectItem>
                                                         ))}
                                                     </SelectContent>
@@ -400,73 +414,75 @@ export default function Create({ clientes, articulos, listasPrecios, listaDefaul
                                             )}
                                         </div>
 
-                                    {/* Quantity Controls */}
-                                    <div className="flex items-center gap-1.5">
-                                        <button
+                                        {/* Cantidad */}
+                                        <div className="flex items-center gap-1.5">
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                className="size-7 rounded-full"
+                                                onClick={() => item.quantity > 1 && updateItem(index, { quantity: item.quantity - 1 })}
+                                            >
+                                                <Minus className="size-3.5" />
+                                            </Button>
+                                            <Input
+                                                type="number"
+                                                value={item.quantity}
+                                                onChange={(e) => updateItem(index, { quantity: Math.max(1, parseInt(e.target.value) || 1) })}
+                                                min={1}
+                                                className="h-7 w-10 border-0 bg-transparent p-0 text-center text-sm font-semibold tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                                            />
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                className="size-7 rounded-full"
+                                                onClick={() => updateItem(index, { quantity: item.quantity + 1 })}
+                                            >
+                                                <Plus className="size-3.5" />
+                                            </Button>
+                                        </div>
+
+                                        {/* Precio */}
+                                        <div className="w-28">
+                                            <MoneyInput
+                                                value={item.price}
+                                                onValueChange={(v) => updateItem(index, { price: v })}
+                                                className="h-7"
+                                            />
+                                            {item.quantity > 1 && (
+                                                <p className="text-muted-foreground mt-0.5 text-right text-[10px] tabular-nums">Sub: {fmt(item.quantity * item.price)}</p>
+                                            )}
+                                        </div>
+
+                                        {/* Borrar */}
+                                        <Button
                                             type="button"
-                                            className="bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary flex size-7 items-center justify-center rounded-full transition-colors"
-                                            onClick={() => {
-                                                if (item.cantidad > 1) updateArticulo(index, 'cantidad', item.cantidad - 1);
-                                            }}
+                                            variant="ghost"
+                                            size="icon"
+                                            className="size-7 shrink-0 text-muted-foreground opacity-0 transition-all group-hover:opacity-100 hover:text-destructive"
+                                            onClick={() => removeItem(index)}
                                         >
-                                            <Minus className="size-3.5" />
-                                        </button>
-                                        <Input
-                                            type="number"
-                                            value={item.cantidad}
-                                            onChange={(e) => updateArticulo(index, 'cantidad', parseInt(e.target.value) || 1)}
-                                            min={1}
-                                            className="h-7 w-10 border-0 bg-transparent p-0 text-center text-sm font-semibold tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                                        />
-                                        <button
-                                            type="button"
-                                            className="bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary flex size-7 items-center justify-center rounded-full transition-colors"
-                                            onClick={() => updateArticulo(index, 'cantidad', item.cantidad + 1)}
-                                        >
-                                            <Plus className="size-3.5" />
-                                        </button>
+                                            <Trash2 className="size-4" />
+                                        </Button>
                                     </div>
 
-                                    {/* Price */}
-                                    <div className="w-20 text-right">
-                                        <Input
-                                            type="number"
-                                            step="0.01"
-                                            value={item.precio}
-                                            onChange={(e) => updateArticulo(index, 'precio', parseFloat(e.target.value) || 0)}
-                                            className="h-7 border-0 bg-transparent p-0 text-right text-sm font-bold tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                                        />
-                                        {item.cantidad > 1 && (
-                                            <p className="text-muted-foreground text-[10px] tabular-nums">
-                                                Sub: ${(item.cantidad * item.precio).toFixed(2)}
-                                            </p>
-                                        )}
-                                    </div>
+                                    {lineError && <p className="mt-1 text-xs text-destructive">{lineError}</p>}
 
-                                    {/* Delete */}
-                                    <button
-                                        type="button"
-                                        className="text-muted-foreground hover:text-destructive shrink-0 opacity-0 transition-all group-hover:opacity-100"
-                                        onClick={() => removeArticulo(index)}
-                                    >
-                                        <Trash2 className="size-4" />
-                                    </button>
-                                    </div>
-
-                                    {/* Stock + Warehouse row */}
-                                    {item.articulo_id && almacenes.length > 0 && (
+                                    {/* Almacén + stock */}
+                                    {item.product_id && warehouses.length > 0 && (
                                         <div className="mt-2 flex flex-wrap items-center gap-2 border-t pt-2">
                                             <WarehouseIcon className="text-muted-foreground size-3.5" />
-                                            <Select value={item.warehouse_id} onValueChange={(v) => updateArticulo(index, 'warehouse_id', v)}>
+                                            <Select value={item.warehouse_id} onValueChange={(v) => updateItem(index, { warehouse_id: v })}>
                                                 <SelectTrigger className="h-7 w-auto min-w-[160px] text-xs">
                                                     <SelectValue placeholder="Almacén" />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    {almacenes.map((a) => {
-                                                        const s = stocks.find((st) => st.warehouse_id === a.id);
+                                                    {warehouses.map((w) => {
+                                                        const s = stocks.find((st) => st.warehouse_id === w.id);
                                                         return (
-                                                            <SelectItem key={a.id} value={String(a.id)}>
-                                                                {a.name} {s ? `(${s.quantity})` : '(0)'}
+                                                            <SelectItem key={w.id} value={String(w.id)}>
+                                                                {w.name} {s ? `(${s.quantity})` : '(0)'}
                                                             </SelectItem>
                                                         );
                                                     })}
@@ -486,7 +502,7 @@ export default function Create({ clientes, articulos, listasPrecios, listaDefaul
                                                             variant="outline"
                                                             size="sm"
                                                             className="h-6 px-2 text-[10px]"
-                                                            onClick={() => updateArticulo(index, 'warehouse_id', String(s.warehouse_id))}
+                                                            onClick={() => updateItem(index, { warehouse_id: String(s.warehouse_id) })}
                                                         >
                                                             {s.warehouse_name} ({s.quantity})
                                                         </Button>
@@ -516,98 +532,71 @@ export default function Create({ clientes, articulos, listasPrecios, listaDefaul
                     </div>
                 </div>
 
-                {/* RIGHT PANEL — Order Summary (sticky) */}
+                {/* RIGHT PANEL — Resumen (sticky) */}
                 <div className="flex w-full flex-col border-t bg-card lg:w-[380px] lg:border-l lg:border-t-0">
-                    {/* Panel Header */}
                     <div className="border-b p-5">
                         <div className="flex items-center justify-between">
                             <h2 className="text-lg font-bold tracking-tight">Resumen</h2>
-                            <Badge variant="secondary" className="tabular-nums">
-                                {articulosVenta.length} {articulosVenta.length === 1 ? 'item' : 'items'}
-                            </Badge>
+                            <div className="flex items-center gap-2">
+                                {data.customer_id && <Badge variant="info">Factura {voucherLetter}</Badge>}
+                                <Badge variant="secondary" className="tabular-nums">
+                                    {items.length} {items.length === 1 ? 'item' : 'items'}
+                                </Badge>
+                            </div>
                         </div>
                     </div>
 
-                    {/* Scrollable middle section */}
                     <div className="flex-1 space-y-5 overflow-y-auto p-5">
-                        {/* Totals */}
+                        {/* Totales */}
                         <div className="space-y-2.5">
                             <div className="text-muted-foreground flex justify-between text-sm">
                                 <span>Subtotal</span>
-                                <span className="tabular-nums">${subtotal.toFixed(2)}</span>
+                                <span className="tabular-nums">{fmt(subtotal)}</span>
                             </div>
                             <div className="flex items-center justify-between gap-2 text-sm">
                                 <Label className="text-muted-foreground text-sm font-normal">Recargo</Label>
-                                <Input
-                                    type="text"
-                                    value={data.surcharge.toString()}
-                                    onChange={(e) => {
-                                        const v = e.target.value;
-                                        const n = v.includes('.') ? parseFloat(v) : parseFloat(v + '.00');
-                                        setData('surcharge', isNaN(n) ? 0 : n);
-                                        setTimeout(updateTotalWithAdjustments, 0);
-                                    }}
-                                    className="h-7 w-24 text-right text-sm tabular-nums"
-                                />
+                                <div className="w-28">
+                                    <MoneyInput value={Number(data.surcharge)} onValueChange={(v) => setData('surcharge', v)} className="h-8" />
+                                </div>
                             </div>
                             <div className="flex items-center justify-between gap-2 text-sm">
                                 <Label className="text-muted-foreground text-sm font-normal">Descuento</Label>
-                                <Input
-                                    type="text"
-                                    value={data.additional_discount.toString()}
-                                    onChange={(e) => {
-                                        const v = e.target.value;
-                                        const n = v.includes('.') ? parseFloat(v) : parseFloat(v + '.00');
-                                        setData('additional_discount', isNaN(n) ? 0 : n);
-                                        setTimeout(updateTotalWithAdjustments, 0);
-                                    }}
-                                    className="h-7 w-24 text-right text-sm tabular-nums"
-                                />
+                                <div className="w-28">
+                                    <MoneyInput value={Number(data.additional_discount)} onValueChange={(v) => setData('additional_discount', v)} className="h-8" />
+                                </div>
                             </div>
                             <div className="flex items-center justify-between border-t pt-3">
                                 <span className="text-base font-semibold">Total</span>
-                                <span className="text-primary text-2xl font-bold tabular-nums">${data.total.toFixed(2)}</span>
+                                <span className="text-primary text-2xl font-bold tabular-nums">{fmt(total)}</span>
                             </div>
                         </div>
 
-                        {/* Payment */}
+                        {/* Pago */}
                         <div className="space-y-3">
                             <h3 className="text-sm font-semibold">Pago</h3>
-                            <Select value={data.payment_method} onValueChange={(v) => setData('payment_method', v)}>
-                                <SelectTrigger className="h-9">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="efectivo">Efectivo</SelectItem>
-                                    <SelectItem value="tarjeta_debito">Tarjeta de Débito</SelectItem>
-                                    <SelectItem value="tarjeta_credito">Tarjeta de Crédito</SelectItem>
-                                    <SelectItem value="transferencia">Transferencia</SelectItem>
-                                    <SelectItem value="mercadopago">MercadoPago</SelectItem>
-                                </SelectContent>
-                            </Select>
+                            <FormField label="Método de pago" error={errors.payment_method}>
+                                <Select value={data.payment_method} onValueChange={(v) => setData('payment_method', v)}>
+                                    <SelectTrigger className="h-9">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="efectivo">Efectivo</SelectItem>
+                                        <SelectItem value="tarjeta_debito">Tarjeta de Débito</SelectItem>
+                                        <SelectItem value="tarjeta_credito">Tarjeta de Crédito</SelectItem>
+                                        <SelectItem value="transferencia">Transferencia</SelectItem>
+                                        <SelectItem value="mercadopago">MercadoPago</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </FormField>
 
                             {!data.auto_payment && (
-                                <div>
-                                    <Label className="text-xs text-muted-foreground">Monto del Pago</Label>
-                                    <Input
-                                        type="text"
-                                        inputMode="decimal"
-                                        value={montoPagoInput}
-                                        onFocus={() => setMontoPagoInput(data.payment_amount > 0 ? data.payment_amount.toString() : '')}
-                                        onChange={(e) => {
-                                            const v = e.target.value;
-                                            if (v === '' || /^\d*\.?\d{0,2}$/.test(v)) {
-                                                setMontoPagoInput(v);
-                                                const n = parseFloat(v);
-                                                if (!isNaN(n)) setData('payment_amount', n);
-                                                else if (v === '') setData('payment_amount', 0);
-                                            }
-                                        }}
-                                        onBlur={() => setMontoPagoInput(data.payment_amount.toFixed(2))}
-                                        placeholder="0.00"
-                                        className="mt-1"
+                                <FormField label="Monto del pago" error={errors.payment_amount}>
+                                    <MoneyInput
+                                        value={Number(data.payment_amount)}
+                                        onValueChange={(v) => setData('payment_amount', v)}
+                                        error={errors.payment_amount}
                                     />
-                                </div>
+                                </FormField>
                             )}
 
                             <div className="space-y-2">
@@ -618,7 +607,7 @@ export default function Create({ clientes, articulos, listasPrecios, listaDefaul
                                         onCheckedChange={(checked) => {
                                             const val = !!checked;
                                             setData('auto_payment', val);
-                                            if (val) setData('payment_amount', data.total);
+                                            if (val) setData('payment_amount', total);
                                             else setData('payment_amount', 0);
                                         }}
                                     />
@@ -634,32 +623,25 @@ export default function Create({ clientes, articulos, listasPrecios, listaDefaul
                                 </div>
                             </div>
 
-                            {data.payment_amount < data.total && data.payment_amount > 0 && (
+                            {partialPayment && (
                                 <div className="rounded-lg bg-warning-soft p-3">
-                                    <p className="text-warning text-xs font-medium">
-                                        Pago parcial — Saldo pendiente: ${(data.total - data.payment_amount).toFixed(2)}
-                                    </p>
+                                    <p className="text-warning text-xs font-medium">Pago parcial — Saldo pendiente: {fmt(total - data.payment_amount)}</p>
                                 </div>
                             )}
                         </div>
                     </div>
 
-                    {/* Action Buttons */}
+                    {/* Acciones */}
                     <div className="grid grid-cols-2 gap-2 border-t p-4">
-                        <Button type="button" variant="outline" onClick={() => window.history.back()} className="col-span-1">
+                        <Button type="button" variant="outline" onClick={() => window.history.back()}>
                             <X className="size-4" />
                             Cancelar
                         </Button>
-                        <Button type="button" variant="secondary" onClick={addArticulo} className="col-span-1">
+                        <Button type="button" variant="secondary" onClick={addEmptyItem}>
                             <Plus className="size-4" />
                             Línea
                         </Button>
-                        <Button
-                            type="submit"
-                            disabled={processing || articulosVenta.length === 0 || data.payment_amount > data.total}
-                            className="col-span-2"
-                            size="lg"
-                        >
+                        <Button type="submit" disabled={!canSubmit} className="col-span-2" size="lg">
                             <Save className="size-4" />
                             {processing ? 'Procesando...' : 'Finalizar Venta'}
                         </Button>

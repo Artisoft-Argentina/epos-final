@@ -4,9 +4,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link, router } from '@inertiajs/react';
-import { ArrowLeft, DollarSign, Trash2, Package, CheckCircle, XCircle } from 'lucide-react';
+import { ArrowLeft, DollarSign, Trash2, Package, CheckCircle, XCircle, Ban } from 'lucide-react';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
+import { ConfirmActionDialog } from '@/components/confirm-action-dialog';
 import { usePermission } from '@/hooks/use-permission';
+import { paymentStatusMeta, isCancelled } from '@/lib/payment-status';
 
 interface Warehouse {
     id: number;
@@ -94,7 +96,9 @@ export default function Show({ factura, warehouses }: Props) {
     const hasPendingDeliveries = factura.deliveries?.some(d => d.status === 'pending');
     const totalVendido = factura.products?.reduce((sum, p) => sum + p.pivot.quantity, 0) || 0;
     const totalEntregado = factura.deliveries?.filter(d => d.status === 'delivered').reduce((sum, d) => sum + d.quantity, 0) || 0;
-    const showDeliveryButton = hasPendingDeliveries || totalEntregado < totalVendido;
+    const cancelada = isCancelled(factura.payment_status);
+    const showDeliveryButton = !cancelada && (hasPendingDeliveries || totalEntregado < totalVendido);
+    const estadoMeta = paymentStatusMeta(factura.payment_status);
 
     return (
         <AppLayout>
@@ -114,10 +118,23 @@ export default function Show({ factura, warehouses }: Props) {
                                 <Button variant="outline"><Package className="w-4 h-4 mr-2" />Registrar Entrega</Button>
                             </Link>
                         )}
-                        {can('pagos.create') && saldoPendiente > 0 && (
+                        {can('pagos.create') && !cancelada && saldoPendiente > 0 && (
                             <Link href={route('pagos.create', factura.id)}>
                                 <Button><DollarSign className="w-4 h-4 mr-2" />Registrar Pago</Button>
                             </Link>
+                        )}
+                        {can('ventas.destroy') && !cancelada && !factura.cae && (
+                            <ConfirmActionDialog
+                                url={route('ventas.cancel', factura.id)}
+                                method="patch"
+                                title="Cancelar venta"
+                                description={`¿Cancelar la venta #${factura.invoice_number}? Se restaurará el inventario entregado y se acreditará lo pagado al cliente. El registro no se elimina.`}
+                                confirmLabel="Cancelar venta"
+                                processingLabel="Cancelando..."
+                                trigger={
+                                    <Button variant="destructive-soft"><Ban className="w-4 h-4 mr-2" />Cancelar Venta</Button>
+                                }
+                            />
                         )}
                     </div>
                 </div>
@@ -131,9 +148,7 @@ export default function Show({ factura, warehouses }: Props) {
                             <div>
                                 <label className="text-sm font-medium text-muted-foreground">Estado</label>
                                 <p className="text-sm mt-1">
-                                    <Badge variant={factura.payment_status === 'SI' ? 'success' : 'warning'}>
-                                        {factura.payment_status === 'SI' ? 'Pagada' : 'Pendiente'}
-                                    </Badge>
+                                    <Badge variant={estadoMeta.variant}>{estadoMeta.label}</Badge>
                                 </p>
                             </div>
                             <div><label className="text-sm font-medium text-gray-500">Fecha</label><p className="text-sm">{new Date(factura.date).toLocaleDateString()}</p></div>

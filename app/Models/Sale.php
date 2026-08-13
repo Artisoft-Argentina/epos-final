@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Enums\PaymentStatus;
+use App\Enums\SaleCondition;
+use App\Enums\SaleType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -47,12 +50,20 @@ class Sale extends Model
     ];
 
     protected $casts = [
-        'date'            => 'date',
-        'due_date'        => 'date',
-        'cae_expiration'  => 'date',
-        'tax_id'          => 'string',
-        'afip_authorized' => 'boolean',
-        'active'          => 'boolean',
+        'date'                => 'date',
+        'due_date'            => 'date',
+        'cae_expiration'      => 'date',
+        'tax_id'              => 'string',
+        'afip_authorized'     => 'boolean',
+        'active'              => 'boolean',
+        'discount'            => 'decimal:2',
+        'surcharge'           => 'decimal:2',
+        'additional_discount' => 'decimal:2',
+        'subtotal'            => 'decimal:2',
+        'total'               => 'decimal:2',
+        'payment_status'      => PaymentStatus::class,
+        'sale_condition'      => SaleCondition::class,
+        'sale_type'           => SaleType::class,
     ];
 
     public function customer()
@@ -102,13 +113,71 @@ class Sale extends Model
         return $this->morphMany(StockMovement::class, 'referenceable');
     }
 
-    public function getTotalPaidAttribute()
+    public function getTotalPaidAttribute(): float
     {
-        return $this->payments->sum('amount');
+        return (float) $this->payments->sum('amount');
     }
 
-    public function getPendingBalanceAttribute()
+    public function getPendingBalanceAttribute(): float
     {
-        return $this->total - $this->total_paid;
+        return round((float) $this->total - $this->total_paid, 2);
+    }
+
+    /** Una venta cancelada es terminal: no acepta pagos, edición ni entregas. */
+    public function isCancelled(): bool
+    {
+        return $this->payment_status === PaymentStatus::Cancelled;
+    }
+
+    /**
+     * Recalcula payment_status a partir del saldo (fresh desde BD) y persiste.
+     * No modifica una venta cancelada (estado terminal).
+     * Debe invocarse dentro de una transacción con lock sobre la venta.
+     */
+    public function recalcPaymentStatus(): void
+    {
+        if ($this->isCancelled()) {
+            return;
+        }
+
+        $paid  = round((float) $this->payments()->sum('amount'), 2);
+        $total = round((float) $this->total, 2);
+
+        $this->payment_status = match (true) {
+            $paid >= $total => PaymentStatus::Paid,
+            $paid > 0       => PaymentStatus::Partial,
+            default         => PaymentStatus::Pending,
+        };
+
+        $this->save();
+    }
+
+    /**
+     * Deriva la letra de comprobante (A/B) según la condición IVA del cliente.
+     * Maneja tanto los códigos cortos (RI/MO/CF/EX de seeders) como los
+     * strings largos que guarda el formulario ('Responsable Inscripto', etc.).
+     */
+    public static function resolveVoucherLetter(?Customer $customer): string
+    {
+        $status = $customer?->tax_status;
+        if (! $status) {
+            return 'B';
+        }
+
+        $code = strtoupper(trim($status));
+        if (in_array($code, ['RI', 'MO'], true)) {
+            return 'A';
+        }
+        if (in_array($code, ['CF', 'EX'], true)) {
+            return 'B';
+        }
+
+        $lower = strtolower($status);
+        if (str_contains($lower, 'responsable inscripto') || str_contains($lower, 'monotributo')) {
+            return 'A';
+        }
+
+        // Exento, Consumidor Final u otros → Factura B
+        return 'B';
     }
 }

@@ -94,15 +94,7 @@ class CustomerController extends Controller
 
     public function show(Customer $customer)
     {
-        $sales = $customer->sales()->with('payments')->orderByDesc('created_at')->get();
-
-        $summary = [
-            'total_sales' => $sales->sum('total'),
-            'total_paid'  => $sales->sum(fn($s) => $s->payments->sum('amount')),
-            'balance_due' => 0,
-            'credit'      => $customer->credit,
-        ];
-        $summary['balance_due'] = $summary['total_sales'] - $summary['total_paid'];
+        [$sales, $summary] = $this->accountStatement($customer);
 
         return Inertia::render('Customers/Show', [
             'customer' => $customer->load(['city', 'state']),
@@ -113,15 +105,7 @@ class CustomerController extends Controller
 
     public function exportExcel(Customer $customer)
     {
-        $sales = $customer->sales()->with('payments')->orderByDesc('created_at')->get();
-
-        $summary = [
-            'total_sales' => $sales->sum('total'),
-            'total_paid'  => $sales->sum(fn($s) => $s->payments->sum('amount')),
-            'balance_due' => 0,
-            'credit'      => $customer->credit,
-        ];
-        $summary['balance_due'] = $summary['total_sales'] - $summary['total_paid'];
+        [$sales, $summary] = $this->accountStatement($customer);
 
         return \Maatwebsite\Excel\Facades\Excel::download(
             new \App\Exports\EstadoCuentaExport($customer, $sales, $summary),
@@ -131,19 +115,35 @@ class CustomerController extends Controller
 
     public function exportPdf(Customer $customer)
     {
-        $sales = $customer->sales()->with('payments')->orderByDesc('created_at')->get();
-
-        $summary = [
-            'total_sales' => $sales->sum('total'),
-            'total_paid'  => $sales->sum(fn($s) => $s->payments->sum('amount')),
-            'balance_due' => 0,
-            'credit'      => $customer->credit,
-        ];
-        $summary['balance_due'] = $summary['total_sales'] - $summary['total_paid'];
+        [$sales, $summary] = $this->accountStatement($customer);
 
         $pdf = \PDF::loadView('pdf.estado-cuenta', compact('customer', 'sales', 'summary'));
 
         return $pdf->download('estado-cuenta-' . $customer->business_name . '.pdf');
+    }
+
+    /**
+     * Estado de cuenta del cliente. Las ventas canceladas se listan (para
+     * trazabilidad) pero se excluyen del saldo; su pago ya se acreditó al crédito.
+     *
+     * @return array{0: \Illuminate\Support\Collection, 1: array}
+     */
+    private function accountStatement(Customer $customer): array
+    {
+        $sales = $customer->sales()->with('payments')->orderByDesc('created_at')->get();
+
+        $activeSales = $sales->reject(fn ($sale) => $sale->isCancelled());
+        $totalSales  = (float) $activeSales->sum('total');
+        $totalPaid   = (float) $activeSales->sum(fn ($sale) => $sale->payments->sum('amount'));
+
+        $summary = [
+            'total_sales' => $totalSales,
+            'total_paid'  => $totalPaid,
+            'balance_due' => round($totalSales - $totalPaid, 2),
+            'credit'      => $customer->credit,
+        ];
+
+        return [$sales, $summary];
     }
 
     private function rules(Request $request): array

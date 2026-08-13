@@ -8,6 +8,7 @@ import { DataTable, type Column } from '@/components/data-table';
 import { PageHeader } from '@/components/page-header';
 import { Download, FileText, Edit, Mail, Phone, Smartphone, MapPin, User, Building2, Wallet, TrendingDown, CreditCard, ShoppingBag, ChevronRight, Receipt, StickyNote } from 'lucide-react';
 import { usePermission } from '@/hooks/use-permission';
+import { paymentStatusMeta } from '@/lib/payment-status';
 
 interface Payment { id: number; amount: number; }
 interface Sale {
@@ -104,11 +105,10 @@ export default function Show({ customer, sales, summary }: Props) {
         {
             key: 'payment_status',
             header: 'Estado',
-            render: (row) => (
-                <Badge variant={row.payment_status === 'SI' ? 'success' : 'warning'} dot>
-                    {row.payment_status === 'SI' ? 'Pagado' : 'Pendiente'}
-                </Badge>
-            ),
+            render: (row) => {
+                const meta = paymentStatusMeta(row.payment_status);
+                return <Badge variant={meta.variant} dot>{meta.label}</Badge>;
+            },
         },
     ];
 

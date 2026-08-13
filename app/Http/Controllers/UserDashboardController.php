@@ -47,7 +47,7 @@ class UserDashboardController extends Controller
                 'numero'          => $sale->invoice_number,
                 'fecha'           => $sale->date,
                 'total'           => (float) $sale->total,
-                'pagada'          => $sale->payment_status,
+                'pagada'          => $sale->payment_status?->value,
                 'total_pagado'    => (float) $sale->payments->sum('amount'),
                 'saldo_pendiente' => (float) ($sale->total - $sale->payments->sum('amount')),
                 'articulos'       => $sale->products->map(fn($p) => [

@@ -196,7 +196,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('ventas/{venta}', [\App\Http\Controllers\VentaController::class, 'show'])->name('ventas.show')->middleware('can:ventas.show');
     Route::get('ventas/{venta}/edit', [\App\Http\Controllers\VentaController::class, 'edit'])->name('ventas.edit')->middleware('can:ventas.edit');
     Route::put('ventas/{venta}', [\App\Http\Controllers\VentaController::class, 'update'])->name('ventas.update')->middleware('can:ventas.update');
-    Route::delete('ventas/{venta}', [\App\Http\Controllers\VentaController::class, 'destroy'])->name('ventas.destroy')->middleware('can:ventas.destroy');
+    Route::patch('ventas/{venta}/cancel', [\App\Http\Controllers\VentaController::class, 'cancel'])->name('ventas.cancel')->middleware('can:ventas.destroy');
 
     // Presupuestos
     Route::get('presupuestos', [\App\Http\Controllers\PresupuestoController::class, 'index'])->name('presupuestos.index')->middleware('can:presupuestos.index');
