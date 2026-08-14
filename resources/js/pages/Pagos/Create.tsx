@@ -119,6 +119,7 @@ export default function Create({ factura }: Props) {
                                         error={errors.amount}
                                         placeholder={`Máximo: $${saldoPendiente.toFixed(2)}`}
                                     />
+                                    {errors.amount && <p className="text-sm text-red-600 mt-1">{errors.amount}</p>}
                                 </div>
 
                                 <div>

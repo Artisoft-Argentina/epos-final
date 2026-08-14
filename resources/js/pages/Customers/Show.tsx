@@ -8,7 +8,7 @@ import { DataTable, type Column } from '@/components/data-table';
 import { PageHeader } from '@/components/page-header';
 import { Download, FileText, Edit, Mail, Phone, Smartphone, MapPin, User, Building2, Wallet, TrendingDown, CreditCard, ShoppingBag, ChevronRight, Receipt, StickyNote } from 'lucide-react';
 import { usePermission } from '@/hooks/use-permission';
-import { paymentStatusMeta } from '@/lib/payment-status';
+import { paymentStatusMeta, isCancelled } from '@/lib/payment-status';
 
 interface Payment { id: number; amount: number; }
 interface Sale {
@@ -94,6 +94,10 @@ export default function Show({ customer, sales, summary }: Props) {
             header: 'Saldo',
             align: 'right',
             render: (row) => {
+                // Una venta cancelada no deja saldo: lo pagado se acreditó al cliente.
+                if (isCancelled(row.payment_status)) {
+                    return <span className="text-muted-foreground tabular-nums">—</span>;
+                }
                 const balance = row.total - row.payments.reduce((s, p) => s + p.amount, 0);
                 return (
                     <Badge variant={balance > 0 ? 'destructive' : 'success'}>
