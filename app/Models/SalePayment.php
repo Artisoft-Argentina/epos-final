@@ -19,6 +19,16 @@ class SalePayment extends Model
         'cheque',
     ];
 
+    /** Etiqueta visible de cada método. Mismas claves que METHODS. */
+    public const METHOD_LABELS = [
+        'efectivo'        => 'Efectivo',
+        'tarjeta_debito'  => 'Tarjeta de Débito',
+        'tarjeta_credito' => 'Tarjeta de Crédito',
+        'transferencia'   => 'Transferencia',
+        'mercadopago'     => 'MercadoPago',
+        'cheque'          => 'Cheque',
+    ];
+
     protected $fillable = [
         'sale_id',
         'amount',
@@ -43,5 +53,11 @@ class SalePayment extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    /** Etiqueta del método de pago; cae al valor crudo si es uno legacy. */
+    public function methodLabel(): string
+    {
+        return self::METHOD_LABELS[$this->payment_method] ?? (string) $this->payment_method;
     }
 }

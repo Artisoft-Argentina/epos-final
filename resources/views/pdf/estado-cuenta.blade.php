@@ -54,35 +54,27 @@
     </div>
 
     <div class="facturas">
-        <h3>Historial de Compras</h3>
+        <h3>Movimientos</h3>
         <table>
             <thead>
                 <tr>
-                    <th>Factura</th>
                     <th>Fecha</th>
-                    <th>Total</th>
-                    <th>Pagado</th>
+                    <th>Concepto</th>
+                    <th>Débito</th>
+                    <th>Crédito</th>
                     <th>Saldo</th>
-                    <th>Estado</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach($sales as $sale)
-                    @php
-                        $isCancelled = $sale->isCancelled();
-                        $totalPaid   = (float) $sale->payments->sum('amount');
-                        // Una venta cancelada no deja saldo: lo pagado se acreditó al cliente.
-                        $balance     = $isCancelled ? 0 : round((float) $sale->total - $totalPaid, 2);
-                    @endphp
+                @foreach($movements as $movement)
                     <tr>
-                        <td>{{ $sale->invoice_number }}</td>
-                        <td>{{ date('d/m/Y', strtotime($sale->date)) }}</td>
-                        <td>${{ number_format($sale->total, 2) }}</td>
-                        <td>${{ number_format($totalPaid, 2) }}</td>
-                        <td class="{{ $isCancelled ? 'cancelada' : ($balance > 0 ? 'pendiente' : 'pagada') }}">
-                            {{ $isCancelled ? '—' : '$' . number_format($balance, 2) }}
+                        <td>{{ date('d/m/Y', strtotime($movement['date'])) }}</td>
+                        <td class="{{ $movement['type'] === 'cancellation' ? 'cancelada' : '' }}">
+                            {{ $movement['description'] }}
                         </td>
-                        <td>{{ $sale->payment_status?->label() }}</td>
+                        <td>{{ $movement['debit'] ? '$' . number_format($movement['debit'], 2) : '—' }}</td>
+                        <td class="pagada">{{ $movement['credit'] ? '$' . number_format($movement['credit'], 2) : '—' }}</td>
+                        <td>${{ number_format($movement['balance'], 2) }}</td>
                     </tr>
                 @endforeach
             </tbody>

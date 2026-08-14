@@ -13,13 +13,13 @@ use PhpOffice\PhpSpreadsheet\Style\Border;
 class EstadoCuentaExport implements FromArray, WithStyles, WithColumnWidths
 {
     protected $cliente;
-    protected $facturas;
+    protected $movimientos;
     protected $resumen;
 
-    public function __construct($cliente, $facturas, $resumen)
+    public function __construct($cliente, $movimientos, $resumen)
     {
         $this->cliente = $cliente;
-        $this->facturas = $facturas;
+        $this->movimientos = $movimientos;
         $this->resumen = $resumen;
     }
 
@@ -47,26 +47,20 @@ class EstadoCuentaExport implements FromArray, WithStyles, WithColumnWidths
         $data[] = ['Crédito a Favor:', '$' . number_format($this->resumen['credit'], 2)];
         $data[] = [''];
         
-        // Encabezados de facturas
-        $data[] = ['HISTORIAL DE COMPRAS'];
-        $data[] = ['Factura', 'Fecha', 'Total', 'Pagado', 'Saldo Pendiente', 'Estado'];
-        
-        // Facturas
-        foreach ($this->facturas as $sale) {
-            $totalPagado = (float) $sale->payments->sum('amount');
-            // Una venta cancelada no deja saldo: lo pagado se acreditó al cliente.
-            $saldoPendiente = $sale->isCancelled() ? 0 : round((float) $sale->total - $totalPagado, 2);
+        // Libro de movimientos: venta al débito, cobro al crédito, saldo acumulado
+        $data[] = ['MOVIMIENTOS'];
+        $data[] = ['Fecha', 'Concepto', 'Débito', 'Crédito', 'Saldo'];
 
+        foreach ($this->movimientos as $movimiento) {
             $data[] = [
-                $sale->invoice_number,
-                date('d/m/Y', strtotime($sale->date)),
-                '$' . number_format($sale->total, 2),
-                '$' . number_format($totalPagado, 2),
-                $sale->isCancelled() ? '—' : '$' . number_format($saldoPendiente, 2),
-                $sale->payment_status?->label(),
+                date('d/m/Y', strtotime($movimiento['date'])),
+                $movimiento['description'],
+                $movimiento['debit'] ? '$' . number_format($movimiento['debit'], 2) : '—',
+                $movimiento['credit'] ? '$' . number_format($movimiento['credit'], 2) : '—',
+                '$' . number_format($movimiento['balance'], 2),
             ];
         }
-        
+
         return $data;
     }
 
@@ -87,11 +81,10 @@ class EstadoCuentaExport implements FromArray, WithStyles, WithColumnWidths
     {
         return [
             'A' => 15,
-            'B' => 20,
+            'B' => 34,
             'C' => 15,
             'D' => 15,
-            'E' => 18,
-            'F' => 12,
+            'E' => 15,
         ];
     }
 }
