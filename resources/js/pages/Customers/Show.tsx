@@ -10,11 +10,13 @@ import { Download, FileText, Edit, Mail, Phone, Smartphone, MapPin, User, Buildi
 import { usePermission } from '@/hooks/use-permission';
 import { paymentStatusMeta, isCancelled } from '@/lib/payment-status';
 
-interface Payment { id: number; amount: number; }
+// Los montos llegan como string: las columnas decimal de Postgres se serializan
+// así (cast decimal:2). Hay que convertirlos antes de operar, no sumarlos crudos.
+interface Payment { id: number; amount: number | string; }
 interface Sale {
     id: number;
     created_at: string;
-    total: number;
+    total: number | string;
     payment_status: string;
     payments: Payment[];
 }
@@ -41,7 +43,11 @@ interface Customer {
 interface Summary { total_sales: number; total_paid: number; balance_due: number; credit: number; }
 interface Props { customer: Customer; sales: Sale[]; summary: Summary; }
 
-const fmt = (n: number) => `$${Number(n).toLocaleString('es-AR', { minimumFractionDigits: 2 })}`;
+const fmt = (n: number | string) => `$${Number(n).toLocaleString('es-AR', { minimumFractionDigits: 2 })}`;
+
+/** Total cobrado de una venta. Convierte cada monto: sumarlos como string concatena. */
+const totalPaid = (sale: Sale): number =>
+    sale.payments.reduce((sum, payment) => sum + Number(payment.amount), 0);
 
 function InfoRow({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) {
     return (
@@ -85,7 +91,7 @@ export default function Show({ customer, sales, summary }: Props) {
             align: 'right',
             render: (row) => (
                 <span className="tabular-nums text-muted-foreground">
-                    {fmt(row.payments.reduce((s, p) => s + p.amount, 0))}
+                    {fmt(totalPaid(row))}
                 </span>
             ),
         },
@@ -98,7 +104,7 @@ export default function Show({ customer, sales, summary }: Props) {
                 if (isCancelled(row.payment_status)) {
                     return <span className="text-muted-foreground tabular-nums">—</span>;
                 }
-                const balance = row.total - row.payments.reduce((s, p) => s + p.amount, 0);
+                const balance = Number(row.total) - totalPaid(row);
                 return (
                     <Badge variant={balance > 0 ? 'destructive' : 'success'}>
                         {fmt(balance)}
