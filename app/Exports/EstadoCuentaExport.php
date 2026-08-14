@@ -33,16 +33,18 @@ class EstadoCuentaExport implements FromArray, WithStyles, WithColumnWidths
         
         // Información del cliente
         $data[] = ['Cliente:', $this->cliente->business_name];
-        $data[] = ['Documento:', $this->cliente->tax_id];
+        // Las personas físicas no tienen CUIT: se documentan con DNI.
+        $data[] = ['Documento:', $this->cliente->tax_id ?? $this->cliente->dni];
         $data[] = ['Email:', $this->cliente->email];
         $data[] = ['Teléfono:', $this->cliente->phone];
         $data[] = [''];
         
-        // Resumen
+        // Resumen — las claves vienen en inglés desde CustomerController::accountStatement
         $data[] = ['RESUMEN'];
-        $data[] = ['Total Compras:', '$' . number_format($this->resumen['total_compras'], 2)];
-        $data[] = ['Total Pagado:', '$' . number_format($this->resumen['total_pagado'], 2)];
-        $data[] = ['Saldo Pendiente:', '$' . number_format($this->resumen['saldo_pendiente'], 2)];
+        $data[] = ['Total Compras:', '$' . number_format($this->resumen['total_sales'], 2)];
+        $data[] = ['Total Pagado:', '$' . number_format($this->resumen['total_paid'], 2)];
+        $data[] = ['Saldo Pendiente:', '$' . number_format($this->resumen['balance_due'], 2)];
+        $data[] = ['Crédito a Favor:', '$' . number_format($this->resumen['credit'], 2)];
         $data[] = [''];
         
         // Encabezados de facturas
@@ -51,16 +53,17 @@ class EstadoCuentaExport implements FromArray, WithStyles, WithColumnWidths
         
         // Facturas
         foreach ($this->facturas as $sale) {
-            $totalPagado    = $sale->payments->sum('amount');
-            $saldoPendiente = $sale->total - $totalPagado;
-            
+            $totalPagado = (float) $sale->payments->sum('amount');
+            // Una venta cancelada no deja saldo: lo pagado se acreditó al cliente.
+            $saldoPendiente = $sale->isCancelled() ? 0 : round((float) $sale->total - $totalPagado, 2);
+
             $data[] = [
                 $sale->invoice_number,
                 date('d/m/Y', strtotime($sale->date)),
                 '$' . number_format($sale->total, 2),
                 '$' . number_format($totalPagado, 2),
-                '$' . number_format($saldoPendiente, 2),
-                $saldoPendiente > 0 ? 'Pendiente' : 'Pagada',
+                $sale->isCancelled() ? '—' : '$' . number_format($saldoPendiente, 2),
+                $sale->payment_status?->label(),
             ];
         }
         
@@ -69,12 +72,14 @@ class EstadoCuentaExport implements FromArray, WithStyles, WithColumnWidths
 
     public function styles(Worksheet $sheet)
     {
+        // Los índices siguen el orden de array(): título, datos del cliente,
+        // RESUMEN (4 filas) y el encabezado del historial.
         return [
-            1 => ['font' => ['bold' => true, 'size' => 16], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]],
-            3 => ['font' => ['bold' => true]],
-            8 => ['font' => ['bold' => true, 'size' => 14]],
-            13 => ['font' => ['bold' => true, 'size' => 14]],
-            14 => ['font' => ['bold' => true], 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]],
+            1  => ['font' => ['bold' => true, 'size' => 16], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]],
+            3  => ['font' => ['bold' => true]],
+            8  => ['font' => ['bold' => true, 'size' => 14]],
+            14 => ['font' => ['bold' => true, 'size' => 14]],
+            15 => ['font' => ['bold' => true], 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]],
         ];
     }
 
