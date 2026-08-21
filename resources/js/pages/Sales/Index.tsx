@@ -12,10 +12,13 @@ import { Plus, Eye, Edit, DollarSign, Package, FileText, Download, Search, Ban }
 import { useState } from 'react';
 import { usePermission } from '@/hooks/use-permission';
 import { paymentStatusMeta, isOwing, isCancelled } from '@/lib/payment-status';
+import { formatVoucher } from '@/lib/sale-number';
 
 interface Sale {
     id: number;
     invoice_number: number;
+    voucher_letter: string;
+    pos_number: number;
     date: string;
     total: number;
     payment_status: string;
@@ -40,6 +43,8 @@ function formatDate(dateStr: string) {
     return `${f[2]}/${f[1]}/${f[0]}`;
 }
 
+const fmt = (n: number | string) => `$${Number(n).toLocaleString('es-AR', { minimumFractionDigits: 2 })}`;
+
 function entregasPendientes(sale: Sale): number {
     return sale.deliveries?.filter((d) => d.status === 'pending').length ?? 0;
 }
@@ -52,6 +57,7 @@ export default function Index({ facturas }: Props) {
     const filtered = facturas.data.filter((s) =>
         s.customer.business_name.toLowerCase().includes(search.toLowerCase()) ||
         s.invoice_number.toString().includes(search) ||
+        formatVoucher(s.voucher_letter, s.pos_number, s.invoice_number).toLowerCase().includes(search.toLowerCase()) ||
         s.user.name.toLowerCase().includes(search.toLowerCase())
     );
 
@@ -60,7 +66,9 @@ export default function Index({ facturas }: Props) {
             key: 'invoice_number',
             header: 'Factura',
             render: (row) => (
-                <span className="font-medium tabular-nums text-foreground">#{row.invoice_number}</span>
+                <span className="font-medium tabular-nums text-foreground">
+                    {formatVoucher(row.voucher_letter, row.pos_number, row.invoice_number)}
+                </span>
             ),
         },
         {
@@ -78,9 +86,7 @@ export default function Index({ facturas }: Props) {
             header: 'Total',
             align: 'right',
             render: (row) => (
-                <span className="font-semibold tabular-nums text-foreground">
-                    ${Number(row.total).toLocaleString('es-AR', { minimumFractionDigits: 2 })}
-                </span>
+                <span className="font-semibold tabular-nums text-foreground">{fmt(row.total)}</span>
             ),
         },
         {
@@ -138,7 +144,7 @@ export default function Index({ facturas }: Props) {
                             url={route('sales.cancel', row.id)}
                             method="patch"
                             title="Cancelar venta"
-                            description={`¿Cancelar la venta #${row.invoice_number}? Se restaurará el inventario entregado y se acreditará lo pagado al cliente. El registro no se elimina.`}
+                            description={`¿Cancelar la ${formatVoucher(row.voucher_letter, row.pos_number, row.invoice_number)} de ${row.customer.business_name} por ${fmt(row.total)}? Se restaurará el inventario entregado y se acreditará lo pagado al cliente. La cancelación no se puede deshacer.`}
                             confirmLabel="Cancelar venta"
                             processingLabel="Cancelando..."
                             trigger={

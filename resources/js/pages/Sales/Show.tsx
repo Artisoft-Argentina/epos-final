@@ -9,6 +9,7 @@ import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialo
 import { ConfirmActionDialog } from '@/components/confirm-action-dialog';
 import { usePermission } from '@/hooks/use-permission';
 import { paymentStatusMeta, isCancelled } from '@/lib/payment-status';
+import { formatVoucher } from '@/lib/sale-number';
 
 interface Warehouse {
     id: number;
@@ -18,6 +19,8 @@ interface Warehouse {
 interface Sale {
     id: number;
     invoice_number: number;
+    voucher_letter: string;
+    pos_number: number;
     total: number;
     subtotal: number;
     surcharge?: number;
@@ -99,14 +102,16 @@ export default function Show({ factura, warehouses }: Props) {
     const cancelada = isCancelled(factura.payment_status);
     const showDeliveryButton = !cancelada && (hasPendingDeliveries || totalEntregado < totalVendido);
     const estadoMeta = paymentStatusMeta(factura.payment_status);
+    // Comprobante completo: el "#N" pelado se confunde con el id de la URL.
+    const voucher = formatVoucher(factura.voucher_letter, factura.pos_number, factura.invoice_number);
 
     return (
         <AppLayout>
-            <Head title={`Venta #${factura.invoice_number}`} />
+            <Head title={`Venta ${voucher}`} />
             <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
                     <div>
-                        <h1 className="text-2xl font-bold">Venta #{factura.invoice_number}</h1>
+                        <h1 className="text-2xl font-bold">Venta {voucher}</h1>
                         <p className="text-gray-600">Detalles de la venta</p>
                     </div>
                     <div className="flex gap-2">
@@ -128,7 +133,7 @@ export default function Show({ factura, warehouses }: Props) {
                                 url={route('sales.cancel', factura.id)}
                                 method="patch"
                                 title="Cancelar venta"
-                                description={`¿Cancelar la venta #${factura.invoice_number}? Se restaurará el inventario entregado y se acreditará lo pagado al cliente. El registro no se elimina.`}
+                                description={`¿Cancelar la ${voucher} de ${factura.customer.business_name} por $${Number(factura.total).toFixed(2)}? Se restaurará el inventario entregado y se acreditará lo pagado al cliente. La cancelación no se puede deshacer.`}
                                 confirmLabel="Cancelar venta"
                                 processingLabel="Cancelando..."
                                 trigger={
