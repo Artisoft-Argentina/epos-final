@@ -169,7 +169,10 @@ export default function Show({ factura, warehouses }: Props) {
                             {factura.additional_discount && Number(factura.additional_discount) > 0 && <div><label className="text-sm font-medium text-gray-500">Descuento</label><p className="text-sm text-green-600">-${Number(factura.additional_discount).toFixed(2)}</p></div>}
                             <div><label className="text-sm font-medium text-gray-500">Total</label><p className="text-lg font-bold">${Number(factura.total).toFixed(2)}</p></div>
                             <div><label className="text-sm font-medium text-gray-500">Total Pagado</label><p className="text-sm font-semibold text-green-600">${totalPagado.toFixed(2)}</p></div>
-                            {saldoPendiente > 0 && <div><label className="text-sm font-medium text-muted-foreground">Saldo Pendiente</label><p className="text-lg font-bold text-destructive">${saldoPendiente.toFixed(2)}</p></div>}
+                            {/* Una venta cancelada no adeuda: lo pagado se acreditó al cliente. */}
+                            {cancelada
+                                ? totalPagado > 0 && <div><label className="text-sm font-medium text-muted-foreground">Saldo Pendiente</label><p className="text-sm text-muted-foreground">Venta cancelada — ${totalPagado.toFixed(2)} acreditados al cliente</p></div>
+                                : saldoPendiente > 0 && <div><label className="text-sm font-medium text-muted-foreground">Saldo Pendiente</label><p className="text-lg font-bold text-destructive">${saldoPendiente.toFixed(2)}</p></div>}
                         </CardContent>
                     </Card>
                 </div>

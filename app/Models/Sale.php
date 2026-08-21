@@ -123,6 +123,16 @@ class Sale extends Model
         return round((float) $this->total - $this->total_paid, 2);
     }
 
+    /**
+     * Excluye las ventas canceladas. Una venta anulada no factura, no adeuda y
+     * no vendió: no debe entrar en totales, reportes ni saldos. Se conserva el
+     * registro, así que hay que filtrarla explícitamente en cada consulta.
+     */
+    public function scopeNotCancelled($query)
+    {
+        return $query->where('sales.payment_status', '!=', PaymentStatus::Cancelled->value);
+    }
+
     /** Una venta cancelada es terminal: no acepta pagos, edición ni entregas. */
     public function isCancelled(): bool
     {

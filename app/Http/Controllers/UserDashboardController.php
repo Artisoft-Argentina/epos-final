@@ -33,9 +33,14 @@ class UserDashboardController extends Controller
             ->orderBy('date', 'desc')
             ->get();
 
-        $totalCompras    = $sales->sum('total');
-        $totalPagado     = $sales->sum(fn($s) => $s->payments->sum('amount'));
-        $saldoPendiente  = $totalCompras - $totalPagado;
+        // Las ventas canceladas se listan (trazabilidad) pero no facturan ni
+        // adeudan: lo pagado ya se acreditó al crédito del cliente. El resumen
+        // tiene que dar lo mismo que el estado de cuenta del admin.
+        $ventasVigentes = $sales->reject(fn ($sale) => $sale->isCancelled());
+
+        $totalCompras    = (float) $ventasVigentes->sum('total');
+        $totalPagado     = (float) $ventasVigentes->sum(fn ($s) => $s->payments->sum('amount'));
+        $saldoPendiente  = round($totalCompras - $totalPagado, 2);
 
         $entregasPendientes = $sales->flatMap(fn($s) => $s->deliveries)
             ->where('status', 'pending')
@@ -49,7 +54,11 @@ class UserDashboardController extends Controller
                 'total'           => (float) $sale->total,
                 'pagada'          => $sale->payment_status?->value,
                 'total_pagado'    => (float) $sale->payments->sum('amount'),
-                'saldo_pendiente' => (float) ($sale->total - $sale->payments->sum('amount')),
+                // Una venta cancelada no deja saldo a cobrar.
+                'saldo_pendiente' => $sale->isCancelled()
+                    ? 0.0
+                    : round((float) $sale->total - (float) $sale->payments->sum('amount'), 2),
+                'cancelada'       => $sale->isCancelled(),
                 'articulos'       => $sale->products->map(fn($p) => [
                     'nombre'   => $p->name,
                     'cantidad' => (int) $p->pivot->quantity,
@@ -67,11 +76,12 @@ class UserDashboardController extends Controller
                 ]),
             ]),
             'resumen' => [
-                'total_compras'       => (float) $totalCompras,
-                'total_pagado'        => (float) $totalPagado,
-                'saldo_pendiente'     => (float) $saldoPendiente,
+                'total_compras'       => $totalCompras,
+                'total_pagado'        => $totalPagado,
+                'saldo_pendiente'     => $saldoPendiente,
+                'credito'             => (float) $customer->credit,
                 'entregas_pendientes' => $entregasPendientes,
-                'total_facturas'      => $sales->count(),
+                'total_facturas'      => $ventasVigentes->count(),
             ],
             'cliente' => [
                 'nombre' => $customer->business_name,

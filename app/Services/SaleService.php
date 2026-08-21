@@ -186,6 +186,16 @@ class SaleService
             $additionalDiscount = round((float) ($data['additional_discount'] ?? 0), 2);
             $total              = round($subtotal + $surcharge - $additionalDiscount, 2);
 
+            // El total no puede quedar por debajo de lo ya cobrado: dejaría un
+            // saldo negativo (el cliente pagó de más) que ninguna pantalla sabe
+            // representar. Si hay que bajarlo, primero se elimina un pago.
+            $paid = round((float) $sale->payments()->sum('amount'), 2);
+            if ($total < $paid) {
+                throw new RuntimeException(
+                    'El total no puede ser menor a lo ya cobrado ($' . number_format($paid, 2) . '). Eliminá un pago primero.'
+                );
+            }
+
             $sale->update([
                 'surcharge'           => $surcharge,
                 'additional_discount' => $additionalDiscount,
