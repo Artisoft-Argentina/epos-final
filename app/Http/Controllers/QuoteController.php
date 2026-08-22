@@ -10,18 +10,18 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
-class PresupuestoController extends Controller
+class QuoteController extends Controller
 {
     public function index()
     {
-        return Inertia::render('Presupuestos/Index', [
+        return Inertia::render('Quotes/Index', [
             'presupuestos' => Quote::with(['customer', 'user'])->latest()->paginate(10),
         ]);
     }
 
     public function create()
     {
-        return Inertia::render('Presupuestos/Create', [
+        return Inertia::render('Quotes/Create', [
             'clientes'  => Customer::all(),
             'articulos' => Product::with(['category', 'brand'])->get(),
         ]);
@@ -79,47 +79,47 @@ class PresupuestoController extends Controller
             $quote->update(['subtotal' => $subtotal, 'total' => $subtotal]);
         });
 
-        return redirect()->route('presupuestos.index')->with('success', 'Presupuesto creado exitosamente');
+        return redirect()->route('quotes.index')->with('success', 'Presupuesto creado exitosamente');
     }
 
-    public function show(Quote $presupuesto)
+    public function show(Quote $quote)
     {
-        return Inertia::render('Presupuestos/Show', [
-            'presupuesto' => $presupuesto->load(['customer', 'user', 'products']),
+        return Inertia::render('Quotes/Show', [
+            'presupuesto' => $quote->load(['customer', 'user', 'products']),
         ]);
     }
 
-    public function destroy(Quote $presupuesto)
+    public function destroy(Quote $quote)
     {
-        $presupuesto->delete();
+        $quote->delete();
 
-        return redirect()->route('presupuestos.index')->with('success', 'Presupuesto eliminado exitosamente');
+        return redirect()->route('quotes.index')->with('success', 'Presupuesto eliminado exitosamente');
     }
 
-    public function convertirAVenta(Quote $presupuesto)
+    public function convertToSale(Quote $quote)
     {
-        $sale = DB::transaction(function () use ($presupuesto) {
-            $presupuesto->load(['customer', 'products']);
+        $sale = DB::transaction(function () use ($quote) {
+            $quote->load(['customer', 'products']);
 
             $sale = Sale::create([
-                'pos_number'      => $presupuesto->pos_number ?? 1,
+                'pos_number'      => $quote->pos_number ?? 1,
                 'voucher_letter'  => 'B',
                 'invoice_number'  => Sale::max('invoice_number') + 1,
-                'tax_id'          => $presupuesto->tax_id,
+                'tax_id'          => $quote->tax_id,
                 'date'            => now()->format('Y-m-d'),
-                'discount'        => $presupuesto->discount ?? 0,
-                'surcharge'       => $presupuesto->surcharge ?? 0,
+                'discount'        => $quote->discount ?? 0,
+                'surcharge'       => $quote->surcharge ?? 0,
                 'additional_discount' => 0,
-                'subtotal'        => $presupuesto->subtotal,
-                'total'           => $presupuesto->total,
+                'subtotal'        => $quote->subtotal,
+                'total'           => $quote->total,
                 'payment_status'  => \App\Enums\PaymentStatus::Pending,
                 'sale_condition'  => \App\Enums\SaleCondition::Credit,
-                'customer_id'     => $presupuesto->customer_id,
+                'customer_id'     => $quote->customer_id,
                 'user_id'         => auth()->id(),
                 'sale_type'       => 'pos',
             ]);
 
-            foreach ($presupuesto->products as $product) {
+            foreach ($quote->products as $product) {
                 $sale->products()->attach($product->id, [
                     'supplier_code' => $product->pivot->supplier_code,
                     'sku'           => $product->pivot->sku,
@@ -137,6 +137,6 @@ class PresupuestoController extends Controller
         });
 
         return redirect()->route('sales.show', $sale->id)
-            ->with('success', "Presupuesto #{$presupuesto->quote_number} convertido a Factura #{$sale->invoice_number} exitosamente");
+            ->with('success', "Presupuesto #{$quote->quote_number} convertido a Factura #{$sale->invoice_number} exitosamente");
     }
 }

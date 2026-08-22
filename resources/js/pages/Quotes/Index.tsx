@@ -34,7 +34,7 @@ export default function Index({ presupuestos }: Props) {
     );
 
     const convertirAVenta = (id: number) => {
-        if (confirm('¿Convertir este presupuesto en una venta?')) router.post(route('presupuestos.convertir-venta', id));
+        if (confirm('¿Convertir este presupuesto en una venta?')) router.post(route('quotes.convert-to-sale', id));
     };
 
     const columns: Column<Presupuesto>[] = [
@@ -76,12 +76,12 @@ export default function Index({ presupuestos }: Props) {
                         </ActionButton>
                     )}
                     {can('presupuestos.show') && (
-                        <Link href={route('presupuestos.show', row.id)}>
+                        <Link href={route('quotes.show', row.id)}>
                             <ActionButton title="Ver"><Eye className="size-3.5" /></ActionButton>
                         </Link>
                     )}
                     {can('presupuestos.destroy') && (
-                        <DeleteConfirmationDialog url={route('presupuestos.destroy', row.id)} title="Eliminar presupuesto" description={`¿Está seguro que desea eliminar el presupuesto #${row.quote_number}?`} />
+                        <DeleteConfirmationDialog url={route('quotes.destroy', row.id)} title="Eliminar presupuesto" description={`¿Está seguro que desea eliminar el presupuesto #${row.quote_number}?`} />
                     )}
                 </div>
             ),
@@ -96,7 +96,7 @@ export default function Index({ presupuestos }: Props) {
                     title="Presupuestos"
                     actions={
                         can('presupuestos.create') && (
-                            <Link href={route('presupuestos.create')}>
+                            <Link href={route('quotes.create')}>
                                 <Button><Plus className="size-4" /> Nuevo Presupuesto</Button>
                             </Link>
                         )

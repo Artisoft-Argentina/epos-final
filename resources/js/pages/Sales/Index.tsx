@@ -114,7 +114,7 @@ export default function Index({ facturas }: Props) {
                         </Link>
                     )}
                     {can('entregas.create') && !isCancelled(row.payment_status) && entregasPendientes(row) > 0 && (
-                        <Link href={route('entregas.index') + `?status=pending&sale_id=${row.id}`}>
+                        <Link href={route('deliveries.index') + `?status=pending&sale_id=${row.id}`}>
                             <ActionButton
                                 title={`Marcar entregas (${entregasPendientes(row)} pendiente${entregasPendientes(row) !== 1 ? 's' : ''})`}
                                 className="border-warning/30 text-warning hover:bg-warning-soft"
@@ -130,12 +130,12 @@ export default function Index({ facturas }: Props) {
                         </ActionButton>
                     )}
                     {row.cae && (
-                        <a href={route('facturas.pdf', row.id)} target="_blank">
+                        <a href={route('sales.pdf', row.id)} target="_blank">
                             <ActionButton title="Descargar PDF"><Download className="size-3.5" /></ActionButton>
                         </a>
                     )}
                     {can('pagos.create') && isOwing(row.payment_status) && (
-                        <Link href={route('pagos.create', row.id)}>
+                        <Link href={route('payments.create', row.id)}>
                             <ActionButton title="Registrar pago"><DollarSign className="size-3.5" /></ActionButton>
                         </Link>
                     )}

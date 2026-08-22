@@ -93,13 +93,13 @@ export default function Index({ entregas, warehouses, selected_status, selected_
             return;
         }
         setSubmitting(true);
-        router.post(route('entregas.marcar-entregada', markModal.id), { warehouse_id: selectedWarehouseId }, {
+        router.post(route('deliveries.mark-delivered', markModal.id), { warehouse_id: selectedWarehouseId }, {
             onFinish: () => { setSubmitting(false); setMarkModal(null); setStockByWarehouse([]); },
         });
     };
 
     const cancelar = (id: number) => {
-        if (confirm('¿Cancelar esta entrega?')) router.post(route('entregas.cancelar', id));
+        if (confirm('¿Cancelar esta entrega?')) router.post(route('deliveries.cancel', id));
     };
 
     const baseParams = (overrides: Record<string, any>) => ({
@@ -108,9 +108,9 @@ export default function Index({ entregas, warehouses, selected_status, selected_
         sale_id: selected_sale_id ?? undefined,
         ...overrides,
     });
-    const filterByStatus = (s: string) => router.get(route('entregas.index'), baseParams({ status: s }), { preserveState: true });
-    const filterByWarehouse = (w: string) => router.get(route('entregas.index'), baseParams({ warehouse_id: w === 'all' ? undefined : w }), { preserveState: true });
-    const clearSaleFilter = () => router.get(route('entregas.index'), baseParams({ sale_id: undefined }), { preserveState: true });
+    const filterByStatus = (s: string) => router.get(route('deliveries.index'), baseParams({ status: s }), { preserveState: true });
+    const filterByWarehouse = (w: string) => router.get(route('deliveries.index'), baseParams({ warehouse_id: w === 'all' ? undefined : w }), { preserveState: true });
+    const clearSaleFilter = () => router.get(route('deliveries.index'), baseParams({ sale_id: undefined }), { preserveState: true });
 
     const columns: Column<Entrega>[] = [
         { key: 'sale', header: 'Factura', render: (row) => <span className="font-medium tabular-nums text-foreground">#{row.sale.invoice_number}</span> },

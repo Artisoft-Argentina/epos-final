@@ -80,19 +80,19 @@ export default function Show({ factura, warehouses }: Props) {
     const saldoPendiente = Number(factura.total) - totalPagado;
 
     const changeWarehouse = (deliveryId: number, warehouseId: string) => {
-        router.patch(route('entregas.update-warehouse', deliveryId), { warehouse_id: warehouseId }, { preserveScroll: true });
+        router.patch(route('deliveries.update-warehouse', deliveryId), { warehouse_id: warehouseId }, { preserveScroll: true });
     };
 
     const marcarEntregada = (deliveryId: number, warehouseId: number | null) => {
         if (!warehouseId) return;
         if (confirm('¿Confirmar entrega? Se descontará el stock del almacén seleccionado.')) {
-            router.post(route('entregas.marcar-entregada', deliveryId), { warehouse_id: warehouseId });
+            router.post(route('deliveries.mark-delivered', deliveryId), { warehouse_id: warehouseId });
         }
     };
 
     const cancelarEntrega = (deliveryId: number) => {
         if (confirm('¿Cancelar esta entrega?')) {
-            router.post(route('entregas.cancelar', deliveryId));
+            router.post(route('deliveries.cancel', deliveryId));
         }
     };
 
@@ -119,12 +119,12 @@ export default function Show({ factura, warehouses }: Props) {
                             <Button variant="outline"><ArrowLeft className="w-4 h-4 mr-2" />Volver</Button>
                         </Link>
                         {can('entregas.create') && showDeliveryButton && (
-                            <Link href={route('entregas.create', factura.id)}>
+                            <Link href={route('deliveries.create', factura.id)}>
                                 <Button variant="outline"><Package className="w-4 h-4 mr-2" />Registrar Entrega</Button>
                             </Link>
                         )}
                         {can('pagos.create') && !cancelada && saldoPendiente > 0 && (
-                            <Link href={route('pagos.create', factura.id)}>
+                            <Link href={route('payments.create', factura.id)}>
                                 <Button><DollarSign className="w-4 h-4 mr-2" />Registrar Pago</Button>
                             </Link>
                         )}
@@ -222,7 +222,7 @@ export default function Show({ factura, warehouses }: Props) {
                                                 <td className="p-2 text-right">
                                                     {can('pagos.destroy') && (
                                                         <DeleteConfirmationDialog
-                                                            url={route('pagos.destroy', payment.id)}
+                                                            url={route('payments.destroy', payment.id)}
                                                             title="Eliminar pago"
                                                             description={`¿Está seguro que desea eliminar este pago de $${Number(payment.amount).toFixed(2)}?`}
                                                             trigger={<Button variant="outline" size="sm"><Trash2 className="w-4 h-4" /></Button>}
@@ -323,7 +323,7 @@ export default function Show({ factura, warehouses }: Props) {
                                                     )}
                                                     {delivery.status === 'delivered' && can('entregas.destroy') && (
                                                         <DeleteConfirmationDialog
-                                                            url={route('entregas.destroy', delivery.id)}
+                                                            url={route('deliveries.destroy', delivery.id)}
                                                             title="Revertir entrega"
                                                             description={`¿Revertir la entrega de ${delivery.quantity} unidades de ${delivery.product.name}? Se devolverá el stock.`}
                                                             trigger={<Button variant="outline" size="sm"><Trash2 className="w-4 h-4" /></Button>}

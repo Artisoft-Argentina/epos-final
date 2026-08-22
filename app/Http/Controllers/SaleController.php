@@ -66,33 +66,33 @@ class SaleController extends Controller
         return redirect()->route('sales.index')->with('success', 'Venta realizada exitosamente');
     }
 
-    public function show(Sale $venta)
+    public function show(Sale $sale)
     {
         return Inertia::render('Sales/Show', [
-            'factura'    => $venta->load(['customer', 'user', 'products', 'payments', 'deliveries.product', 'deliveries.warehouse']),
+            'factura'    => $sale->load(['customer', 'user', 'products', 'payments', 'deliveries.product', 'deliveries.warehouse']),
             'warehouses' => Warehouse::active()->orderBy('is_default', 'desc')->orderBy('name')->get(['id', 'name']),
         ]);
     }
 
-    public function edit(Sale $venta)
+    public function edit(Sale $sale)
     {
-        if ($venta->isCancelled()) {
+        if ($sale->isCancelled()) {
             return redirect()->route('sales.index')->with('error', 'No se puede editar una venta cancelada');
         }
 
-        if ($venta->cae) {
+        if ($sale->cae) {
             return redirect()->route('sales.index')->with('error', 'No se puede editar una factura ya autorizada en AFIP');
         }
 
         return Inertia::render('Sales/Edit', [
-            'factura' => $venta->load(['customer', 'user', 'products']),
+            'factura' => $sale->load(['customer', 'user', 'products']),
         ]);
     }
 
-    public function update(UpdateSaleRequest $request, Sale $venta)
+    public function update(UpdateSaleRequest $request, Sale $sale)
     {
         try {
-            $this->saleService->update($venta, $request->validated());
+            $this->saleService->update($sale, $request->validated());
         } catch (\RuntimeException $e) {
             return redirect()->route('sales.index')->with('error', $e->getMessage());
         }
@@ -100,10 +100,10 @@ class SaleController extends Controller
         return redirect()->route('sales.index')->with('success', 'Factura actualizada exitosamente');
     }
 
-    public function cancel(Sale $venta)
+    public function cancel(Sale $sale)
     {
         try {
-            $this->saleService->cancel($venta);
+            $this->saleService->cancel($sale);
         } catch (\RuntimeException $e) {
             return back()->with('error', $e->getMessage());
         }
@@ -111,11 +111,11 @@ class SaleController extends Controller
         return redirect()->route('sales.index')->with('success', 'Venta cancelada exitosamente');
     }
 
-    public function autorizarAfip(Sale $factura)
+    public function authorizeAfip(Sale $sale)
     {
         try {
             $afipService = new AfipService();
-            $resultado   = $afipService->autorizarFactura($factura);
+            $resultado   = $afipService->autorizarFactura($sale);
 
             if ($resultado['success']) {
                 return redirect()->route('sales.index')

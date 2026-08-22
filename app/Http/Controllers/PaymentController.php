@@ -8,38 +8,41 @@ use App\Models\SalePayment;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
-class PagoController extends Controller
+class PaymentController extends Controller
 {
-    public function create(Sale $factura)
+    public function create(Sale $sale)
     {
-        if ($factura->isCancelled()) {
+        if ($sale->isCancelled()) {
             return redirect()->route('sales.index')->with('error', 'No se pueden registrar pagos en una venta cancelada.');
         }
 
-        return Inertia::render('Pagos/Create', [
-            'factura' => $factura->load(['customer', 'payments']),
+        return Inertia::render('Payments/Create', [
+            'factura' => $sale->load(['customer', 'payments']),
         ]);
     }
 
-    public function store(StorePaymentRequest $request, Sale $factura)
+    public function store(StorePaymentRequest $request, Sale $sale)
     {
-        if ($factura->isCancelled()) {
+        if ($sale->isCancelled()) {
             return redirect()->route('sales.index')->with('error', 'No se pueden registrar pagos en una venta cancelada.');
         }
 
         $data = $request->validated();
 
         try {
-            DB::transaction(function () use ($factura, $data, $request) {
+            DB::transaction(function () use ($sale, $data, $request) {
                 // Lock sobre la venta: serializa pagos concurrentes / doble submit.
-                $sale = Sale::lockForUpdate()->findOrFail($factura->id);
+                // De acá en adelante se trabaja SIEMPRE sobre $lockedSale: la
+                // instancia del route binding quedó fuera del lock y sus datos
+                // pueden estar desactualizados.
+                $lockedSale = Sale::lockForUpdate()->findOrFail($sale->id);
 
-                if ($sale->isCancelled()) {
+                if ($lockedSale->isCancelled()) {
                     throw new \RuntimeException('No se pueden registrar pagos en una venta cancelada.');
                 }
 
                 // Saldo re-leído DESPUÉS del lock (evita sobrepago por doble submit).
-                $pendingBalance = round((float) $sale->total - (float) $sale->payments()->sum('amount'), 2);
+                $pendingBalance = round((float) $lockedSale->total - (float) $lockedSale->payments()->sum('amount'), 2);
                 $amount         = round((float) $data['amount'], 2);
 
                 if ($amount > $pendingBalance) {
@@ -47,7 +50,7 @@ class PagoController extends Controller
                 }
 
                 SalePayment::create([
-                    'sale_id'        => $sale->id,
+                    'sale_id'        => $lockedSale->id,
                     'amount'         => $amount,
                     'payment_method' => $data['payment_method'],
                     'payment_date'   => $data['payment_date'],
@@ -55,7 +58,7 @@ class PagoController extends Controller
                     'user_id'        => $request->user()->id,
                 ]);
 
-                $sale->recalcPaymentStatus();
+                $lockedSale->recalcPaymentStatus();
             });
         } catch (\RuntimeException $e) {
             return back()->withInput()->withErrors(['amount' => $e->getMessage()]);
@@ -64,17 +67,17 @@ class PagoController extends Controller
         return redirect()->route('sales.index')->with('success', 'Pago registrado exitosamente');
     }
 
-    public function destroy(SalePayment $pago)
+    public function destroy(SalePayment $payment)
     {
-        $sale = $pago->sale;
+        $sale = $payment->sale;
 
         if ($sale->isCancelled()) {
             return back()->with('error', 'No se pueden modificar los pagos de una venta cancelada.');
         }
 
-        DB::transaction(function () use ($pago, $sale) {
+        DB::transaction(function () use ($payment, $sale) {
             $lockedSale = Sale::lockForUpdate()->findOrFail($sale->id);
-            $pago->delete();
+            $payment->delete();
             $lockedSale->recalcPaymentStatus();
         });
 

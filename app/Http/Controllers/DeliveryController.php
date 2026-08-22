@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
-class EntregaController extends Controller
+class DeliveryController extends Controller
 {
     public function __construct(private DeliveryService $deliveryService) {}
 
@@ -33,7 +33,7 @@ class EntregaController extends Controller
             $query->where('sale_id', $saleId);
         }
 
-        return Inertia::render('Entregas/Index', [
+        return Inertia::render('Deliveries/Index', [
             'entregas'              => $query->paginate(20),
             'warehouses'            => Warehouse::active()->orderBy('is_default', 'desc')->orderBy('name')->get(['id', 'name', 'is_default']),
             'selected_status'       => $status ?? Delivery::STATUS_PENDING,
@@ -42,15 +42,15 @@ class EntregaController extends Controller
         ]);
     }
 
-    public function create(Sale $factura)
+    public function create(Sale $sale)
     {
-        return Inertia::render('Entregas/Create', [
-            'factura'    => $factura->load(['customer', 'products', 'deliveries.warehouse']),
+        return Inertia::render('Deliveries/Create', [
+            'factura'    => $sale->load(['customer', 'products', 'deliveries.warehouse']),
             'warehouses' => Warehouse::active()->orderBy('is_default', 'desc')->orderBy('name')->get(['id', 'name', 'is_default']),
         ]);
     }
 
-    public function store(Request $request, Sale $factura)
+    public function store(Request $request, Sale $sale)
     {
         $request->validate([
             'entregas'                  => 'required|array|min:1',
@@ -61,25 +61,25 @@ class EntregaController extends Controller
             'observaciones'             => 'nullable|string',
         ]);
 
-        if ($factura->isCancelled()) {
+        if ($sale->isCancelled()) {
             return back()->with('error', 'No se pueden registrar entregas de una venta cancelada.');
         }
 
         try {
-            DB::transaction(function () use ($request, $factura) {
+            DB::transaction(function () use ($request, $sale) {
                 // Lock sobre la venta: serializa doble submit / concurrencia.
-                $sale = Sale::lockForUpdate()->findOrFail($factura->id);
+                $lockedSale = Sale::lockForUpdate()->findOrFail($sale->id);
 
-                if ($sale->isCancelled()) {
+                if ($lockedSale->isCancelled()) {
                     throw new \RuntimeException('No se pueden registrar entregas de una venta cancelada.');
                 }
 
                 // Cantidades vendidas y ya entregadas por producto.
-                $soldByProduct = $sale->products()->get()
+                $soldByProduct = $lockedSale->products()->get()
                     ->groupBy('id')
                     ->map(fn ($rows) => (int) $rows->sum(fn ($p) => (int) $p->pivot->quantity));
 
-                $deliveredByProduct = $sale->deliveries()
+                $deliveredByProduct = $lockedSale->deliveries()
                     ->where('status', Delivery::STATUS_DELIVERED)
                     ->get()
                     ->groupBy('product_id')
@@ -87,9 +87,9 @@ class EntregaController extends Controller
 
                 $requestedByProduct = [];
 
-                foreach ($request->entregas as $entregaData) {
-                    $productId = (int) $entregaData['articulo_id'];
-                    $quantity  = (int) $entregaData['cantidad'];
+                foreach ($request->entregas as $deliveryData) {
+                    $productId = (int) $deliveryData['articulo_id'];
+                    $quantity  = (int) $deliveryData['cantidad'];
 
                     $requestedByProduct[$productId] = ($requestedByProduct[$productId] ?? 0) + $quantity;
 
@@ -102,10 +102,10 @@ class EntregaController extends Controller
                     }
 
                     $this->deliveryService->create(
-                        $sale,
+                        $lockedSale,
                         $productId,
                         $quantity,
-                        (int) $entregaData['warehouse_id'],
+                        (int) $deliveryData['warehouse_id'],
                         Delivery::STATUS_DELIVERED,
                         \Carbon\Carbon::parse($request->fecha_entrega),
                         $request->observaciones,
@@ -120,21 +120,21 @@ class EntregaController extends Controller
         return redirect()->route('sales.index')->with('success', 'Entrega registrada y stock descontado exitosamente');
     }
 
-    public function marcarEntregada(Request $request, Delivery $entrega)
+    public function markDelivered(Request $request, Delivery $delivery)
     {
         $request->validate(['warehouse_id' => 'required|exists:warehouses,id']);
 
-        if ($entrega->sale && $entrega->sale->isCancelled()) {
+        if ($delivery->sale && $delivery->sale->isCancelled()) {
             return back()->with('error', 'No se pueden entregar ítems de una venta cancelada.');
         }
 
-        if ($entrega->isDelivered()) {
+        if ($delivery->isDelivered()) {
             return back()->with('error', 'Esta entrega ya fue completada');
         }
 
         try {
             $this->deliveryService->markDelivered(
-                $entrega,
+                $delivery,
                 (int) $request->warehouse_id,
                 auth()->id(),
             );
@@ -145,36 +145,36 @@ class EntregaController extends Controller
         return back()->with('success', 'Entrega marcada como completada');
     }
 
-    public function cancelar(Delivery $entrega)
+    public function cancel(Delivery $delivery)
     {
-        if ($entrega->isDelivered()) {
+        if ($delivery->isDelivered()) {
             return back()->with('error', 'No se puede cancelar una entrega ya completada. Use revertir desde la venta.');
         }
 
-        $entrega->update(['status' => Delivery::STATUS_CANCELLED]);
+        $delivery->update(['status' => Delivery::STATUS_CANCELLED]);
 
         return back()->with('success', 'Entrega cancelada');
     }
 
-    public function updateWarehouse(Request $request, Delivery $entrega)
+    public function updateWarehouse(Request $request, Delivery $delivery)
     {
-        if ($entrega->isDelivered()) {
+        if ($delivery->isDelivered()) {
             return back()->with('error', 'No se puede cambiar el almacén de una entrega ya completada.');
         }
 
         $request->validate(['warehouse_id' => 'required|exists:warehouses,id']);
-        $entrega->update(['warehouse_id' => $request->warehouse_id]);
+        $delivery->update(['warehouse_id' => $request->warehouse_id]);
 
         return back()->with('success', 'Almacén de entrega actualizado.');
     }
 
-    public function destroy(Delivery $entrega)
+    public function destroy(Delivery $delivery)
     {
-        DB::transaction(function () use ($entrega) {
-            if ($entrega->isDelivered()) {
-                $this->deliveryService->revert($entrega, 'Reversión por eliminación de entrega');
+        DB::transaction(function () use ($delivery) {
+            if ($delivery->isDelivered()) {
+                $this->deliveryService->revert($delivery, 'Reversión por eliminación de entrega');
             }
-            $entrega->delete();
+            $delivery->delete();
         });
 
         return back()->with('success', 'Entrega eliminada exitosamente');

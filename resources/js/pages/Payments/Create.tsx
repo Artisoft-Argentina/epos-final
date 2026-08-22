@@ -41,7 +41,7 @@ export default function Create({ factura }: Props) {
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(route('pagos.store', factura.id));
+        post(route('payments.store', factura.id));
     };
 
     return (
