@@ -31,7 +31,9 @@ class StoreSaleRequest extends FormRequest
             'payment_amount'         => ['required', 'numeric', 'min:0'],
             'auto_payment'           => ['boolean'],
             'auto_delivery'          => ['boolean'],
-            'price_list_id'          => ['nullable', 'exists:price_lists,id'],
+            // El precio de cada línea sale de una lista: sin lista no se factura.
+            // `exists` a secas aceptaría una lista dada de baja (no mira deleted_at).
+            'price_list_id'          => ['required', Rule::exists('price_lists', 'id')->whereNull('deleted_at')],
             'sale_type'              => ['nullable', 'in:pos,ecommerce'],
             'point_of_sale_id'       => ['nullable', 'exists:points_of_sale,id'],
         ];
@@ -72,6 +74,8 @@ class StoreSaleRequest extends FormRequest
             'items.*.quantity.min'         => 'La cantidad debe ser al menos 1.',
             'items.*.price.gt'             => 'El precio debe ser mayor a 0.',
             'payment_method.in'            => 'El método de pago no es válido.',
+            'price_list_id.required'       => 'Seleccioná una lista de precios.',
+            'price_list_id.exists'         => 'La lista de precios seleccionada no existe.',
         ];
     }
 }

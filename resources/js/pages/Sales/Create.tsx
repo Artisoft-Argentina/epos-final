@@ -1,4 +1,4 @@
-import { Head, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,7 +9,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Combobox } from '@/components/ui/combobox';
 import { MoneyInput } from '@/components/ui/money-input';
 import { FormField } from '@/components/form-field';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { usePermission } from '@/hooks/use-permission';
 import { Plus, Trash2, Save, X, Package, Camera, Search, Minus, ListOrdered, ScanLine, Warehouse as WarehouseIcon, AlertTriangle, ArrowRightLeft } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import QRScanner from '@/components/QRScanner';
@@ -31,6 +33,12 @@ interface Product {
     id: number;
     name: string;
     sku: string;
+    // Códigos alternativos: el mostrador busca por cualquiera de ellos, igual
+    // que el lector de código de barras.
+    barcode?: string | null;
+    ean?: string | null;
+    qr_code?: string | null;
+    supplier_code?: string | null;
     category?: { id: number; name: string } | null;
     brand?: { id: number; name: string } | null;
     price_lists: { id: number; pivot: { price: number } }[];
@@ -89,6 +97,9 @@ interface PageProps {
 
 const fmt = (n: number): string => `$${Number(n).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
+/** Tope de resultados en el desplegable: más que esto no se lee, se refina. */
+const MAX_SEARCH_RESULTS = 8;
+
 /** Deriva la letra de comprobante (A/B) según la condición IVA del cliente. */
 function resolveVoucherLetter(taxStatus?: string | null): 'A' | 'B' {
     if (!taxStatus) return 'B';
@@ -102,14 +113,15 @@ function resolveVoucherLetter(taxStatus?: string | null): 'A' | 'B' {
 
 export default function Create({ customers, products, priceLists, defaultPosList, pointsOfSale = [], warehouses = [] }: Props) {
     const page = usePage<PageProps>();
+    const { can } = usePermission();
     const activePosId = page.props.activePointOfSaleId;
     const activePos = pointsOfSale.find((p) => p.id === activePosId) ?? pointsOfSale[0];
     const defaultWarehouseId = activePos?.warehouse_id ?? warehouses.find((w) => w.is_default)?.id ?? warehouses[0]?.id ?? null;
 
     const [stockByProduct, setStockByProduct] = useState<Record<string, WarehouseStock[]>>({});
     const [searchTerm, setSearchTerm] = useState('');
-    const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
     const [showDropdown, setShowDropdown] = useState(false);
+    const [highlight, setHighlight] = useState(0);
     const [isScanning, setIsScanning] = useState(false);
     const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -140,6 +152,32 @@ export default function Create({ customers, products, priceLists, defaultPosList
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [total, data.auto_payment]);
+
+    // Códigos por los que se puede identificar un artículo, en el mismo orden
+    // que usa CodigoService para el lector.
+    const codesOf = (p: Product): string[] =>
+        [p.sku, p.barcode, p.ean, p.qr_code, p.supplier_code].filter(Boolean).map((c) => String(c).toLowerCase());
+
+    const matches = useMemo(() => {
+        const term = searchTerm.trim().toLowerCase();
+        if (!term) return [];
+
+        return products.filter(
+            (p) => p.name.toLowerCase().includes(term) || codesOf(p).some((code) => code.includes(term)),
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchTerm, products]);
+
+    const visibleMatches = matches.slice(0, MAX_SEARCH_RESULTS);
+
+    /** Código tipeado o escaneado que identifica un artículo sin ambigüedad. */
+    const exactCodeMatch = useMemo(() => {
+        const term = searchTerm.trim().toLowerCase();
+        if (!term) return undefined;
+
+        return products.find((p) => codesOf(p).includes(term));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchTerm, products]);
 
     const priceForProduct = (product: Product): number => {
         if (data.price_list_id) {
@@ -209,14 +247,35 @@ export default function Create({ customers, products, priceLists, defaultPosList
 
     const handleSearch = (value: string) => {
         setSearchTerm(value);
-        if (value.length > 0) {
-            const term = value.toLowerCase();
-            setFilteredProducts(
-                products.filter((p) => p.name.toLowerCase().includes(term) || p.sku.toLowerCase().includes(term)),
-            );
-            setShowDropdown(true);
-        } else {
+        setHighlight(0);
+        setShowDropdown(value.trim().length > 0);
+    };
+
+    /**
+     * Teclado del mostrador. Los lectores de código de barras se comportan como
+     * un teclado: escriben el código y mandan Enter. Por eso un match exacto de
+     * código se agrega directo, sin obligar a elegir de la lista.
+     */
+    const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Escape') {
             setShowDropdown(false);
+            return;
+        }
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            setShowDropdown(true);
+            setHighlight((i) => Math.min(i + 1, visibleMatches.length - 1));
+            return;
+        }
+        if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            setHighlight((i) => Math.max(i - 1, 0));
+            return;
+        }
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const product = exactCodeMatch ?? visibleMatches[highlight];
+            if (product) addProductFromSearch(product);
         }
     };
 
@@ -261,12 +320,63 @@ export default function Create({ customers, products, priceLists, defaultPosList
     const hasEmptyLine = items.some((item) => !item.product_id);
     const partialPayment = data.payment_amount < total && data.payment_amount > 0;
     const itemErrorKeys = Object.keys(errors).filter((k) => k.startsWith('items'));
-    const canSubmit = !processing && !!data.customer_id && items.length > 0 && !hasEmptyLine && data.payment_amount <= total;
+    // Sin lista de precios no hay precio de línea: la venta no se puede facturar.
+    const canSubmit = !processing && !!data.customer_id && !!data.price_list_id && items.length > 0 && !hasEmptyLine && data.payment_amount <= total;
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
         post(route('sales.store'));
     };
+
+    // Sin ninguna lista configurada el POS no es operable: todos los artículos
+    // saldrían a $0. Se bloquea la venta y se ofrece el camino para resolverlo.
+    if (priceLists.length === 0) {
+        return (
+            <AppLayout>
+                <Head title="Nueva Venta" />
+
+                <div className="flex flex-1 items-center justify-center p-6">
+                    <Card className="w-full max-w-xl">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-base">
+                                <ListOrdered className="text-muted-foreground size-4" />
+                                Nueva Venta
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="flex flex-col gap-4">
+                            <Alert variant="warning">
+                                <AlertTriangle className="size-4" />
+                                <AlertTitle>No hay listas de precios configuradas</AlertTitle>
+                                <AlertDescription>
+                                    El precio de cada artículo sale de una lista de precios. Hasta que exista al
+                                    menos una, no se pueden registrar ventas.
+                                </AlertDescription>
+                            </Alert>
+
+                            <div className="flex flex-wrap gap-2">
+                                <Button type="button" variant="outline" onClick={() => window.history.back()}>
+                                    <X className="size-4" />
+                                    Volver
+                                </Button>
+                                {can('price-lists.store') ? (
+                                    <Link href={route('price-lists.index')}>
+                                        <Button>
+                                            <Plus className="size-4" />
+                                            Crear lista de precios
+                                        </Button>
+                                    </Link>
+                                ) : (
+                                    <p className="text-muted-foreground self-center text-sm">
+                                        Pedile a un administrador que configure una lista de precios.
+                                    </p>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            </AppLayout>
+        );
+    }
 
     return (
         <AppLayout>
@@ -291,7 +401,7 @@ export default function Create({ customers, products, priceLists, defaultPosList
                             </FormField>
                         </div>
                         <div className="flex-1">
-                            <FormField label="Lista de Precios">
+                            <FormField label="Lista de Precios" required error={errors.price_list_id}>
                                 <Select value={data.price_list_id} onValueChange={changePriceList}>
                                     <SelectTrigger>
                                         <ListOrdered className="text-muted-foreground mr-2 size-4" />
@@ -323,35 +433,62 @@ export default function Create({ customers, products, priceLists, defaultPosList
                             ref={searchInputRef}
                             type="text"
                             startIcon={<Search className="size-4" />}
-                            placeholder="Buscar artículo por código o nombre..."
+                            placeholder={
+                                products.length === 0
+                                    ? 'No hay artículos para vender'
+                                    : 'Buscar por nombre, SKU o código de barras...'
+                            }
                             value={searchTerm}
                             onChange={(e) => handleSearch(e.target.value)}
+                            onKeyDown={handleSearchKeyDown}
+                            disabled={products.length === 0}
                         />
-                        {showDropdown && filteredProducts.length > 0 && (
-                            <div className="absolute z-10 mt-1 max-h-72 w-full overflow-auto rounded-lg border bg-card shadow-lg">
-                                {filteredProducts.map((product) => {
-                                    const img = product.images?.find((i) => i.is_primary) || product.images?.[0];
-                                    return (
-                                        <div
-                                            key={product.id}
-                                            className="flex cursor-pointer items-center gap-3 px-4 py-2.5 transition-colors hover:bg-accent"
-                                            onClick={() => addProductFromSearch(product)}
-                                        >
-                                            {img ? (
-                                                <img src={`/storage/${img.path}`} alt={product.name} className="size-10 shrink-0 rounded-lg object-cover" />
-                                            ) : (
-                                                <div className="bg-muted flex size-10 shrink-0 items-center justify-center rounded-lg">
-                                                    <Package className="text-muted-foreground size-5" />
-                                                </div>
-                                            )}
-                                            <div className="min-w-0 flex-1">
-                                                <p className="truncate text-sm font-medium">{product.name}</p>
-                                                <p className="text-muted-foreground text-xs">{product.sku} · {product.category?.name}</p>
-                                            </div>
-                                            <span className="text-primary shrink-0 text-sm font-bold tabular-nums">{fmt(priceForProduct(product))}</span>
+                        {showDropdown && (
+                            <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-lg border bg-card shadow-lg">
+                                {visibleMatches.length === 0 ? (
+                                    <p className="text-muted-foreground px-4 py-3 text-sm">
+                                        Ningún artículo coincide con «{searchTerm}».
+                                    </p>
+                                ) : (
+                                    <>
+                                        <div className="max-h-72 overflow-auto">
+                                            {visibleMatches.map((product, index) => {
+                                                const img = product.images?.find((i) => i.is_primary) || product.images?.[0];
+                                                return (
+                                                    <div
+                                                        key={product.id}
+                                                        className={`flex cursor-pointer items-center gap-3 px-4 py-2.5 transition-colors ${
+                                                            index === highlight ? 'bg-accent' : 'hover:bg-accent'
+                                                        }`}
+                                                        onMouseEnter={() => setHighlight(index)}
+                                                        onClick={() => addProductFromSearch(product)}
+                                                    >
+                                                        {img ? (
+                                                            <img src={`/storage/${img.path}`} alt={product.name} className="size-10 shrink-0 rounded-lg object-cover" />
+                                                        ) : (
+                                                            <div className="bg-muted flex size-10 shrink-0 items-center justify-center rounded-lg">
+                                                                <Package className="text-muted-foreground size-5" />
+                                                            </div>
+                                                        )}
+                                                        <div className="min-w-0 flex-1">
+                                                            <p className="truncate text-sm font-medium">{product.name}</p>
+                                                            <p className="text-muted-foreground text-xs">{product.sku} · {product.category?.name}</p>
+                                                        </div>
+                                                        <span className="text-primary shrink-0 text-sm font-bold tabular-nums">{fmt(priceForProduct(product))}</span>
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
-                                    );
-                                })}
+                                        <div className="text-muted-foreground flex items-center justify-between border-t px-4 py-2 text-xs">
+                                            <span>
+                                                {matches.length > MAX_SEARCH_RESULTS
+                                                    ? `Mostrando ${MAX_SEARCH_RESULTS} de ${matches.length} — refiná la búsqueda`
+                                                    : `${matches.length} ${matches.length === 1 ? 'resultado' : 'resultados'}`}
+                                            </span>
+                                            <span className="hidden sm:inline">↑↓ para elegir · Enter para agregar</span>
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         )}
                     </div>
@@ -365,7 +502,26 @@ export default function Create({ customers, products, priceLists, defaultPosList
 
                     {/* Lista de items */}
                     <div className="flex-1 space-y-2 overflow-y-auto pr-1">
-                        {items.length === 0 && (
+                        {items.length === 0 && products.length === 0 && (
+                            <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
+                                <Package className="text-muted-foreground size-10 opacity-30" />
+                                <div>
+                                    <p className="text-sm font-medium">No hay artículos para vender</p>
+                                    <p className="text-muted-foreground mt-1 text-sm">
+                                        El catálogo está vacío o todos los artículos están dados de baja.
+                                    </p>
+                                </div>
+                                {can('products.create') && (
+                                    <Link href={route('products.create')}>
+                                        <Button variant="outline" size="sm">
+                                            <Plus className="size-4" />
+                                            Crear artículo
+                                        </Button>
+                                    </Link>
+                                )}
+                            </div>
+                        )}
+                        {items.length === 0 && products.length > 0 && (
                             <div className="text-muted-foreground flex h-full flex-col items-center justify-center gap-2">
                                 <ScanLine className="size-10 opacity-30" />
                                 <p className="text-sm">Buscá o escaneá un artículo para comenzar</p>

@@ -47,7 +47,8 @@ class SaleController extends Controller
 
         return Inertia::render('Sales/Create', [
             'customers'      => Customer::all(),
-            'products'       => Product::with(['category', 'brand', 'priceLists', 'images'])->get(),
+            // Solo artículos activos: uno dado de baja no debe poder venderse.
+            'products'       => Product::active()->with(['category', 'brand', 'priceLists', 'images'])->get(),
             'priceLists'     => $priceLists,
             'defaultPosList' => $defaultPosList,
             'pointsOfSale'   => PointOfSale::active()->orderBy('is_default', 'desc')->orderBy('name')->get(),
