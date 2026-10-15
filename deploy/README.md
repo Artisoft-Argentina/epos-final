@@ -10,6 +10,7 @@ Documentación de despliegue de EPOS. Los detalles de cada ambiente están en su
 | **dev** | `dev` | `dev.artisoft-demo.store` | Postgres en Docker | [dev-qa/README.md](dev-qa/README.md) |
 | **qa** | `qa` | `qa.artisoft-demo.store` | Postgres en Docker | [dev-qa/README.md](dev-qa/README.md) |
 | **prod** | `main` | `epos.velto.ar` | Postgres **nativo** | [prod/README.md](prod/README.md) |
+| **demo** | `main` (réplica de prod, misma imagen `:prod`) | — | Postgres **nativo** | [prod/README.md](prod/README.md) en `/var/www/html/demo` |
 
 > dev y qa comparten un VPS; prod tiene el suyo dedicado.
 
@@ -35,9 +36,38 @@ feature/xxx ──PR──► dev ──PR──► qa ──PR──► main
 
 | Workflow | Dispara con | Qué hace |
 |---|---|---|
-| `deploy-dev.yml` | push a `dev` | build+push `:dev` → VPS: `git pull`, `docker pull`, `compose up --wait` |
-| `deploy-qa.yml` | push a `qa` | ídem con `:qa` |
-| `deploy-prod.yml` | push a `main` | build+push `:prod`+`:sha` → **aprobación** → VPS: `docker pull`, `compose up --wait` |
+| `deploy-dev.yml` | push a `dev` | build+push `:dev` → un job por servidor de `deployment-config.dev.json` |
+| `deploy-qa.yml` | push a `qa` | ídem con `:qa` y `deployment-config.qa.json` |
+| `deploy-prod.yml` | push a `main` | build+push `:prod`+`:sha` → **aprobación** → un job por servidor de `deployment-config.prod.json` |
+
+En cada servidor: `cd path` → `beforeHooks` → `docker pull` → `compose up --wait` → `afterHooks`.
+`git pull` y el compose de dev/qa (`COMPOSE_FILE=docker-compose.prod.yml`) van en sus `beforeHooks`.
+
+### Matriz de servidores (`deploy/deployment-config.<env>.json`)
+
+Un archivo por ambiente (`dev`, `qa`, `prod`), cada uno una lista de servidores (una empresa = una entrada).
+La imagen se construye **una vez** y se despliega en paralelo a todos (`fail-fast: false`: si uno falla, los
+demás siguen).
+
+```json
+[
+  {
+    "name": "velto",
+    "ip": "",
+    "username": "",
+    "port": "22",
+    "beforeHooks": "",
+    "afterHooks": "",
+    "path": "/var/www/html/prod"
+  }
+]
+```
+- `name`: nombre del job en Actions.
+- `ip` / `username`: vacíos → usan los secrets `VPS_HOST` / `VPS_USER` del ambiente.
+- `path`: directorio del stack en el VPS (con su `docker-compose.yml` y `.env`, preparado según el runbook).
+- `beforeHooks` / `afterHooks`: comandos shell antes del `docker pull` / después del `compose up`. Corren en
+  el mismo shell, así que un `export` en `beforeHooks` afecta al compose.
+- La clave es siempre `VPS_SSH_KEY` del ambiente → la pública de deploy tiene que estar en todos sus VPS.
 
 ## Migraciones
 
