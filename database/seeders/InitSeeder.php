@@ -7,7 +7,7 @@ use App\Models\State;
 use App\Models\Warehouse;
 use Illuminate\Database\Seeder;
 
-class TenantInitSeeder extends Seeder
+class InitSeeder extends Seeder
 {
     public function run(): void
     {

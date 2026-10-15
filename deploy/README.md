@@ -35,15 +35,14 @@ feature/xxx ──PR──► dev ──PR──► qa ──PR──► main
 
 | Workflow | Dispara con | Qué hace |
 |---|---|---|
-| `deploy-dev.yml` | push a `dev` | build+push `:dev` → VPS: `git pull`, `docker pull`, `compose up --wait`, `tenants:migrate` |
+| `deploy-dev.yml` | push a `dev` | build+push `:dev` → VPS: `git pull`, `docker pull`, `compose up --wait` |
 | `deploy-qa.yml` | push a `qa` | ídem con `:qa` |
-| `deploy-prod.yml` | push a `main` | build+push `:prod`+`:sha` → **aprobación** → VPS: `docker pull`, `compose up --wait`, `tenants:migrate` |
+| `deploy-prod.yml` | push a `main` | build+push `:prod`+`:sha` → **aprobación** → VPS: `docker pull`, `compose up --wait` |
 
-## Migraciones (multitenant)
+## Migraciones
 
 Todos los deploys corren migraciones **incrementales** (nunca `migrate:fresh` en un ambiente con datos):
-- **Central**: la migra el entrypoint (`RUN_MIGRATIONS=true`).
-- **Tenants**: `php artisan tenants:migrate --force` (explícito en cada workflow — el entrypoint no lo hace).
+las corre el entrypoint (`RUN_MIGRATIONS=true`). Un deploy = una empresa = una base.
 
 Regla de equipo: migraciones **forward-only**; nunca renombrar/reestructurar una migración ya corrida en un
 ambiente con datos; probar en qa antes de prod.

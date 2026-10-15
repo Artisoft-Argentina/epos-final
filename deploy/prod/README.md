@@ -4,23 +4,21 @@ Guía **as-built** (probada en el deploy real) para levantar EPOS en un VPS de p
 Documenta cada paso y configuración, incluyendo los ajustes que descubrimos en el camino.
 
 > **Modelo**: la **app corre en Docker** (imagen de GHCR); **PostgreSQL es nativo** en el host (fuera de Docker);
-> **nginx del host** hace de reverse proxy + termina SSL wildcard. Deploy automatizado por GitHub Actions con
+> **nginx del host** hace de reverse proxy + termina SSL. Deploy automatizado por GitHub Actions con
 > gate de aprobación manual.
 
 ```
-Internet ──HTTPS──► nginx (host, cert wildcard) ──► App (Docker, imagen GHCR) :127.0.0.1:8000
+Internet ──HTTPS──► nginx (host, cert SSL) ──► App (Docker, imagen GHCR) :127.0.0.1:8000
                                                           │
                                                           └──► PostgreSQL 16 (host, nativo)
-                                                               ├── epos_central
-                                                               └── epos_<tenant> ...
+                                                               └── epos_central (única base de la empresa)
 ```
 
 **Valores de referencia de esta instalación** (cambialos para otro VPS/dominio):
 
 | | Valor |
 |---|---|
-| Dominio central | `epos.velto.ar` |
-| Dominio tenants | `*.epos.velto.ar` |
+| Dominio | `epos.velto.ar` |
 | Landing (aparte, diferido) | `velto.ar` |
 | IP del VPS | `2.25.88.67` |
 | SO | Ubuntu 24.04 LTS |
@@ -107,9 +105,9 @@ ip -4 addr show docker0 | grep inet
 # 3. Generar una password segura SIN caracteres especiales (hex → sin líos de escape en SQL/.env/URIs)
 openssl rand -hex 24          # copiala, va en el CREATE ROLE y en DB_PASSWORD
 
-# 4. Crear usuario + base central (CREATEDB es CRÍTICO: stancl/tenancy crea una base por tenant)
+# 4. Crear usuario + base
 sudo -u postgres psql <<'SQL'
-CREATE ROLE epos_user WITH LOGIN PASSWORD 'PEGAR_HEX_ACA' CREATEDB;
+CREATE ROLE epos_user WITH LOGIN PASSWORD 'PEGAR_HEX_ACA';
 CREATE DATABASE epos_central OWNER epos_user;
 SQL
 
@@ -157,7 +155,7 @@ services:
     ports:
       - '127.0.0.1:8000:80'          # solo lo alcanza el nginx del host
     environment:
-      - RUN_MIGRATIONS=true          # migra la base CENTRAL en cada arranque (incremental)
+      - RUN_MIGRATIONS=true          # migra la base en cada arranque (incremental)
       - RUN_SEEDERS=false            # true SOLO en el primer boot (ver paso 6)
       - DB_HOST=host.docker.internal # el entrypoint lo necesita para esperar la BD
       - DB_PORT=5432
@@ -202,12 +200,9 @@ DB_DATABASE=epos_central
 DB_USERNAME=epos_user
 DB_PASSWORD=REEMPLAZAR_HEX
 
-CENTRAL_DOMAIN=epos.velto.ar
-TENANCY_DB_PREFIX=epos_
-
 SESSION_DRIVER=database
 SESSION_LIFETIME=120
-SESSION_DOMAIN=.epos.velto.ar
+SESSION_DOMAIN=null
 SESSION_SECURE_COOKIE=true
 QUEUE_CONNECTION=database
 CACHE_STORE=database
@@ -252,6 +247,9 @@ Debe responder **`Login Succeeded`**. (La imagen `:prod` todavía **no existe** 
 
 ## 5. DNS + nginx + SSL wildcard
 
+> Desde que se quitó el multitenant (1 deploy = 1 empresa) **ya no hace falta el wildcard**: alcanza un cert
+> normal para el dominio (ej. `certbot --nginx -d epos.velto.ar`). El procedimiento de abajo sigue funcionando.
+
 ### 5.1 DNS en Cloudflare (modo "DNS only" / nube gris)
 
 | Tipo | Nombre | Valor |
@@ -282,8 +280,8 @@ certbot deja un timer de renovación automática. Verificá: `sudo certbot renew
 
 ### 5.3 nginx (reverse proxy)
 
-> ⚠️ **Buffers grandes** (`proxy_buffer_size 128k`, etc.): sin esto, al **recargar (F5)** una página de un
-> tenant, nginx corta con *"upstream sent too big header"* → **502**. Los headers de Laravel/Inertia superan
+> ⚠️ **Buffers grandes** (`proxy_buffer_size 128k`, etc.): sin esto, al **recargar (F5)** una página,
+> nginx corta con *"upstream sent too big header"* → **502**. Los headers de Laravel/Inertia superan
 > el buffer default (4–8k). Este bloque lo resuelve.
 
 ```bash
@@ -387,7 +385,7 @@ Luego, en GitHub: **promover a `main`** (por el flujo `dev → qa → main`, ví
 1. Job `build` → construye `:prod` + `:sha-xxx` y los sube a GHCR.
 2. Job `deploy` → queda **pendiente de aprobación** (el revisor aprueba en Actions → Review deployments).
 3. Al aprobar: `docker pull :prod` → `docker compose up --wait` (el entrypoint genera `APP_KEY`, migra la
-   central y **crea el superadmin** desde `SUPERADMIN_*`) → `tenants:migrate`.
+   base y **crea el superadmin** desde `SUPERADMIN_*`).
 
 Después del deploy, **volver a apagar los seeders**:
 ```bash
@@ -403,9 +401,8 @@ docker compose up -d      # recrea el contenedor con seed apagado
 docker ps --format 'table {{.Names}}\t{{.Status}}'   # prod-epos-app → healthy
 docker logs prod-epos-app --tail 30                  # sin errores
 ```
-- `https://epos.velto.ar` → candado válido, login con el superadmin, panel **limpio** (sin tenants demo).
-- Crear una empresa desde el panel → se provisiona `epos_<slug>` (roles, warehouse, POS, admin).
-- Entrar a `https://<slug>.epos.velto.ar` con el admin → probar producto, cliente, lista de precios,
+- `https://epos.velto.ar` → candado válido, login con el superadmin, sistema **limpio** (sin datos demo).
+- Probar producto, cliente, lista de precios,
   inventario y una venta.
 
 ---
@@ -428,7 +425,7 @@ APP_IMAGE=$IMG docker compose up -d --force-recreate --wait
 ### Backups (imprescindible antes de datos reales)
 
 **Qué se respalda y por qué**: la imagen de Docker es solo el **código** (se reconstruye desde GHCR/git). Los **datos NO están en la imagen** y son **irrecuperables** si se pierden:
-- **Base de datos** (`epos_central` + todas las `epos_<tenant>`) → tenants, usuarios, productos, clientes, ventas, stock. **Lo más crítico.** Vive en el Postgres nativo del host.
+- **Base de datos** (`epos_central`) → usuarios, productos, clientes, ventas, stock. **Lo más crítico.** Vive en el Postgres nativo del host.
 - **`storage/`** → archivos subidos (imágenes de productos, PDFs, certificados).
 - **`.env`** → tiene el `APP_KEY` y los secretos (necesario para recuperar).
 
@@ -439,7 +436,7 @@ Script (base + storage + .env), por cron diario:
 DATE=$(date +%Y%m%d_%H%M%S)
 DEST=/var/www/html/prod/backups
 mkdir -p $DEST
-sudo -u postgres pg_dumpall | gzip > $DEST/epos_all_$DATE.sql.gz   # central + todos los tenants
+sudo -u postgres pg_dump epos_central | gzip > $DEST/epos_$DATE.sql.gz
 tar czf $DEST/storage_$DATE.tar.gz -C /var/www/html/prod storage
 cp /var/www/html/prod/.env $DEST/env_$DATE.bak
 find $DEST -mtime +14 -delete
@@ -458,8 +455,7 @@ Alternativas: AWS S3, Backblaze B2, o descargar los dumps a otra máquina.
 
 ### Conexión a la BD con DBeaver (túnel SSH)
 Postgres está cerrado a internet → se accede por túnel SSH:
-- **Main**: Host `localhost`, Port `5432`, DB `epos_central` (o `epos_<id>`), User `epos_user`, Password (DB_PASSWORD).
-  - Activar **"Show all databases"** (pestaña PostgreSQL) para ver todos los tenants.
+- **Main**: Host `localhost`, Port `5432`, DB `epos_central`, User `epos_user`, Password (DB_PASSWORD).
 - **SSH**: Host = IP del VPS, Port `22`, User `deploy`, Auth **Public Key**, Private Key `epos_prod_deploy`.
 - Si da `invalid value for parameter "TimeZone": "America/Buenos_Aires"`: editar `dbeaver.ini` (como admin)
   y agregar bajo `-vmargs`: `-Duser.timezone=America/Argentina/Buenos_Aires`.
@@ -473,7 +469,7 @@ Automática (timer de certbot). Verificar: `sudo certbot renew --dry-run`.
 
 | Síntoma | Causa | Fix |
 |---|---|---|
-| **502 al recargar (F5)** una página de tenant | Headers de Inertia > buffer default de nginx | `proxy_buffer_size 128k` + `proxy_buffers 4 256k` (§5.3) |
+| **502 al recargar (F5)** una página | Headers de Inertia > buffer default de nginx | `proxy_buffer_size 128k` + `proxy_buffers 4 256k` (§5.3) |
 | El arranque del contenedor **cuelga** esperando la BD | El entrypoint lee `DB_HOST` del shell, no del `.env` | `DB_HOST=host.docker.internal` en `environment` del compose (§3) |
 | `docker pull` da `denied` | El package GHCR no da acceso al repo, o falta login | Package settings → Manage Actions access → repo con **Write**; y `docker login` como `deploy` |
 | Build de prod: `invalid reference format` en el tag | Comentario inline dentro del bloque `tags: |` de YAML | Sacar el `#` del block scalar (poner el comentario arriba de `tags:`) |

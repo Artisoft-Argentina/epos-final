@@ -50,8 +50,6 @@ jobs:
             docker pull $IMG
             echo "🐳 Restarting containers..."
             APP_IMAGE=$IMG docker compose -f docker-compose.prod.yml up -d --force-recreate --wait
-            echo "🗄️  Migrando bases de tenants..."
-            docker compose -f docker-compose.prod.yml exec -T app php artisan tenants:migrate --force
             echo "✅ Deployment completed successfully!"
 
       - name: Notify

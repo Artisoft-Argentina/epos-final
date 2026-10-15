@@ -6,11 +6,10 @@ Este archivo es leído automáticamente por Claude Code y Amazon Q al iniciar un
 
 ## ¿Qué es EPOS?
 
-Sistema de gestión comercial **multi-tenant** para PyMEs argentinas. Cada empresa (tenant) tiene su propio subdominio, base de datos y configuración. El sistema incluye:
+Sistema de gestión comercial para PyMEs argentinas. **Un deploy = una empresa** (su propia base de datos, dominio y configuración). El sistema incluye:
 
 - **Punto de venta (POS)** con facturación electrónica ARCA (ex-AFIP)
 - **Ecommerce** con carrito, checkout y pagos con MercadoPago
-- **Panel central** para gestión de tenants (superadmin)
 - **Módulos**: Clientes, Artículos, Inventario, Ventas, Compras, Proveedores, Listas de Precios
 - **IA integrada**: asistente de compras (lectura de facturas/remitos PDF), asistente de precios de proveedor (listas de precios PDF)
 
@@ -23,8 +22,7 @@ Sistema de gestión comercial **multi-tenant** para PyMEs argentinas. Cada empre
 |---|---|---|
 | PHP | 8.4 | Runtime |
 | Laravel | 12 | Framework principal |
-| stancl/tenancy | 3.9 | Multi-tenancy (subdominio + DB separada por tenant) |
-| PostgreSQL | 16 | Base de datos (una por tenant + central) |
+| PostgreSQL | 16 | Base de datos (una por deploy) |
 | Redis | 7 | Cache y sesiones |
 | Groq API | llama-3.3-70b | IA para procesamiento de PDFs |
 | smalot/pdfparser | — | Extracción de texto de PDFs |
@@ -54,18 +52,15 @@ Sistema de gestión comercial **multi-tenant** para PyMEs argentinas. Cada empre
 
 ---
 
-## Arquitectura multi-tenant
+## Arquitectura
 
-- **Identificación**: por subdominio (`empresa1.epos.lvh.me:3000`)
-- **Aislamiento**: cada tenant tiene su propia base de datos PostgreSQL (`epos_<id>`)
-- **Dominio central**: `epos.lvh.me` (panel de superadmin)
-- **Bootstrappers activos**: DatabaseTenancyBootstrapper, CacheTenancyBootstrapper, QueueTenancyBootstrapper
-- **FilesystemTenancyBootstrapper**: deshabilitado (assets Vite compartidos)
+- **Single-tenant**: no hay multi-tenancy (se quitó stancl/tenancy). Cada empresa es un deploy separado con su propia BD.
+- Para una empresa nueva se levanta otro stack (compose + BD + dominio).
 
 ### Roles del sistema
 | Rol | Acceso |
 |---|---|
-| `superadmin` | Panel central: crear/ver/suspender empresas |
+| `superadmin` | Todo, incluida la configuración de usuarios |
 | `admin` | Todos los módulos de la empresa (excepto Configuración de usuarios) |
 | `vendedor` | Solo módulo de Ventas |
 | `cliente` | Portal de cliente: estado de cuenta, perfil |
@@ -76,7 +71,7 @@ Sistema de gestión comercial **multi-tenant** para PyMEs argentinas. Cada empre
 
 ```
 app/
-  Http/Controllers/       # Controladores (central y tenant)
+  Http/Controllers/       # Controladores
   Models/                 # Eloquent models
   Services/               # Lógica de negocio
     PrecioProveedorService.php   # IA: procesamiento de listas de precios PDF
@@ -87,11 +82,9 @@ resources/
     components/           # Componentes reutilizables
     layouts/              # Layouts (AppLayout, AuthLayout)
 routes/
-  web.php                 # Rutas tenant (con middleware de rol)
-  central.php             # Rutas panel central
+  web.php                 # Rutas (con middleware de rol)
 database/
-  migrations/tenant/      # Migraciones que se ejecutan por tenant
-  migrations/             # Migraciones de la BD central
+  migrations/             # Migraciones
   seeders/                # Seeders de datos iniciales
 docker/
   nginx.conf, php.ini, supervisord.conf, entrypoint.sh
@@ -112,29 +105,27 @@ make up              # Levantar servicios Docker
 make down            # Bajar servicios
 make logs            # Ver logs en tiempo real
 make shell           # Shell en el contenedor
-make migrate         # php artisan migrate (BD central)
-make tenant-migrate  # php artisan tenants:migrate (todas las BDs de tenant)
+make migrate         # php artisan migrate
+make demo-seed       # Datos demo (marcas, productos, stock, clientes)
 make fresh           # Reset total + seeders
 make tinker          # Laravel Tinker
 make rebuild         # Reconstruir imagen desde cero
 ```
 
 **URLs locales:**
-- Panel central: `http://epos.lvh.me:3000` (superadmin)
-- Tenant: `http://<nombre>.epos.lvh.me:3000`
+- App: `http://epos.lvh.me:3000`
 
 **Credenciales por defecto (seeder):**
-- Superadmin central: `admin@epos.com` / `password`
-- Tenant demo: `gepetto@mail.com` / `asdf1234`
+- Superadmin: `SUPERADMIN_EMAIL` / `SUPERADMIN_PASSWORD` (default dev: `principal@mail.com` / `superadmin123`)
+- Demo (no prod): `superadmin@mail.com`, `admin@mail.com`, `vendedor@mail.com` / `asdf1234`
 
 ---
 
 ## Variables de entorno importantes
 
 ```env
-CENTRAL_DOMAIN=epos.lvh.me          # Dominio del panel central
-TENANCY_DB_PREFIX=epos_             # Prefijo de BDs de tenants
-SESSION_DOMAIN=.lvh.me              # Cookies para subdominios
+SUPERADMIN_EMAIL=                   # Superadmin inicial (requerido en prod)
+SUPERADMIN_PASSWORD=
 GROQ_API_KEY=                       # API key de Groq (IA)
 AFIP_ENVIRONMENT=homologacion       # homologacion | produccion
 MERCADOPAGO_ACCESS_TOKEN=           # Token de MercadoPago
@@ -145,11 +136,6 @@ AI_PROVIDER=groq                    # groq | ollama
 ---
 
 ## Módulos y funcionalidades
-
-### Panel Central (superadmin)
-- Crear, ver, editar y suspender empresas (tenants)
-- Cada empresa tiene: razón social, CUIT, plan, estado
-- Al crear una empresa se provisiona automáticamente su BD y se ejecutan las migraciones tenant
 
 ### Módulo de Ventas (POS)
 - Facturas y presupuestos
@@ -179,7 +165,7 @@ AI_PROVIDER=groq                    # groq | ollama
 - Módulo Compras vs Remitos: flujo a unificar
 
 ### Ecommerce
-- Tienda online por tenant con subdominio propio
+- Tienda online en el mismo dominio del deploy
 - Carrito de compras (sesión + usuario)
 - Checkout con MercadoPago
 - Webhook de MercadoPago para actualización asíncrona de pagos
@@ -191,7 +177,7 @@ AI_PROVIDER=groq                    # groq | ollama
 - **Asistente de Precios** (`/asistente-precios`): sube PDF de lista de precios de proveedor → IA extrae precios → actualiza precio en lista de precios default POS (match por EAN o SKU)
 
 ### Integraciones externas
-- **ARCA (ex-AFIP)**: autorización de comprobantes electrónicos, certificados por tenant, tokens con renovación automática (pendiente)
+- **ARCA (ex-AFIP)**: autorización de comprobantes electrónicos, certificados en `storage/app/private/afip/`, tokens con renovación automática (pendiente)
 - **MercadoPago**: pagos en checkout, webhook de notificaciones
 - **Telegram**: alertas de administración
 
@@ -203,8 +189,7 @@ AI_PROVIDER=groq                    # groq | ollama
 - Controladores delgados: lógica en Services
 - Transacciones DB explícitas para operaciones críticas (`DB::transaction`)
 - `lockForUpdate()` en operaciones concurrentes (ej: numeración de facturas)
-- Migraciones tenant en `database/migrations/tenant/`
-- Modelos tenant extienden de modelos base sin tenancy bootstrapping
+- Migraciones en `database/migrations/`
 
 ### React / TypeScript
 - Páginas en `resources/js/pages/<Módulo>/Index.tsx` (o Create, Edit, Show)
@@ -227,8 +212,7 @@ AI_PROVIDER=groq                    # groq | ollama
 - **Si encontrás código viejo con nombres en español como `razonsocial`, `articulo.articulo`, `numfactura`**, etc.: arreglalo a la convención inglés. Es deuda técnica heredada del sistema original.
 
 ### Rutas
-- Rutas tenant en `routes/web.php` agrupadas por rol (`role:admin,superadmin`)
-- Rutas centrales en `routes/central.php`
+- Rutas en `routes/web.php` agrupadas por rol (`role:admin,superadmin`)
 - Inertia renderiza con `Inertia::render('Módulo/Index', [...props])`
 
 ---
@@ -364,6 +348,5 @@ Para leer una historia antes de empezar: pedile a Claude "leé la historia SCRUM
 - **No usar axios**: fue removido del proyecto. Usar `fetch` nativo con header `X-CSRF-TOKEN`.
 - **Build de assets**: los assets Vite NO están en la imagen Docker (volumen separado). Después de cambios en `.tsx`/`.ts`, buildear con `npm run build` en el host y copiar al contenedor con `docker cp public/build/. epos-app:/var/www/html/public/build/`.
 - **OPcache**: cambios en PHP pueden requerir `docker exec epos-app kill -USR2 $(pgrep -o php-fpm)` o `docker restart epos-app`.
-- **Multi-tenant**: las migraciones en `database/migrations/tenant/` se ejecutan con `php artisan tenants:migrate`, no con `php artisan migrate`.
 - **Lista de precios default**: `listas_precios.default_pos = true` es la lista que usa el POS. `default_ecommerce = true` es la que usa el ecommerce.
-- **Facturación ARCA**: certificados almacenados en `storage/app/private/afip/<tenant_id>/`. En homologación no se requiere certificado real.
+- **Facturación ARCA**: certificados almacenados en `storage/app/private/afip/`. En homologación no se requiere certificado real.

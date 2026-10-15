@@ -16,7 +16,7 @@ use App\Services\PriceService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
-class TenantDemoSeeder extends Seeder
+class DemoSeeder extends Seeder
 {
     public function run(): void
     {
@@ -31,7 +31,7 @@ class TenantDemoSeeder extends Seeder
             $this->seedCustomers();
         });
 
-        $this->command->info('✓ Demo data sembrada en este tenant.');
+        $this->command->info('✓ Demo data sembrada.');
     }
 
     private function seedBrands(): array

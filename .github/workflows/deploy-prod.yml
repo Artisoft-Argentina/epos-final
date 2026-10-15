@@ -59,9 +59,6 @@ jobs:
             docker pull $IMG
             echo "🐳 Restarting containers..."
             APP_IMAGE=$IMG docker compose up -d --force-recreate --wait
-            # el entrypoint ya migró la central; los TENANTS van aparte:
-            echo "🗄️  Migrando bases de tenants..."
-            docker compose exec -T app php artisan tenants:migrate --force
             echo "✅ Deployment completed successfully!"
 
       - name: Notify
