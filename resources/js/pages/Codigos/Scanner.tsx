@@ -73,7 +73,7 @@ export default function Scanner() {
     if (foundArticle) {
       // Aquí puedes implementar la lógica para agregar al carrito
       // Por ejemplo, redirigir a la página de ventas con el artículo
-      router.visit('/ventas/create', {
+      router.visit('/sales/create', {
         data: { articulo_id: foundArticle.id }
       });
     }

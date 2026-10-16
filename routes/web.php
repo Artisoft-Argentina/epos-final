@@ -190,39 +190,39 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('scanner/buscar', [\App\Http\Controllers\CodigoController::class, 'buscarPorCodigo'])->name('scanner.buscar')->middleware('can:scanner.buscar');
 
     // Ventas
-    Route::get('ventas', [\App\Http\Controllers\VentaController::class, 'index'])->name('ventas.index')->middleware('can:ventas.index');
-    Route::get('ventas/create', [\App\Http\Controllers\VentaController::class, 'create'])->name('ventas.create')->middleware('can:ventas.create');
-    Route::post('ventas', [\App\Http\Controllers\VentaController::class, 'store'])->name('ventas.store')->middleware('can:ventas.store');
-    Route::get('ventas/{venta}', [\App\Http\Controllers\VentaController::class, 'show'])->name('ventas.show')->middleware('can:ventas.show');
-    Route::get('ventas/{venta}/edit', [\App\Http\Controllers\VentaController::class, 'edit'])->name('ventas.edit')->middleware('can:ventas.edit');
-    Route::put('ventas/{venta}', [\App\Http\Controllers\VentaController::class, 'update'])->name('ventas.update')->middleware('can:ventas.update');
-    Route::delete('ventas/{venta}', [\App\Http\Controllers\VentaController::class, 'destroy'])->name('ventas.destroy')->middleware('can:ventas.destroy');
+    Route::get('sales', [\App\Http\Controllers\SaleController::class, 'index'])->name('sales.index')->middleware('can:ventas.index');
+    Route::get('sales/create', [\App\Http\Controllers\SaleController::class, 'create'])->name('sales.create')->middleware('can:ventas.create');
+    Route::post('sales', [\App\Http\Controllers\SaleController::class, 'store'])->name('sales.store')->middleware('can:ventas.store');
+    Route::get('sales/{sale}', [\App\Http\Controllers\SaleController::class, 'show'])->name('sales.show')->middleware('can:ventas.show');
+    Route::get('sales/{sale}/edit', [\App\Http\Controllers\SaleController::class, 'edit'])->name('sales.edit')->middleware('can:ventas.edit');
+    Route::put('sales/{sale}', [\App\Http\Controllers\SaleController::class, 'update'])->name('sales.update')->middleware('can:ventas.update');
+    Route::patch('sales/{sale}/cancel', [\App\Http\Controllers\SaleController::class, 'cancel'])->name('sales.cancel')->middleware('can:ventas.destroy');
 
     // Presupuestos
-    Route::get('presupuestos', [\App\Http\Controllers\PresupuestoController::class, 'index'])->name('presupuestos.index')->middleware('can:presupuestos.index');
-    Route::get('presupuestos/create', [\App\Http\Controllers\PresupuestoController::class, 'create'])->name('presupuestos.create')->middleware('can:presupuestos.create');
-    Route::post('presupuestos', [\App\Http\Controllers\PresupuestoController::class, 'store'])->name('presupuestos.store')->middleware('can:presupuestos.store');
-    Route::get('presupuestos/{presupuesto}', [\App\Http\Controllers\PresupuestoController::class, 'show'])->name('presupuestos.show')->middleware('can:presupuestos.show');
-    Route::get('presupuestos/{presupuesto}/edit', [\App\Http\Controllers\PresupuestoController::class, 'edit'])->name('presupuestos.edit')->middleware('can:presupuestos.edit');
-    Route::put('presupuestos/{presupuesto}', [\App\Http\Controllers\PresupuestoController::class, 'update'])->name('presupuestos.update')->middleware('can:presupuestos.update');
-    Route::delete('presupuestos/{presupuesto}', [\App\Http\Controllers\PresupuestoController::class, 'destroy'])->name('presupuestos.destroy')->middleware('can:presupuestos.destroy');
-    Route::post('presupuestos/{presupuesto}/convertir-venta', [\App\Http\Controllers\PresupuestoController::class, 'convertirAVenta'])->name('presupuestos.convertir-venta')->middleware('can:presupuestos.convertir-venta');
+    Route::get('quotes', [\App\Http\Controllers\QuoteController::class, 'index'])->name('quotes.index')->middleware('can:presupuestos.index');
+    Route::get('quotes/create', [\App\Http\Controllers\QuoteController::class, 'create'])->name('quotes.create')->middleware('can:presupuestos.create');
+    Route::post('quotes', [\App\Http\Controllers\QuoteController::class, 'store'])->name('quotes.store')->middleware('can:presupuestos.store');
+    Route::get('quotes/{quote}', [\App\Http\Controllers\QuoteController::class, 'show'])->name('quotes.show')->middleware('can:presupuestos.show');
+    Route::get('quotes/{quote}/edit', [\App\Http\Controllers\QuoteController::class, 'edit'])->name('quotes.edit')->middleware('can:presupuestos.edit');
+    Route::put('quotes/{quote}', [\App\Http\Controllers\QuoteController::class, 'update'])->name('quotes.update')->middleware('can:presupuestos.update');
+    Route::delete('quotes/{quote}', [\App\Http\Controllers\QuoteController::class, 'destroy'])->name('quotes.destroy')->middleware('can:presupuestos.destroy');
+    Route::post('quotes/{quote}/convert-to-sale', [\App\Http\Controllers\QuoteController::class, 'convertToSale'])->name('quotes.convert-to-sale')->middleware('can:presupuestos.convertir-venta');
 
-    Route::post('afip/authorize/{factura}', [\App\Http\Controllers\VentaController::class, 'autorizarAfip'])->name('afip.authorize')->middleware('can:afip.authorize');
+    Route::post('afip/authorize/{factura}', [\App\Http\Controllers\SaleController::class, 'authorizeAfip'])->name('afip.authorize')->middleware('can:afip.authorize');
 
     // Pagos
-    Route::get('facturas/{factura}/pagos/create', [\App\Http\Controllers\PagoController::class, 'create'])->name('pagos.create')->middleware('can:pagos.create');
-    Route::post('facturas/{factura}/pagos', [\App\Http\Controllers\PagoController::class, 'store'])->name('pagos.store')->middleware('can:pagos.store');
-    Route::delete('pagos/{pago}', [\App\Http\Controllers\PagoController::class, 'destroy'])->name('pagos.destroy')->middleware('can:pagos.destroy');
+    Route::get('sales/{sale}/payments/create', [\App\Http\Controllers\PaymentController::class, 'create'])->name('payments.create')->middleware('can:pagos.create');
+    Route::post('sales/{sale}/payments', [\App\Http\Controllers\PaymentController::class, 'store'])->name('payments.store')->middleware('can:pagos.store');
+    Route::delete('payments/{payment}', [\App\Http\Controllers\PaymentController::class, 'destroy'])->name('payments.destroy')->middleware('can:pagos.destroy');
 
     // Entregas
-    Route::get('facturas/{factura}/entregas/create', [\App\Http\Controllers\EntregaController::class, 'create'])->name('entregas.create')->middleware('can:entregas.create');
-    Route::post('facturas/{factura}/entregas', [\App\Http\Controllers\EntregaController::class, 'store'])->name('entregas.store')->middleware('can:entregas.store');
-    Route::get('entregas', [\App\Http\Controllers\EntregaController::class, 'index'])->name('entregas.index')->middleware('can:entregas.index');
-    Route::post('entregas/{entrega}/marcar-entregada', [\App\Http\Controllers\EntregaController::class, 'marcarEntregada'])->name('entregas.marcar-entregada')->middleware('can:entregas.marcar-entregada');
-    Route::post('entregas/{entrega}/cancelar', [\App\Http\Controllers\EntregaController::class, 'cancelar'])->name('entregas.cancelar')->middleware('can:entregas.cancelar');
-    Route::patch('entregas/{entrega}/warehouse', [\App\Http\Controllers\EntregaController::class, 'updateWarehouse'])->name('entregas.update-warehouse')->middleware('can:entregas.update-warehouse');
-    Route::delete('entregas/{entrega}', [\App\Http\Controllers\EntregaController::class, 'destroy'])->name('entregas.destroy')->middleware('can:entregas.destroy');
+    Route::get('sales/{sale}/deliveries/create', [\App\Http\Controllers\DeliveryController::class, 'create'])->name('deliveries.create')->middleware('can:entregas.create');
+    Route::post('sales/{sale}/deliveries', [\App\Http\Controllers\DeliveryController::class, 'store'])->name('deliveries.store')->middleware('can:entregas.store');
+    Route::get('deliveries', [\App\Http\Controllers\DeliveryController::class, 'index'])->name('deliveries.index')->middleware('can:entregas.index');
+    Route::post('deliveries/{delivery}/mark-delivered', [\App\Http\Controllers\DeliveryController::class, 'markDelivered'])->name('deliveries.mark-delivered')->middleware('can:entregas.marcar-entregada');
+    Route::post('deliveries/{delivery}/cancel', [\App\Http\Controllers\DeliveryController::class, 'cancel'])->name('deliveries.cancel')->middleware('can:entregas.cancelar');
+    Route::patch('deliveries/{delivery}/warehouse', [\App\Http\Controllers\DeliveryController::class, 'updateWarehouse'])->name('deliveries.update-warehouse')->middleware('can:entregas.update-warehouse');
+    Route::delete('deliveries/{delivery}', [\App\Http\Controllers\DeliveryController::class, 'destroy'])->name('deliveries.destroy')->middleware('can:entregas.destroy');
 
     Route::get('chat', [\App\Http\Controllers\ChatController::class, 'index'])->name('chat.index')->middleware('can:chat.index');
     Route::post('chat/send', [\App\Http\Controllers\ChatController::class, 'send'])->name('chat.send')->middleware('can:chat.send');
@@ -231,7 +231,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('asistente-compras/process', [\App\Http\Controllers\AsistenteComprasController::class, 'processPdf'])->name('asistente-compras.process')->middleware('can:asistente-compras.process');
     Route::post('asistente-compras/add-inventory', [\App\Http\Controllers\AsistenteComprasController::class, 'addToInventory'])->name('asistente-compras.add-inventory')->middleware('can:asistente-compras.add-inventory');
 
-    Route::get('facturas/{factura}/pdf', [\App\Http\Controllers\FacturaPdfController::class, 'generate'])->name('facturas.pdf')->middleware('can:facturas.pdf');
+    Route::get('sales/{sale}/pdf', [\App\Http\Controllers\SalePdfController::class, 'generate'])->name('sales.pdf')->middleware('can:facturas.pdf');
 
     Route::post('afip/consultar-cuit', [\App\Http\Controllers\CustomerController::class, 'consultarCuit'])->name('afip.consultar-cuit')->middleware('can:afip.consultar-cuit');
 

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Stock;
 use App\Models\StockMovement;
 use Illuminate\Database\Eloquent\Model;
+use RuntimeException;
 
 class MovimientoService
 {
@@ -32,6 +33,17 @@ class MovimientoService
     ): StockMovement {
         if (! array_key_exists($tipo, StockMovement::TYPES)) {
             throw new \InvalidArgumentException("Tipo de movimiento inválido: {$tipo}");
+        }
+
+        $qty = abs($cantidad);
+
+        // Guard de stock negativo para egresos: lectura lockeada del saldo real
+        // antes de registrar el movimiento (red de seguridad para TODOS los EXIT).
+        if (in_array($tipo, StockMovement::EXIT_TYPES)) {
+            $current = (int) Stock::whereKey($inventario->id)->lockForUpdate()->value('quantity');
+            if ($current < $qty) {
+                throw new RuntimeException("Stock insuficiente: disponible {$current}, requerido {$qty}.");
+            }
         }
 
         $movement = StockMovement::create([

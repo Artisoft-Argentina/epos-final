@@ -9,13 +9,19 @@ import { PageHeader } from '@/components/page-header';
 import { Download, FileText, Edit, Mail, Phone, Smartphone, MapPin, User, Building2, Wallet, TrendingDown, CreditCard, ShoppingBag, ChevronRight, Receipt, StickyNote } from 'lucide-react';
 import { usePermission } from '@/hooks/use-permission';
 
-interface Payment { id: number; amount: number; }
-interface Sale {
-    id: number;
-    created_at: string;
-    total: number;
-    payment_status: string;
-    payments: Payment[];
+/**
+ * Movimiento del estado de cuenta: la venta es un débito, cada pago un crédito
+ * y la anulación compensa el saldo de una venta cancelada. `balance` es el
+ * saldo acumulado que ya viene calculado del backend.
+ */
+interface Movement {
+    date: string;
+    type: 'sale' | 'payment' | 'cancellation';
+    description: string;
+    sale_id: number;
+    debit: number;
+    credit: number;
+    balance: number;
 }
 interface Customer {
     id: number;
@@ -38,9 +44,11 @@ interface Customer {
     state: { id: number; name: string } | null;
 }
 interface Summary { total_sales: number; total_paid: number; balance_due: number; credit: number; }
-interface Props { customer: Customer; sales: Sale[]; summary: Summary; }
+interface Props { customer: Customer; movements: Movement[]; summary: Summary; }
 
-const fmt = (n: number) => `$${Number(n).toLocaleString('es-AR', { minimumFractionDigits: 2 })}`;
+// Los importes decimales viajan como string (columnas numeric de Postgres):
+// hay que convertirlos antes de formatear u operar.
+const fmt = (n: number | string) => `$${Number(n).toLocaleString('es-AR', { minimumFractionDigits: 2 })}`;
 
 function InfoRow({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) {
     return (
@@ -54,37 +62,56 @@ function InfoRow({ icon: Icon, label, value }: { icon: React.ElementType; label:
     );
 }
 
-export default function Show({ customer, sales, summary }: Props) {
+export default function Show({ customer, movements, summary }: Props) {
     const { can } = usePermission();
 
     const address = [customer.address, customer.city?.name, customer.state?.name, customer.zip_code]
         .filter(Boolean).join(', ');
 
-    const salesColumns: Column<Sale>[] = [
+    const movementColumns: Column<Movement>[] = [
         {
-            key: 'created_at',
+            key: 'date',
             header: 'Fecha',
             render: (row) => (
                 <span className="text-sm tabular-nums text-foreground">
-                    {new Date(row.created_at).toLocaleDateString('es-AR')}
+                    {new Date(`${row.date}T00:00:00`).toLocaleDateString('es-AR')}
                 </span>
             ),
         },
         {
-            key: 'total',
-            header: 'Total',
+            key: 'description',
+            header: 'Concepto',
+            render: (row) => {
+                const label = (
+                    <span className={row.type === 'cancellation' ? 'text-sm text-muted-foreground line-through' : 'text-sm text-foreground'}>
+                        {row.description}
+                    </span>
+                );
+
+                return row.type === 'sale' && can('ventas.show') ? (
+                    <Link href={route('sales.show', row.sale_id)} className="hover:underline">
+                        {label}
+                    </Link>
+                ) : label;
+            },
+        },
+        {
+            key: 'debit',
+            header: 'Débito',
             align: 'right',
             render: (row) => (
-                <span className="font-medium tabular-nums text-foreground">{fmt(row.total)}</span>
+                <span className="tabular-nums text-foreground">
+                    {row.debit ? fmt(row.debit) : '—'}
+                </span>
             ),
         },
         {
-            key: 'paid',
-            header: 'Pagado',
+            key: 'credit',
+            header: 'Crédito',
             align: 'right',
             render: (row) => (
-                <span className="tabular-nums text-muted-foreground">
-                    {fmt(row.payments.reduce((s, p) => s + p.amount, 0))}
+                <span className="tabular-nums text-success">
+                    {row.credit ? fmt(row.credit) : '—'}
                 </span>
             ),
         },
@@ -92,22 +119,8 @@ export default function Show({ customer, sales, summary }: Props) {
             key: 'balance',
             header: 'Saldo',
             align: 'right',
-            render: (row) => {
-                const balance = row.total - row.payments.reduce((s, p) => s + p.amount, 0);
-                return (
-                    <Badge variant={balance > 0 ? 'destructive' : 'success'}>
-                        {fmt(balance)}
-                    </Badge>
-                );
-            },
-        },
-        {
-            key: 'payment_status',
-            header: 'Estado',
             render: (row) => (
-                <Badge variant={row.payment_status === 'SI' ? 'success' : 'warning'} dot>
-                    {row.payment_status === 'SI' ? 'Pagado' : 'Pendiente'}
-                </Badge>
+                <span className="font-medium tabular-nums text-foreground">{fmt(row.balance)}</span>
             ),
         },
     ];
@@ -256,12 +269,20 @@ export default function Show({ customer, sales, summary }: Props) {
 
                     <TabsContent value="history">
                         <DataTable
-                            columns={salesColumns}
-                            data={sales}
-                            keyExtractor={(row) => row.id}
+                            columns={movementColumns}
+                            data={movements}
+                            keyExtractor={(row, index) => index}
                             title="Historial Comercial"
-                            emptyMessage="No se encontraron ventas para este cliente."
-                            footer={<p className="text-sm text-muted-foreground">{sales.length} registros</p>}
+                            description="Ventas y cobros del cliente, con el saldo acumulado."
+                            emptyMessage="No se registraron movimientos para este cliente."
+                            footer={
+                                <div className="flex w-full items-center justify-between">
+                                    <span className="text-sm text-muted-foreground">{movements.length} movimientos</span>
+                                    <span className="text-sm font-medium tabular-nums">
+                                        Saldo pendiente: {fmt(summary.balance_due)}
+                                    </span>
+                                </div>
+                            }
                         />
                     </TabsContent>
                 </Tabs>
