@@ -4,7 +4,7 @@ import { ProductCard } from '@/components/sales/product-card';
 import { SaleLine } from '@/components/sales/sale-line';
 import { fmt, taxStatusLabel, type SaleForm } from '@/components/sales/use-sale-form';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
+import { Badge, badgeVariants } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Combobox } from '@/components/ui/combobox';
@@ -234,16 +234,20 @@ export function PosDesktop({ sale }: { sale: SaleForm }) {
                 {categories.length > 0 && (
                     <div className="flex flex-wrap gap-1.5">
                         {[{ id: 'all', name: 'Todos' }, ...categories].map((c) => (
+                            /* Las clases salen de `badgeVariants`, que es la misma
+                               fuente que usa <Badge>, en vez de copiarlas a mano.
+                               No se usa <Badge asChild> porque está roto: con
+                               `dot` en false le pasa dos hijos al Slot de Radix,
+                               que exige uno. */
                             <button
                                 key={c.id}
                                 type="button"
                                 onClick={() => setCategoryId(c.id)}
                                 aria-pressed={categoryId === c.id}
                                 className={cn(
-                                    'rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors',
-                                    categoryId === c.id
-                                        ? 'border-transparent bg-primary/10 text-primary'
-                                        : 'border-border text-foreground hover:bg-accent',
+                                    badgeVariants({ variant: categoryId === c.id ? 'default' : 'outline' }),
+                                    'cursor-pointer',
+                                    categoryId !== c.id && 'hover:bg-accent',
                                 )}
                             >
                                 {c.name}
@@ -527,15 +531,17 @@ export function PosDesktop({ sale }: { sale: SaleForm }) {
                                         Con un ajuste cargado queda bloqueado, porque un
                                         recargo que no se ve es un recargo que se olvida. */}
                                     <div className="flex items-center gap-2">
-                                        <button
+                                        <Button
                                             type="button"
                                             onClick={closeAdjustments}
                                             disabled={hasAdjustment}
                                             title={hasAdjustment ? 'Poné recargo y descuento en 0 para ocultarlos' : 'Ocultar recargo y descuento'}
-                                            className="grid size-6 shrink-0 place-items-center rounded-md border bg-card text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
+                                            variant="outline"
+                                            size="icon"
+                                            className="size-6 shrink-0 text-muted-foreground hover:text-foreground"
                                         >
                                             <ChevronDown className="size-3.5" />
-                                        </button>
+                                        </Button>
                                         <span>Subtotal</span>
                                     </div>
                                     <span className="text-foreground tabular-nums">{fmt(subtotal)}</span>
@@ -558,13 +564,15 @@ export function PosDesktop({ sale }: { sale: SaleForm }) {
                                 </div>
                             </div>
                         ) : (
-                            <button
+                            <Button
                                 type="button"
+                                variant="link"
+                                size="sm"
                                 onClick={() => setShowAdjustments(true)}
-                                className="self-start text-xs text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
+                                className="h-auto self-start p-0 text-xs text-muted-foreground decoration-dotted hover:text-foreground"
                             >
                                 Agregar recargo o descuento
-                            </button>
+                            </Button>
                         )}
 
                         {/*
@@ -576,7 +584,7 @@ export function PosDesktop({ sale }: { sale: SaleForm }) {
                         */}
                         <div className={cn('flex items-center justify-between gap-3', !summaryCollapsed && 'border-t pt-3')}>
                             <div className="flex min-w-0 items-center gap-2">
-                                <button
+                                <Button
                                     type="button"
                                     onClick={() => setSummaryFolded((folded) => !folded)}
                                     disabled={paymentNeedsAttention}
@@ -588,10 +596,12 @@ export function PosDesktop({ sale }: { sale: SaleForm }) {
                                               ? 'Mostrar las opciones de cobro'
                                               : 'Ocultar las opciones de cobro y ver más artículos'
                                     }
-                                    className="grid size-6 shrink-0 place-items-center rounded-md border bg-card text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
+                                    variant="outline"
+                                    size="icon"
+                                    className="size-6 shrink-0 text-muted-foreground hover:text-foreground"
                                 >
                                     {summaryCollapsed ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
-                                </button>
+                                </Button>
                                 <span className="text-base font-semibold">Total</span>
                                 {unitCount > 0 && (
                                     <span className="text-xs text-muted-foreground tabular-nums">

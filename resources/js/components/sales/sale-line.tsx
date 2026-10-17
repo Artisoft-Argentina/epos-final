@@ -153,26 +153,30 @@ export function SaleLine({ item, product, products, warehouses, stocks, error, o
                     ) : item.quantity > 1 ? (
                         <>
                             <p className="text-sm font-semibold tabular-nums">{fmt(item.quantity * item.price)}</p>
-                            <button
+                            <Button
                                 type="button"
+                                variant="link"
+                                size="sm"
                                 onClick={() => setEditingPrice(true)}
                                 title="Corregir el precio unitario"
-                                className="text-xs text-muted-foreground tabular-nums underline decoration-dotted underline-offset-2 hover:text-foreground"
+                                className="h-auto p-0 text-xs text-muted-foreground tabular-nums underline decoration-dotted hover:text-foreground"
                             >
                                 {fmt(item.price)} c/u
-                            </button>
+                            </Button>
                         </>
                     ) : (
-                        <button
+                        <Button
                             type="button"
+                            variant="link"
+                            size="sm"
                             onClick={() => setEditingPrice(true)}
                             title="Corregir el precio"
-                            // Sin subrayado fijo: ocho precios subrayados se leen
-                            // como ocho enlaces. Aparece al pasar el mouse.
-                            className="cursor-pointer text-sm font-semibold tabular-nums underline-offset-2 hover:underline hover:decoration-dotted"
+                            /* Sin subrayado fijo: ocho precios subrayados se leen
+                               como ocho enlaces. Aparece al pasar el mouse. */
+                            className="h-auto p-0 text-sm font-semibold text-foreground tabular-nums hover:decoration-dotted"
                         >
                             {fmt(item.price)}
-                        </button>
+                        </Button>
                     )}
                 </div>
 
