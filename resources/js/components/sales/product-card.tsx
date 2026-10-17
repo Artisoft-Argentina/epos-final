@@ -1,6 +1,6 @@
-import { Package, Plus } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { Package, Plus } from 'lucide-react';
 
 export type CatalogView = 'grid' | 'list';
 
@@ -18,14 +18,15 @@ interface ProductCardProps {
     view: CatalogView;
     /** Resaltado por teclado (flechas). */
     highlighted?: boolean;
-    /** Stock total del artículo. Mientras el backend no lo envíe, no se muestra. */
+    /** Fila de dos renglones, para anchos de teléfono. Sólo aplica a la vista lista. */
+    dense?: boolean;
+    /** Stock del artículo en el almacén del punto de venta. */
     stock?: number | null;
     onAdd: () => void;
     onHover?: () => void;
 }
 
-const fmt = (n: number): string =>
-    `$${Number(n).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const fmt = (n: number): string => `$${Number(n).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 function primaryImage(product: CatalogProduct) {
     return product.images?.find((i) => i.is_primary) ?? product.images?.[0];
@@ -40,7 +41,7 @@ function primaryImage(product: CatalogProduct) {
  * botón de eliminar. Esa diferencia es deliberada: si se parecieran, volvería
  * la confusión entre lo que se puede agregar y lo que ya está cargado.
  */
-export function ProductCard({ product, price, view, highlighted, stock, onAdd, onHover }: ProductCardProps) {
+export function ProductCard({ product, price, view, highlighted, dense, stock, onAdd, onHover }: ProductCardProps) {
     const img = primaryImage(product);
     const outOfStock = stock !== undefined && stock !== null && stock <= 0;
 
@@ -48,6 +49,40 @@ export function ProductCard({ product, price, view, highlighted, stock, onAdd, o
         stock === undefined || stock === null ? null : (
             <Badge variant={outOfStock ? 'destructive' : stock <= 5 ? 'warning' : 'success'}>{stock}</Badge>
         );
+
+    /*
+     * Fila angosta, para el teléfono. Los mismos datos pero en dos renglones:
+     * a 390px la fila de una línea deja 121px para el nombre —unos quince
+     * caracteres— y corta casi todo el catálogo. Apilada, el nombre se lleva el
+     * ancho entero y la fila sigue midiendo un tercio de lo que mide una ficha.
+     */
+    if (view === 'list' && dense) {
+        return (
+            <button
+                type="button"
+                onClick={onAdd}
+                onMouseEnter={onHover}
+                className={cn(
+                    'flex w-full flex-col gap-0.5 rounded-lg border bg-card px-3 py-2 text-left transition-colors',
+                    highlighted ? 'border-primary bg-accent' : 'hover:bg-accent',
+                    outOfStock && 'opacity-60',
+                )}
+            >
+                <div className="flex w-full items-start gap-2">
+                    <p className="min-w-0 flex-1 truncate text-sm font-medium">{product.name}</p>
+                    {stockBadge}
+                </div>
+
+                <div className="flex w-full items-center gap-2">
+                    <span className="truncate text-xs text-muted-foreground">{product.sku}</span>
+                    <span className="ml-auto shrink-0 text-sm font-semibold text-primary tabular-nums">{fmt(price)}</span>
+                    <span className="grid size-6 shrink-0 place-items-center rounded-md bg-primary text-primary-foreground">
+                        <Plus className="size-3.5" />
+                    </span>
+                </div>
+            </button>
+        );
+    }
 
     if (view === 'list') {
         return (
@@ -64,22 +99,22 @@ export function ProductCard({ product, price, view, highlighted, stock, onAdd, o
                 {img ? (
                     <img src={`/storage/${img.path}`} alt="" className="size-10 shrink-0 rounded-md object-cover" />
                 ) : (
-                    <div className="bg-muted flex size-10 shrink-0 items-center justify-center rounded-md">
-                        <Package className="text-muted-foreground size-4" />
+                    <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-muted">
+                        <Package className="size-4 text-muted-foreground" />
                     </div>
                 )}
 
                 <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">{product.name}</p>
-                    <p className="text-muted-foreground truncate text-xs">
+                    <p className="truncate text-xs text-muted-foreground">
                         {product.sku}
                         {product.category?.name ? ` · ${product.category.name}` : ''}
                     </p>
                 </div>
 
                 {stockBadge}
-                <span className="text-primary shrink-0 text-sm font-semibold tabular-nums">{fmt(price)}</span>
-                <span className="bg-primary text-primary-foreground grid size-7 shrink-0 place-items-center rounded-md">
+                <span className="shrink-0 text-sm font-semibold text-primary tabular-nums">{fmt(price)}</span>
+                <span className="grid size-7 shrink-0 place-items-center rounded-md bg-primary text-primary-foreground">
                     <Plus className="size-4" />
                 </span>
             </button>
@@ -93,25 +128,25 @@ export function ProductCard({ product, price, view, highlighted, stock, onAdd, o
             onMouseEnter={onHover}
             className={cn(
                 'flex flex-col overflow-hidden rounded-xl border bg-card text-left shadow-sm transition-colors',
-                highlighted ? 'border-primary ring-primary/20 ring-2' : 'hover:border-primary/30',
+                highlighted ? 'border-primary ring-2 ring-primary/20' : 'hover:border-primary/30',
                 outOfStock && 'opacity-60',
             )}
         >
-            <div className="bg-muted relative flex h-24 items-center justify-center">
+            <div className="relative flex h-24 items-center justify-center bg-muted">
                 {img ? (
                     <img src={`/storage/${img.path}`} alt="" className="size-full object-cover" />
                 ) : (
-                    <Package className="text-muted-foreground size-6" />
+                    <Package className="size-6 text-muted-foreground" />
                 )}
-                {stockBadge && <span className="absolute right-1.5 top-1.5">{stockBadge}</span>}
+                {stockBadge && <span className="absolute top-1.5 right-1.5">{stockBadge}</span>}
             </div>
 
             <div className="flex flex-1 flex-col gap-0.5 p-3">
-                <p className="line-clamp-2 text-sm font-medium leading-snug">{product.name}</p>
-                <p className="text-muted-foreground text-xs">{product.sku}</p>
+                <p className="line-clamp-2 text-sm leading-snug font-medium">{product.name}</p>
+                <p className="text-xs text-muted-foreground">{product.sku}</p>
                 <div className="mt-auto flex items-center justify-between gap-2 pt-2">
-                    <span className="text-primary text-sm font-semibold tabular-nums">{fmt(price)}</span>
-                    <span className="bg-primary text-primary-foreground grid size-7 shrink-0 place-items-center rounded-md">
+                    <span className="text-sm font-semibold text-primary tabular-nums">{fmt(price)}</span>
+                    <span className="grid size-7 shrink-0 place-items-center rounded-md bg-primary text-primary-foreground">
                         <Plus className="size-4" />
                     </span>
                 </div>

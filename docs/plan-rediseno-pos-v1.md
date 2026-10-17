@@ -26,8 +26,17 @@ claro que ese diferimiento no se sostenía:
   caros y no lo son. Ver las decisiones 3 y 4, que cambiaron de respuesta.
 
 Dejar la mitad de esos elementos afuera habría dado una pantalla que no se
-parecía a la propuesta y que después había que volver a tocar. Pendiente: la
-**Etapa 2 (mobile)**, que sigue siendo el bloqueante real.
+parecía a la propuesta y que después había que volver a tocar.
+
+### Estado — 16/10/2026
+
+**Etapa 2 terminada.** Con eso el plan está completo: no quedan etapas abiertas.
+La pantalla se reorganizó en una lógica compartida y dos shells, y a 390px se
+completa una venta entera sin zoom ni scroll horizontal.
+
+Lo que queda fuera del plan sigue en «Fuera de alcance V1»: búsqueda en el
+servidor, ticket de impresión, los campos del payload de entregas en español y
+los tests automatizados, que dependen del harness de SCRUM-67.
 
 ### Qué NO cambia
 
@@ -139,10 +148,90 @@ resultado que hoy, y en una ventana de 1024px nada se trunca.
 
 ---
 
-## Etapa 2 — Mobile
+## Etapa 2 — Mobile — **hecha (16/10/2026)**
 
 Cierra el bloqueante de forma definitiva, reutilizando los componentes de la
 Etapa 1.
+
+### Arquitectura: una lógica, dos shells
+
+El layout de teléfono no es un escritorio angosto —las dos regiones se turnan en
+pestañas, el cobro vive en un `Sheet` y hay una barra inferior fija—, así que no
+se resuelve con clases responsive: habría que montar los dos árboles y esconder
+uno, duplicando `id="auto_payment"` y `id="auto_delivery"` en el DOM, los
+efectos y hasta 60 fichas de catálogo.
+
+Tampoco son dos pantallas separadas: el estado es demasiado —13 `useState`, el
+`useForm` y unos 15 handlers— y dos copias divergen en la primera corrección.
+
+```
+pages/Sales/Create.tsx        elige shell y poco más
+components/sales/
+  use-sale-form.ts            estado y reglas, sin una decisión de layout
+  pos-desktop.tsx             catálogo y comprobante a la vez
+  pos-mobile.tsx              pestañas + barra inferior + Sheet
+  pos-bits.tsx                Kbd y PercentInput, que usan los dos
+  product-card.tsx            hojas compartidas
+  sale-line.tsx
+```
+
+`Create.tsx` bajó de 1263 a 94 líneas. El escritorio quedó idéntico al
+pre-refactor, medido: panel 865, encabezado 73, carrito 509 (7,4 renglones),
+cobro 219, sin scroll de página.
+
+### Lo que resuelve
+
+A 390px el comprobante arrancaba a **1573px de scroll** y agregar un artículo no
+daba ninguna señal: el contador no se veía y el carrito estaba fuera de pantalla.
+
+- **Conmutador Catálogo / Venta · N** fijo arriba. El contador en la propia
+  pestaña es la señal que faltaba: se agrega desde el catálogo y se ve subir sin
+  cambiar de pestaña.
+- **El contador va en unidades, no en renglones.** Agregar un artículo que ya
+  está cargado sube la cantidad de su renglón en lugar de sumar uno nuevo, así
+  que contando renglones el badge no se movía al tocar «+» sobre algo ya
+  agregado —justo lo único que avisa que la venta cambió—. Además la barra
+  inferior ya mostraba unidades, y dos números distintos en la misma pantalla
+  obligan a preguntarse cuál es cuál.
+- **Barra inferior fija** con total, cancelar y Cobrar, presente en las dos
+  pestañas. La venta se abandona desde el mismo lugar donde se cobra, igual que
+  en el escritorio.
+- **El cobro abre un `Sheet`** con ajustes, método, paga con, vuelto, los dos
+  interruptores y la confirmación. Mide 425px de 844.
+- **Fichas en dos columnas**, buscador fijo bajo el conmutador y filtros de
+  categoría en scroll horizontal.
+- **Grilla o lista también en el teléfono**, con preferencia propia. Era donde
+  más rendía y casi se queda afuera: la fila de una línea deja 121px para el
+  nombre a 390px —unos quince caracteres— y cortaba casi todo el catálogo. La
+  variante `dense` la apila en dos renglones, el nombre se lleva el ancho entero
+  y la fila mide 65px contra 197px de la ficha: **3x más densa**, 9 artículos
+  por pantalla contra 6.
+- La vista se guarda **por dispositivo** (`pos.catalog-view` y
+  `pos.catalog-view.mobile`). Con una sola clave, elegir lista en la compu
+  dejaba el teléfono en lista, y la decisión no es la misma en los dos.
+
+### Dos cosas que aparecieron al construirlo
+
+**El botón del Sheet no puede ser `type="submit"`.** El `Sheet` se dibuja en un
+portal, así que en el DOM queda fuera del `<form>` y un submit nativo no
+encuentra el formulario. Llama a `submit()` por `onClick`.
+
+**Cobrar sin cliente era un callejón sin salida.** En el escritorio el selector
+de cliente está a la vista; en el teléfono vive detrás de la otra pestaña, así
+que un botón apagado dejaba al vendedor sin saber qué le faltaba. Ahora sólo se
+deshabilita si no hay artículos: si falta el cliente, lleva a la pestaña de la
+venta y abre el encabezado.
+
+### `useIsMobile` reescrito con `useSyncExternalStore`
+
+Arrancaba en `false` y se corregía en un efecto, así que en un teléfono se
+pintaba un frame de la versión de escritorio —visible también en el sidebar, que
+recién después saltaba a `Sheet`—. Inicializar el estado leyendo `window`
+arreglaba el parpadeo pero rompía la hidratación si algún día se prende el SSR,
+que está configurado en `config/inertia.php` aunque hoy no corra.
+`useSyncExternalStore` resuelve los dos casos: su tercer argumento es el snapshot
+del servidor, React hidrata con él y vuelve a renderizar con el del cliente sin
+emitir mismatch.
 
 ### 2.1 Estructura
 
@@ -407,7 +496,7 @@ real menos el encabezado de la aplicación.
 1. ~~**Etapa 0**~~ — innecesaria: la Etapa 1 ya dejó el recorte sólo desde `xl`.
 2. **Etapa 1** — componentes y escritorio. **Hecha**, con las etapas 3 y 4
    adentro.
-3. **Etapa 2** — mobile. **Lo único que queda**, y sigue siendo el bloqueante.
+3. **Etapa 2** — mobile. **Hecha** (16/10/2026): una lógica, dos shells.
 
 Las etapas 1 y 2 conviene hacerlas seguidas: comparten los componentes y
 dejarlas a mitad implica mantener dos layouts a la vez.
@@ -425,7 +514,7 @@ Casos nuevos que agrega este trabajo:
 
 | # | Caso | Resultado esperado | Estado |
 |---|---|---|---|
-| 7.1 | Venta completa a 390px | Se puede buscar, agregar, ajustar y cobrar | Pendiente — Etapa 2 |
+| 7.1 | Venta completa a 390px | Se puede buscar, agregar, ajustar y cobrar | ✅ 16/10/2026 — `A 0003-00000005`, 2 ítems, 3 unidades, $2.150 |
 | 7.2 | Venta completa a 1024px | Nada se trunca ni se superpone | ✅ 14/10/2026 |
 | 7.3 | Catálogo con más artículos que el tope | Muestra el tope y avisa de refinar | ✅ 14/10/2026 |
 | 7.4 | Artículo sin stock en la grilla | Aparece atenuado, con el cero marcado | ✅ 14/10/2026 |
@@ -433,7 +522,7 @@ Casos nuevos que agrega este trabajo:
 | 7.9 | Artículo sin foto | Cae al ícono, en grilla y en lista | ✅ 14/10/2026 |
 | 7.5 | Vuelto | Paga con − total; el pago registrado es el total, no lo entregado | ✅ 14/10/2026 — $50.000 por $40.740 ⇒ vuelto $9.260 y pago $40.740 |
 | 7.6 | Recargo y descuento en % | El importe resultante coincide con el total guardado | ✅ 14/10/2026 — 42.000 +2% −5% ⇒ 840 / 2.100 / 40.740 en base |
-| 7.7 | Conmutador en mobile | El contador refleja los ítems sin cambiar de pestaña | Pendiente — Etapa 2 |
+| 7.7 | Conmutador en mobile | El contador refleja los ítems sin cambiar de pestaña | ✅ 16/10/2026 |
 | 7.10 | Pago parcial | Se destilda el automático, se paga menos y queda saldo pendiente | ✅ 14/10/2026 |
 | 7.11 | Próximo comprobante | El número mostrado coincide con el emitido | ✅ 14/10/2026 — predijo `A 0003-00000002`, emitió `A 0003-00000002` |
 | 7.12 | Atajos F2 y F3 | F3 enfoca el buscador, F2 cobra | ✅ 14/10/2026 |
@@ -448,10 +537,19 @@ Casos nuevos que agrega este trabajo:
 | 7.21 | Plegado no esconde decisiones | Pago parcial fuerza la apertura y deshabilita el chevron | ✅ 14/10/2026 |
 | 7.22 | El plegado se recuerda | Sobrevive a recargar la pantalla | ✅ 14/10/2026 |
 | 7.23 | Cobrar desde el pie plegado | F2 factura con el resumen plegado | ✅ 14/10/2026 — `A 0003-00000004`, 10 ítems, $915.000 |
-| 7.24 | Salir del encabezado sin reelegir | El lápiz abre, **Listo** cierra, sin tocar el cliente | ✅ 16/10/2026 |
+| 7.24 | Salir del encabezado sin reelegir | El lápiz abre, **Ocultar** cierra, sin tocar el cliente | ✅ 16/10/2026 |
 | 7.25 | Cerrar los ajustes vacíos | Abrir «Agregar recargo o descuento» y cerrarlo sin cargar nada | ✅ 16/10/2026 |
 | 7.26 | Ajuste cargado bloquea el cierre | Con 5% de descuento, el cierre y el chevron del resumen quedan deshabilitados | ✅ 16/10/2026 |
 | 7.27 | Volver el ajuste a 0 desbloquea | Cierre y plegado del resumen vuelven a habilitarse | ✅ 16/10/2026 |
+| 7.28 | Shell correcto por tamaño | A 390px monta el de teléfono; a 1512px el de escritorio | ✅ 16/10/2026 |
+| 7.29 | Escritorio tras el refactor | Mismas medidas que antes de extraer la lógica | ✅ 16/10/2026 — 73 / 509 / 219, sin scroll de página |
+| 7.30 | Barra inferior en ambas pestañas | Total y Cobrar visibles en Catálogo y en Venta | ✅ 16/10/2026 |
+| 7.31 | Hoja de cobro | Abre con ajustes, método, paga con, interruptores y confirmación | ✅ 16/10/2026 — 425px de 844 |
+| 7.32 | Cobrar sin cliente | Lleva a la pestaña de venta y abre el encabezado, no queda mudo | ✅ 16/10/2026 |
+| 7.33 | Grilla o lista en el teléfono | El conmutador cambia la vista y los nombres no se cortan | ✅ 16/10/2026 — fila 65px contra ficha 197px, 3x más densa |
+| 7.34 | Preferencia de vista por dispositivo | Elegir lista en la compu no cambia la del teléfono | ✅ 16/10/2026 — claves separadas |
+| 7.35 | Contador del conmutador | Coincide con la barra inferior y se mueve al repetir un artículo ya cargado | ✅ 16/10/2026 — 3 renglones, 5 unidades, los dos dicen 5 |
+| 7.36 | Cancelar la venta en el teléfono | La X de la barra inferior abandona la venta, igual que en el escritorio | ✅ 16/10/2026 — total con 176px, sin cortes ni superposición |
 
 ---
 
