@@ -1,7 +1,9 @@
 import { FormField } from '@/components/form-field';
 import { PercentInput } from '@/components/sales/pos-bits';
 import { ProductCard } from '@/components/sales/product-card';
+import { DiscardSaleDialog } from '@/components/sales/sale-dialogs';
 import { SaleLine } from '@/components/sales/sale-line';
+import { SALE_COMMIT_NOTE, SaleRecap } from '@/components/sales/sale-recap';
 import { fmt, taxStatusLabel, type SaleForm } from '@/components/sales/use-sale-form';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge, badgeVariants } from '@/components/ui/badge';
@@ -99,9 +101,28 @@ export function PosMobile({ sale }: { sale: SaleForm }) {
 
     const [tab, setTab] = useState<Tab>('catalogo');
     const [paying, setPaying] = useState(false);
+    const [discarding, setDiscarding] = useState(false);
+
+    /*
+     * La hoja de cobro tiene dos pasos: el primero se edita —método, paga con,
+     * interruptores— y el segundo sólo se lee. Esa diferencia es lo que la hace
+     * una confirmación: antes el botón de registrar vivía pegado a los campos
+     * editables, así que el pulgar que iba a «Paga con» podía caer encima.
+     */
+    const [step, setStep] = useState<'cobro' | 'confirmar'>('cobro');
+
+    // Al cerrar vuelve al primer paso: reabrirla en «confirmar» mostraría un
+    // resumen de algo que el vendedor quizá ya cambió.
+    const closePayment = (open: boolean) => {
+        setPaying(open);
+        if (!open) setStep('cobro');
+    };
+
+    // Con el carrito vacío no hay nada que perder y preguntar sería puro ruido.
+    const leave = () => (items.length > 0 ? setDiscarding(true) : window.history.back());
 
     /**
-     * Cobrar desde la barra inferior. Si todavía falta algo del comprobante
+     * Continuar desde la barra inferior. Si todavía falta algo del comprobante
      * —típicamente el cliente— no abre la hoja de cobro: lleva a la pestaña de
      * la venta y abre el encabezado, que es donde está lo que falta.
      */
@@ -413,14 +434,7 @@ export function PosMobile({ sale }: { sale: SaleForm }) {
                 </div>
                 {/* Misma salida que en el escritorio: la venta se abandona desde
                     el mismo lugar donde se cobra. */}
-                <Button
-                    type="button"
-                    variant="outline"
-                    size="lg"
-                    className="shrink-0"
-                    onClick={() => window.history.back()}
-                    title="Cancelar la venta"
-                >
+                <Button type="button" variant="outline" size="lg" className="shrink-0" onClick={leave} title="Descartar la venta">
                     <X className="size-4" />
                 </Button>
 
@@ -432,140 +446,169 @@ export function PosMobile({ sale }: { sale: SaleForm }) {
                   vendedor sin saber qué le falta.
                 */}
                 <Button type="button" size="lg" className="shrink-0" disabled={items.length === 0} onClick={startPayment}>
-                    Cobrar
+                    Continuar
                 </Button>
             </div>
 
             {/* ───── COBRO ───── */}
-            <Sheet open={paying} onOpenChange={setPaying}>
+            {/*
+              La hoja avanza de paso en lugar de apilarse con un diálogo: una sola
+              capa modal, sin dos trampas de foco ni dos manejadores de Escape, y
+              «Volver» tiene adónde ir —al paso de cobro, que es donde se corrige—.
+            */}
+            <Sheet open={paying} onOpenChange={closePayment}>
                 <SheetContent side="bottom" className="max-h-[92svh] overflow-y-auto">
                     <SheetHeader>
-                        <SheetTitle>Cobrar</SheetTitle>
+                        <SheetTitle>{step === 'cobro' ? 'Cobro' : 'Revisá la venta'}</SheetTitle>
                     </SheetHeader>
 
-                    <div className="flex flex-col gap-3 px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
-                        {adjustmentsOpen ? (
+                    {step === 'confirmar' ? (
+                        <div className="flex flex-col gap-3 px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
+                            <SaleRecap sale={sale} withTotals />
+                            <p className="text-xs text-muted-foreground">{SALE_COMMIT_NOTE}</p>
+
+                            <div className="grid grid-cols-2 gap-2">
+                                <Button type="button" variant="outline" size="lg" onClick={() => setStep('cobro')}>
+                                    Volver
+                                </Button>
+                                {/* `type="button"` y no submit: el Sheet se dibuja en un
+                                    portal, así que en el DOM queda fuera del <form> y un
+                                    submit nativo no encontraría el formulario. */}
+                                <Button type="button" size="lg" disabled={!canSubmit} onClick={submit}>
+                                    {processing ? 'Procesando...' : 'Confirmar venta'}
+                                </Button>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="flex flex-col gap-3 px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
+                            {adjustmentsOpen ? (
+                                <div className="flex flex-col gap-2">
+                                    <div className="flex items-center justify-between gap-3 text-sm text-muted-foreground">
+                                        <div className="flex items-center gap-2">
+                                            <span>Subtotal</span>
+                                            {!hasAdjustment && (
+                                                <Button
+                                                    type="button"
+                                                    variant="link"
+                                                    size="sm"
+                                                    onClick={closeAdjustments}
+                                                    className="h-auto p-0 text-xs text-muted-foreground decoration-dotted"
+                                                >
+                                                    ocultar
+                                                </Button>
+                                            )}
+                                        </div>
+                                        <span className="text-foreground tabular-nums">{fmt(subtotal)}</span>
+                                    </div>
+
+                                    <div className="flex items-center justify-between gap-3 text-sm text-muted-foreground">
+                                        <div className="flex items-center gap-2.5">
+                                            <Label className="text-sm font-normal text-muted-foreground">Recargo</Label>
+                                            <PercentInput value={surchargePct} onChange={setSurchargePct} label="Recargo en porcentaje" />
+                                        </div>
+                                        <span className="text-foreground tabular-nums">{fmt(surchargeAmount)}</span>
+                                    </div>
+
+                                    <div className="flex items-center justify-between gap-3 text-sm text-muted-foreground">
+                                        <div className="flex items-center gap-2.5">
+                                            <Label className="text-sm font-normal text-muted-foreground">Descuento</Label>
+                                            <PercentInput value={discountPct} onChange={setDiscountPct} label="Descuento en porcentaje" />
+                                        </div>
+                                        <span className="text-foreground tabular-nums">
+                                            {discountAmount > 0 ? `−${fmt(discountAmount)}` : fmt(0)}
+                                        </span>
+                                    </div>
+                                </div>
+                            ) : (
+                                <Button
+                                    type="button"
+                                    variant="link"
+                                    size="sm"
+                                    onClick={() => setShowAdjustments(true)}
+                                    className="h-auto self-start p-0 text-xs text-muted-foreground decoration-dotted"
+                                >
+                                    Agregar recargo o descuento
+                                </Button>
+                            )}
+
+                            <div className="flex items-baseline justify-between gap-3 border-t pt-3">
+                                <span className="text-base font-semibold">Total</span>
+                                <span className="text-2xl font-semibold tracking-tight text-primary tabular-nums">{fmt(total)}</span>
+                            </div>
+
+                            <FormField label="Método" error={errors.payment_method}>
+                                <Select value={data.payment_method} onValueChange={(v) => setData('payment_method', v)}>
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {Object.entries(paymentMethods).map(([value, label]) => (
+                                            <SelectItem key={value} value={value}>
+                                                {label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </FormField>
+
+                            <FormField label="Paga con" error={errors.payment_amount}>
+                                <MoneyInput value={tenderedValue} onValueChange={setTenderedValue} error={errors.payment_amount} />
+                            </FormField>
+
+                            {change > 0 && (
+                                <div className="flex items-center justify-between gap-3 rounded-md bg-success-soft px-3 py-2">
+                                    <span className="text-sm font-medium text-success">Vuelto</span>
+                                    <span className="text-base font-semibold text-success tabular-nums">{fmt(change)}</span>
+                                </div>
+                            )}
+
+                            {pendingBalance > 0 && (
+                                <div className="flex items-center justify-between gap-3 rounded-md bg-warning-soft px-3 py-2">
+                                    <span className="text-sm font-medium text-warning">Saldo pendiente</span>
+                                    <span className="text-base font-semibold text-warning tabular-nums">{fmt(pendingBalance)}</span>
+                                </div>
+                            )}
+
                             <div className="flex flex-col gap-2">
-                                <div className="flex items-center justify-between gap-3 text-sm text-muted-foreground">
-                                    <div className="flex items-center gap-2">
-                                        <span>Subtotal</span>
-                                        {!hasAdjustment && (
-                                            <Button
-                                                type="button"
-                                                variant="link"
-                                                size="sm"
-                                                onClick={closeAdjustments}
-                                                className="h-auto p-0 text-xs text-muted-foreground decoration-dotted"
-                                            >
-                                                ocultar
-                                            </Button>
-                                        )}
-                                    </div>
-                                    <span className="text-foreground tabular-nums">{fmt(subtotal)}</span>
+                                <div className="flex items-center gap-2">
+                                    <Checkbox
+                                        id="auto_payment"
+                                        checked={data.auto_payment}
+                                        onCheckedChange={(checked) => {
+                                            const val = !!checked;
+                                            setData('auto_payment', val);
+                                            setData('payment_amount', val ? total : 0);
+                                        }}
+                                    />
+                                    <Label htmlFor="auto_payment" className="text-sm font-normal">
+                                        Pago automático por el total
+                                    </Label>
                                 </div>
-
-                                <div className="flex items-center justify-between gap-3 text-sm text-muted-foreground">
-                                    <div className="flex items-center gap-2.5">
-                                        <Label className="text-sm font-normal text-muted-foreground">Recargo</Label>
-                                        <PercentInput value={surchargePct} onChange={setSurchargePct} label="Recargo en porcentaje" />
-                                    </div>
-                                    <span className="text-foreground tabular-nums">{fmt(surchargeAmount)}</span>
-                                </div>
-
-                                <div className="flex items-center justify-between gap-3 text-sm text-muted-foreground">
-                                    <div className="flex items-center gap-2.5">
-                                        <Label className="text-sm font-normal text-muted-foreground">Descuento</Label>
-                                        <PercentInput value={discountPct} onChange={setDiscountPct} label="Descuento en porcentaje" />
-                                    </div>
-                                    <span className="text-foreground tabular-nums">{discountAmount > 0 ? `−${fmt(discountAmount)}` : fmt(0)}</span>
+                                <div className="flex items-center gap-2">
+                                    <Checkbox
+                                        id="auto_delivery"
+                                        checked={data.auto_delivery}
+                                        onCheckedChange={(checked) => setData('auto_delivery', !!checked)}
+                                    />
+                                    <Label htmlFor="auto_delivery" className="text-sm font-normal">
+                                        Entrega automática de productos
+                                    </Label>
                                 </div>
                             </div>
-                        ) : (
-                            <Button
-                                type="button"
-                                variant="link"
-                                size="sm"
-                                onClick={() => setShowAdjustments(true)}
-                                className="h-auto self-start p-0 text-xs text-muted-foreground decoration-dotted"
-                            >
-                                Agregar recargo o descuento
+
+                            {/* Cada botón del recorrido nombra lo que abre y ninguno
+                            repite al anterior: la barra dice «Continuar», éste
+                            «Revisar» —porque lleva a «Revisá la venta»— y el del paso
+                            2 «Confirmar venta», que es el único que registra. */}
+                            <Button type="button" size="lg" disabled={!canSubmit} onClick={() => setStep('confirmar')} className="w-full">
+                                Revisar
                             </Button>
-                        )}
-
-                        <div className="flex items-baseline justify-between gap-3 border-t pt-3">
-                            <span className="text-base font-semibold">Total</span>
-                            <span className="text-2xl font-semibold tracking-tight text-primary tabular-nums">{fmt(total)}</span>
                         </div>
-
-                        <FormField label="Método" error={errors.payment_method}>
-                            <Select value={data.payment_method} onValueChange={(v) => setData('payment_method', v)}>
-                                <SelectTrigger>
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {Object.entries(paymentMethods).map(([value, label]) => (
-                                        <SelectItem key={value} value={value}>
-                                            {label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </FormField>
-
-                        <FormField label="Paga con" error={errors.payment_amount}>
-                            <MoneyInput value={tenderedValue} onValueChange={setTenderedValue} error={errors.payment_amount} />
-                        </FormField>
-
-                        {change > 0 && (
-                            <div className="flex items-center justify-between gap-3 rounded-md bg-success-soft px-3 py-2">
-                                <span className="text-sm font-medium text-success">Vuelto</span>
-                                <span className="text-base font-semibold text-success tabular-nums">{fmt(change)}</span>
-                            </div>
-                        )}
-
-                        {pendingBalance > 0 && (
-                            <div className="flex items-center justify-between gap-3 rounded-md bg-warning-soft px-3 py-2">
-                                <span className="text-sm font-medium text-warning">Saldo pendiente</span>
-                                <span className="text-base font-semibold text-warning tabular-nums">{fmt(pendingBalance)}</span>
-                            </div>
-                        )}
-
-                        <div className="flex flex-col gap-2">
-                            <div className="flex items-center gap-2">
-                                <Checkbox
-                                    id="auto_payment"
-                                    checked={data.auto_payment}
-                                    onCheckedChange={(checked) => {
-                                        const val = !!checked;
-                                        setData('auto_payment', val);
-                                        setData('payment_amount', val ? total : 0);
-                                    }}
-                                />
-                                <Label htmlFor="auto_payment" className="text-sm font-normal">
-                                    Pago automático por el total
-                                </Label>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Checkbox
-                                    id="auto_delivery"
-                                    checked={data.auto_delivery}
-                                    onCheckedChange={(checked) => setData('auto_delivery', !!checked)}
-                                />
-                                <Label htmlFor="auto_delivery" className="text-sm font-normal">
-                                    Entrega automática de productos
-                                </Label>
-                            </div>
-                        </div>
-
-                        {/* `type="button"` y no submit: el Sheet se dibuja en un portal,
-                            así que en el DOM este botón queda fuera del <form> y un
-                            submit nativo no encontraría el formulario al que pertenece. */}
-                        <Button type="button" size="lg" disabled={!canSubmit} onClick={submit} className="w-full">
-                            {processing ? 'Procesando...' : 'Cobrar y facturar'}
-                        </Button>
-                    </div>
+                    )}
                 </SheetContent>
             </Sheet>
+
+            <DiscardSaleDialog open={discarding} onOpenChange={setDiscarding} sale={sale} onConfirm={() => window.history.back()} />
         </form>
     );
 }

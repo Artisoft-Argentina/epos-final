@@ -1,6 +1,7 @@
 import { FormField } from '@/components/form-field';
 import { Kbd, PercentInput } from '@/components/sales/pos-bits';
 import { ProductCard } from '@/components/sales/product-card';
+import { ConfirmSaleDialog, DiscardSaleDialog } from '@/components/sales/sale-dialogs';
 import { SaleLine } from '@/components/sales/sale-line';
 import { fmt, taxStatusLabel, type SaleForm } from '@/components/sales/use-sale-form';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -35,8 +36,6 @@ export function PosDesktop({ sale }: { sale: SaleForm }) {
         data,
         setData,
         errors,
-        processing,
-        submit,
         canSubmit,
         errorFor,
         itemErrorKeys,
@@ -99,6 +98,12 @@ export function PosDesktop({ sale }: { sale: SaleForm }) {
 
     const visible = filtered.slice(0, capacity[view]);
 
+    const [discarding, setDiscarding] = useState(false);
+    const [confirming, setConfirming] = useState(false);
+
+    // Con el carrito vacío no hay nada que perder y preguntar sería puro ruido.
+    const leave = () => (items.length > 0 ? setDiscarding(true) : window.history.back());
+
     /*
      * Alto disponible para el POS, medido en vez de calculado.
      * Antes era `100vh - 4rem`, pero el encabezado de la app mide 72px y no 64:
@@ -152,9 +157,11 @@ export function PosDesktop({ sale }: { sale: SaleForm }) {
     return (
         <form
             ref={shellRef}
+            /* No registra: abre la confirmación. Así F2 —que hace
+               `requestSubmit()`— y el botón del pie entran por la misma puerta. */
             onSubmit={(e) => {
                 e.preventDefault();
-                submit();
+                if (canSubmit) setConfirming(true);
             }}
             style={{ '--pos-shell-h': shellHeight } as React.CSSProperties}
             className="flex flex-col xl:h-[var(--pos-shell-h)] xl:flex-row xl:overflow-hidden"
@@ -697,23 +704,23 @@ export function PosDesktop({ sale }: { sale: SaleForm }) {
                     </div>
 
                     <div className="flex shrink-0 gap-2 px-4 py-3">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="lg"
-                            className="shrink-0"
-                            onClick={() => window.history.back()}
-                            title="Cancelar la venta"
-                        >
+                        <Button type="button" variant="outline" size="lg" className="shrink-0" onClick={leave} title="Descartar la venta">
                             <X className="size-4" />
                         </Button>
+                        {/* «Continuar» y no «Cobrar»: este botón abre la revisión, no
+                            registra nada. Quien registra es el de la confirmación, y
+                            ahí dice «Confirmar venta» —que además es cierto cuando el
+                            pago es parcial o nulo, donde «Cobrar» sería falso—. */}
                         <Button type="submit" size="lg" disabled={!canSubmit} className="flex-1">
-                            {processing ? 'Procesando...' : 'Cobrar y facturar'}
-                            {!processing && <Kbd>F2</Kbd>}
+                            Continuar
+                            <Kbd>F2</Kbd>
                         </Button>
                     </div>
                 </div>
             </aside>
+
+            <DiscardSaleDialog open={discarding} onOpenChange={setDiscarding} sale={sale} onConfirm={() => window.history.back()} />
+            <ConfirmSaleDialog open={confirming} onOpenChange={setConfirming} sale={sale} />
         </form>
     );
 }

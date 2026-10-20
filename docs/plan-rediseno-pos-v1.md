@@ -413,6 +413,86 @@ lugar de relleno.
 primario, y en `text-xs` sobre `muted-foreground` se pierde. Los badges además
 hacen que la excepción sea un cambio de variante y no un salto de forma.
 
+### Confirmaciones — 17/10/2026
+
+Dos acciones no tenían vuelta atrás y salían de un solo toque.
+
+**Descartar la venta.** La X pregunta cuándo hay artículos cargados, diciendo
+cuántos y por cuánto. Con el carrito vacío sale directo: no hay nada que perder
+y preguntar sería ruido.
+
+Se llama **descartar** y no «cancelar» a propósito. En este sistema *cancelar una
+venta* es anular un comprobante ya emitido —restaura el inventario entregado y
+acredita lo pagado—, vive en el listado y en el detalle con su propia
+confirmación, y es bastante más seria. Usar la misma palabra haría que un
+vendedor que aprendió a desconfiar de «cancelar» dude también acá, donde no hay
+nada que temer, y al revés.
+
+**Confirmar la venta.** Un mini comprobante (`SaleRecap`) con número, cliente,
+lista, el detalle de artículos, totales, los tres badges de cobro y el vuelto.
+Muestra **todos** los renglones, no los primeros N: cortar en «y 6 más» da falsa
+confianza, y el error que la pantalla hace fácil —tocar «+» de más— en el total
+no se nota. Con muchos artículos la lista scrollea y el resto queda fijo.
+
+El resumen muestra el **vuelto** o el **saldo pendiente** según corresponda —nunca
+los dos, porque uno sale del pago automático y el otro de haberlo destildado—. El
+saldo va porque el badge «Pago parcial» avisa del estado pero no de cuánto, y eso
+es justamente lo que hay que decidir.
+
+La columna de la derecha se llama **Importe** y no «Precio»: es cantidad por
+precio, y nombrarla mal confundiría justo donde hay que verificar. El unitario no
+va —se deduce, y casi nunca es el error porque sale de la lista de precios—.
+
+En el escritorio es un `Dialog`. En el teléfono, **la hoja avanza de paso**: el
+primero edita —método, paga con, interruptores— y el segundo sólo se lee.
+
+**El botón dice «Confirmar venta», no «Cobrar».** `StoreSaleRequest` acepta
+`payment_amount` con `min:0` y `canSubmit` no exige que sea mayor a cero, así que
+una venta entera a cuenta corriente no cobra nada y un pago parcial cobra sólo una
+parte: en esos casos «Cobrar» es falso. El título dice «Revisá la venta» para que
+no le haga eco al botón.
+
+Los botones de entrada tampoco: el pie del escritorio y la barra del teléfono
+dicen **Continuar** y el paso 1 de la hoja dice **Revisar** —porque lleva a
+«Revisá la venta»—. Cada uno nombra lo que abre, ninguno repite al anterior y el
+único que registra es el último.
+
+El primer intento fue darle el `SaleRecap` a la hoja de cobro y dejar que su
+botón registrara, con el argumento de que «la hoja ya es la confirmación». Era
+falso: una hoja con campos editables es una superficie de edición, y su botón
+vive pegado a esos campos —el pulgar que va a «Paga con» puede caer en «Cobrar»—.
+Agregarle el resumen la hizo más informativa, no más segura; son cosas distintas.
+
+Lo que define una confirmación es que **nada adentro se edita y las únicas dos
+salidas son volver o confirmar**. Por eso el segundo paso no tiene un solo input,
+y el botón del primero dice **Continuar**: decir «Cobrar» ahí sería prometer otra
+vez algo que todavía no pasa, el mismo error que teníamos con «facturar».
+
+Se eligió avanzar de paso en vez de apilar un `Dialog` sobre la hoja: una sola
+capa modal, sin dos trampas de foco ni dos manejadores de Escape, y «Volver»
+tiene adónde ir —al paso de cobro, que es donde se corrige—. Al cerrar la hoja
+vuelve al primer paso: reabrirla en «confirmar» mostraría el resumen de algo que
+el vendedor quizá ya cambió.
+
+La nota de ARCA vive en `SALE_COMMIT_NOTE`, una sola vez, para que las dos
+pantallas no puedan divergir.
+
+`F2` abre la confirmación en lugar de registrar, y el botón de confirmar recibe
+el foco: la secuencia sigue siendo teclado, F2 y Enter.
+
+### El botón no dice «facturar», porque no factura
+
+`SaleService::create` nunca llama a ARCA. La autorización es una acción aparte
+(`POST afip/authorize/{factura}`) y la venta nace con `cae` en `null`. Prometer
+una factura en el botón haría que alguien se saltee ese paso creyendo que ya está
+hecho. Dice **Cobrar**.
+
+La nota de la confirmación decía además lo contrario de lo que hace el código
+—«una vez emitida, la factura sólo se puede anular»—: `SaleService::cancel`
+**rechaza** cancelar una venta que ya tiene CAE, así que es la no autorizada la
+que sí se puede cancelar. Ahora dice: «Queda registrada y descuenta stock.
+Todavía no se autoriza en ARCA».
+
 ### Todo plegado tiene que tener vuelta
 
 Los tres plegables salieron de ida y sin vuelta, y los tres había que corregirlos:
@@ -549,7 +629,20 @@ Casos nuevos que agrega este trabajo:
 | 7.33 | Grilla o lista en el teléfono | El conmutador cambia la vista y los nombres no se cortan | ✅ 16/10/2026 — fila 65px contra ficha 197px, 3x más densa |
 | 7.34 | Preferencia de vista por dispositivo | Elegir lista en la compu no cambia la del teléfono | ✅ 16/10/2026 — claves separadas |
 | 7.35 | Contador del conmutador | Coincide con la barra inferior y se mueve al repetir un artículo ya cargado | ✅ 16/10/2026 — 3 renglones, 5 unidades, los dos dicen 5 |
-| 7.36 | Cancelar la venta en el teléfono | La X de la barra inferior abandona la venta, igual que en el escritorio | ✅ 16/10/2026 — total con 176px, sin cortes ni superposición |
+| 7.36 | Descartar la venta en el teléfono | La X de la barra inferior abandona la venta, igual que en el escritorio | ✅ 16/10/2026 — total con 176px, sin cortes ni superposición |
+| 7.37 | Descartar pregunta con artículos | Dice cuántos y por cuánto; con el carrito vacío sale directo | ✅ 17/10/2026 — verificado en los dos shells |
+| 7.38 | Confirmación con detalle | Muestra todos los renglones, con encabezado Cant./Descripción/Importe | ✅ 17/10/2026 |
+| 7.39 | F2 abre la confirmación | Ya no registra directo; Enter confirma por el foco del botón | ✅ 17/10/2026 — `A 0003-00000007` emitida con F2 y Enter |
+| 7.40 | La hoja del teléfono se vale sola | Trae comprobante, cliente y artículos, sin repetir totales | ✅ 17/10/2026 — 642px de 844 |
+| 7.41 | El botón no promete factura | Dice «Cobrar»; la venta queda con `cae` nulo | ✅ 17/10/2026 — verificado en base |
+| 7.42 | Saldo pendiente en el resumen | Con pago parcial muestra el monto, simétrico al vuelto | ✅ 17/10/2026 — `A 0003-00000009`, $35.000 con $10.000 pagados ⇒ `partial` |
+| 7.43 | La hoja del teléfono no registra | Su botón dice «Continuar» y abre el paso de confirmación | ✅ 17/10/2026 |
+| 7.44 | El paso de confirmación es de sólo lectura | Cero inputs y cero selects; sólo Volver y Cobrar | ✅ 17/10/2026 |
+| 7.45 | «Volver» regresa al cobro | No cierra la hoja: vuelve al paso donde se corrige | ✅ 17/10/2026 |
+| 7.46 | Cerrar y reabrir la hoja | Arranca siempre en el paso de cobro | ✅ 17/10/2026 |
+| 7.47 | Confirmar desde el paso 2 | Registra la venta correctamente | ✅ 17/10/2026 — `A 0003-00000010`, 2 ítems, $35.850 |
+| 7.48 | El botón no promete cobro | Dice «Confirmar venta»: es cierto con pago total, parcial o nulo | ✅ 20/10/2026 — entra sin cortarse en los dos shells |
+| 7.49 | Ningún botón promete lo que no hace | Continuar ⇒ Revisar ⇒ Confirmar venta: sólo el último registra, y ninguno repite al anterior | ✅ 20/10/2026 |
 
 ---
 
