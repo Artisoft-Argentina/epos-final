@@ -2,7 +2,7 @@
 # EPOS — Docker Compose de PRODUCCIÓN (solo la app)
 #
 # Postgres corre NATIVO en el host (fuera de Docker); esta app
-# se conecta vía host.docker.internal. Ver deploy/README.md.
+# se conecta vía host.docker.internal. Ver deploy/prod/README.md.
 #
 # Ubicación en el VPS: /var/www/html/prod/docker-compose.yml
 # ============================================================
@@ -16,11 +16,14 @@ services:
       - '127.0.0.1:8000:80'          # solo lo alcanza el nginx del host
     environment:
       - RUN_MIGRATIONS=true          # migra la base CENTRAL en cada arranque (incremental)
-      - RUN_SEEDERS=false            # true SOLO en el primer boot (ver README 2.8)
+      - RUN_SEEDERS=false            # true SOLO en el primer boot (ver README §6.3)
+      - DB_HOST=host.docker.internal # el entrypoint (pg_isready) lo lee del shell, no del .env
+      - DB_PORT=5432
+      - DB_USERNAME=epos_user
     extra_hosts:
-      - "host.docker.internal:host-gateway"   # así el contenedor ve el Postgres del host
+      - "host.docker.internal:host-gateway"   # resuelve al gateway de docker0 (Postgres del host)
     volumes:
-      - ./storage:/var/www/html/storage       # certs ARCA, uploads, PDFs → PERSISTE
+      - ./storage:/var/www/html/storage       # certs, uploads, PDFs → PERSISTE
       - ./.env:/var/www/html/.env
     networks:
       - epos-network
@@ -30,4 +33,4 @@ networks:
     driver: bridge
     ipam:
       config:
-        - subnet: 172.20.0.0/16      # gateway fijo 172.20.0.1 (lo que autoriza pg_hba)
+        - subnet: 172.20.0.0/16      # red del proyecto (no colisiona con docker0 172.16.x)
