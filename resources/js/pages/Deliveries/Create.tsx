@@ -95,7 +95,7 @@ export default function Create({ factura, warehouses }: Props) {
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(route('entregas.store', factura.id));
+        post(route('deliveries.store', factura.id));
     };
 
     return (

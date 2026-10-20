@@ -114,7 +114,7 @@ export default function Create({ clientes, articulos }: Props) {
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(route('presupuestos.store'));
+        post(route('quotes.store'));
     };
 
     return (

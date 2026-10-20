@@ -62,14 +62,6 @@ class Delivery extends Model
         return $this->belongsTo(User::class, 'delivered_by_user_id');
     }
 
-    public function markAsDelivered(): void
-    {
-        $this->update([
-            'status'               => self::STATUS_DELIVERED,
-            'actual_delivery_date' => today(),
-        ]);
-    }
-
     public function isPending(): bool
     {
         return $this->status === self::STATUS_PENDING;

@@ -45,7 +45,7 @@ export default function Show({ presupuesto }: Props) {
                         <p className="text-gray-600">Detalles del presupuesto</p>
                     </div>
                     <div className="flex gap-2">
-                        <Link href={route('presupuestos.index')}>
+                        <Link href={route('quotes.index')}>
                             <Button variant="outline">
                                 <ArrowLeft className="w-4 h-4 mr-2" />
                                 Volver
