@@ -12,8 +12,7 @@ class AfipController extends Controller
 {
     private function afipDir(): string
     {
-        $tenantId = tenancy()->tenant?->id ?? 'default';
-        return storage_path("app/private/tenants/{$tenantId}/afip");
+        return storage_path('app/private/afip');
     }
 
     public function index()

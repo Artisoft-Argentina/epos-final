@@ -39,7 +39,7 @@ echo "==> Limpiando cache de configuración..."
 php artisan config:clear
 
 if [ "${RUN_MIGRATIONS:-false}" = "true" ]; then
-    echo "==> Ejecutando migraciones de la base central..."
+    echo "==> Ejecutando migraciones..."
     php artisan migrate --force
 fi
 

@@ -1,0 +1,11 @@
+[
+  {
+    "name": "qa",
+    "ip": "",
+    "username": "",
+    "port": "22",
+    "beforeHooks": "git config --global --add safe.directory /var/www/html/qa && git pull origin qa && export COMPOSE_FILE=docker-compose.prod.yml",
+    "afterHooks": "",
+    "path": "/var/www/html/qa"
+  }
+]
