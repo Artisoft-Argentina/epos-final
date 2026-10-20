@@ -158,7 +158,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                         </p>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
-                        <Button size="sm" onClick={() => router.visit(route('ventas.create'))}>
+                        <Button size="sm" onClick={() => router.visit(route('sales.create'))}>
                             <Plus className="size-4" />
                             Nueva venta
                         </Button>

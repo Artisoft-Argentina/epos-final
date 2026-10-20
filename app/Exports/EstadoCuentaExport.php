@@ -13,13 +13,13 @@ use PhpOffice\PhpSpreadsheet\Style\Border;
 class EstadoCuentaExport implements FromArray, WithStyles, WithColumnWidths
 {
     protected $cliente;
-    protected $facturas;
+    protected $movimientos;
     protected $resumen;
 
-    public function __construct($cliente, $facturas, $resumen)
+    public function __construct($cliente, $movimientos, $resumen)
     {
         $this->cliente = $cliente;
-        $this->facturas = $facturas;
+        $this->movimientos = $movimientos;
         $this->resumen = $resumen;
     }
 
@@ -33,48 +33,47 @@ class EstadoCuentaExport implements FromArray, WithStyles, WithColumnWidths
         
         // Información del cliente
         $data[] = ['Cliente:', $this->cliente->business_name];
-        $data[] = ['Documento:', $this->cliente->tax_id];
+        // Las personas físicas no tienen CUIT: se documentan con DNI.
+        $data[] = ['Documento:', $this->cliente->tax_id ?? $this->cliente->dni];
         $data[] = ['Email:', $this->cliente->email];
         $data[] = ['Teléfono:', $this->cliente->phone];
         $data[] = [''];
         
-        // Resumen
+        // Resumen — las claves vienen en inglés desde CustomerController::accountStatement
         $data[] = ['RESUMEN'];
-        $data[] = ['Total Compras:', '$' . number_format($this->resumen['total_compras'], 2)];
-        $data[] = ['Total Pagado:', '$' . number_format($this->resumen['total_pagado'], 2)];
-        $data[] = ['Saldo Pendiente:', '$' . number_format($this->resumen['saldo_pendiente'], 2)];
+        $data[] = ['Total Compras:', '$' . number_format($this->resumen['total_sales'], 2)];
+        $data[] = ['Total Pagado:', '$' . number_format($this->resumen['total_paid'], 2)];
+        $data[] = ['Saldo Pendiente:', '$' . number_format($this->resumen['balance_due'], 2)];
+        $data[] = ['Crédito a Favor:', '$' . number_format($this->resumen['credit'], 2)];
         $data[] = [''];
         
-        // Encabezados de facturas
-        $data[] = ['HISTORIAL DE COMPRAS'];
-        $data[] = ['Factura', 'Fecha', 'Total', 'Pagado', 'Saldo Pendiente', 'Estado'];
-        
-        // Facturas
-        foreach ($this->facturas as $sale) {
-            $totalPagado    = $sale->payments->sum('amount');
-            $saldoPendiente = $sale->total - $totalPagado;
-            
+        // Libro de movimientos: venta al débito, cobro al crédito, saldo acumulado
+        $data[] = ['MOVIMIENTOS'];
+        $data[] = ['Fecha', 'Concepto', 'Débito', 'Crédito', 'Saldo'];
+
+        foreach ($this->movimientos as $movimiento) {
             $data[] = [
-                $sale->invoice_number,
-                date('d/m/Y', strtotime($sale->date)),
-                '$' . number_format($sale->total, 2),
-                '$' . number_format($totalPagado, 2),
-                '$' . number_format($saldoPendiente, 2),
-                $saldoPendiente > 0 ? 'Pendiente' : 'Pagada',
+                date('d/m/Y', strtotime($movimiento['date'])),
+                $movimiento['description'],
+                $movimiento['debit'] ? '$' . number_format($movimiento['debit'], 2) : '—',
+                $movimiento['credit'] ? '$' . number_format($movimiento['credit'], 2) : '—',
+                '$' . number_format($movimiento['balance'], 2),
             ];
         }
-        
+
         return $data;
     }
 
     public function styles(Worksheet $sheet)
     {
+        // Los índices siguen el orden de array(): título, datos del cliente,
+        // RESUMEN (4 filas) y el encabezado del historial.
         return [
-            1 => ['font' => ['bold' => true, 'size' => 16], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]],
-            3 => ['font' => ['bold' => true]],
-            8 => ['font' => ['bold' => true, 'size' => 14]],
-            13 => ['font' => ['bold' => true, 'size' => 14]],
-            14 => ['font' => ['bold' => true], 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]],
+            1  => ['font' => ['bold' => true, 'size' => 16], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]],
+            3  => ['font' => ['bold' => true]],
+            8  => ['font' => ['bold' => true, 'size' => 14]],
+            14 => ['font' => ['bold' => true, 'size' => 14]],
+            15 => ['font' => ['bold' => true], 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]],
         ];
     }
 
@@ -82,11 +81,10 @@ class EstadoCuentaExport implements FromArray, WithStyles, WithColumnWidths
     {
         return [
             'A' => 15,
-            'B' => 20,
+            'B' => 34,
             'C' => 15,
             'D' => 15,
-            'E' => 18,
-            'F' => 12,
+            'E' => 15,
         ];
     }
 }

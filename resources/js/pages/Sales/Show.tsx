@@ -4,9 +4,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link, router } from '@inertiajs/react';
-import { ArrowLeft, DollarSign, Trash2, Package, CheckCircle, XCircle } from 'lucide-react';
+import { ArrowLeft, DollarSign, Trash2, Package, CheckCircle, XCircle, Ban } from 'lucide-react';
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog';
+import { ConfirmActionDialog } from '@/components/confirm-action-dialog';
 import { usePermission } from '@/hooks/use-permission';
+import { paymentStatusMeta, isCancelled } from '@/lib/payment-status';
+import { formatVoucher } from '@/lib/sale-number';
 
 interface Warehouse {
     id: number;
@@ -16,6 +19,8 @@ interface Warehouse {
 interface Sale {
     id: number;
     invoice_number: number;
+    voucher_letter: string;
+    pos_number: number;
     total: number;
     subtotal: number;
     surcharge?: number;
@@ -75,49 +80,66 @@ export default function Show({ factura, warehouses }: Props) {
     const saldoPendiente = Number(factura.total) - totalPagado;
 
     const changeWarehouse = (deliveryId: number, warehouseId: string) => {
-        router.patch(route('entregas.update-warehouse', deliveryId), { warehouse_id: warehouseId }, { preserveScroll: true });
+        router.patch(route('deliveries.update-warehouse', deliveryId), { warehouse_id: warehouseId }, { preserveScroll: true });
     };
 
     const marcarEntregada = (deliveryId: number, warehouseId: number | null) => {
         if (!warehouseId) return;
         if (confirm('¿Confirmar entrega? Se descontará el stock del almacén seleccionado.')) {
-            router.post(route('entregas.marcar-entregada', deliveryId), { warehouse_id: warehouseId });
+            router.post(route('deliveries.mark-delivered', deliveryId), { warehouse_id: warehouseId });
         }
     };
 
     const cancelarEntrega = (deliveryId: number) => {
         if (confirm('¿Cancelar esta entrega?')) {
-            router.post(route('entregas.cancelar', deliveryId));
+            router.post(route('deliveries.cancel', deliveryId));
         }
     };
 
     const hasPendingDeliveries = factura.deliveries?.some(d => d.status === 'pending');
     const totalVendido = factura.products?.reduce((sum, p) => sum + p.pivot.quantity, 0) || 0;
     const totalEntregado = factura.deliveries?.filter(d => d.status === 'delivered').reduce((sum, d) => sum + d.quantity, 0) || 0;
-    const showDeliveryButton = hasPendingDeliveries || totalEntregado < totalVendido;
+    const cancelada = isCancelled(factura.payment_status);
+    const showDeliveryButton = !cancelada && (hasPendingDeliveries || totalEntregado < totalVendido);
+    const estadoMeta = paymentStatusMeta(factura.payment_status);
+    // Comprobante completo: el "#N" pelado se confunde con el id de la URL.
+    const voucher = formatVoucher(factura.voucher_letter, factura.pos_number, factura.invoice_number);
 
     return (
         <AppLayout>
-            <Head title={`Venta #${factura.invoice_number}`} />
+            <Head title={`Venta ${voucher}`} />
             <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
                     <div>
-                        <h1 className="text-2xl font-bold">Venta #{factura.invoice_number}</h1>
+                        <h1 className="text-2xl font-bold">Venta {voucher}</h1>
                         <p className="text-gray-600">Detalles de la venta</p>
                     </div>
                     <div className="flex gap-2">
-                        <Link href={route('ventas.index')}>
+                        <Link href={route('sales.index')}>
                             <Button variant="outline"><ArrowLeft className="w-4 h-4 mr-2" />Volver</Button>
                         </Link>
                         {can('entregas.create') && showDeliveryButton && (
-                            <Link href={route('entregas.create', factura.id)}>
+                            <Link href={route('deliveries.create', factura.id)}>
                                 <Button variant="outline"><Package className="w-4 h-4 mr-2" />Registrar Entrega</Button>
                             </Link>
                         )}
-                        {can('pagos.create') && saldoPendiente > 0 && (
-                            <Link href={route('pagos.create', factura.id)}>
+                        {can('pagos.create') && !cancelada && saldoPendiente > 0 && (
+                            <Link href={route('payments.create', factura.id)}>
                                 <Button><DollarSign className="w-4 h-4 mr-2" />Registrar Pago</Button>
                             </Link>
+                        )}
+                        {can('ventas.destroy') && !cancelada && !factura.cae && (
+                            <ConfirmActionDialog
+                                url={route('sales.cancel', factura.id)}
+                                method="patch"
+                                title="Cancelar venta"
+                                description={`¿Cancelar la ${voucher} de ${factura.customer.business_name} por $${Number(factura.total).toFixed(2)}? Se restaurará el inventario entregado y se acreditará lo pagado al cliente. La cancelación no se puede deshacer.`}
+                                confirmLabel="Cancelar venta"
+                                processingLabel="Cancelando..."
+                                trigger={
+                                    <Button variant="destructive-soft"><Ban className="w-4 h-4 mr-2" />Cancelar Venta</Button>
+                                }
+                            />
                         )}
                     </div>
                 </div>
@@ -131,9 +153,7 @@ export default function Show({ factura, warehouses }: Props) {
                             <div>
                                 <label className="text-sm font-medium text-muted-foreground">Estado</label>
                                 <p className="text-sm mt-1">
-                                    <Badge variant={factura.payment_status === 'SI' ? 'success' : 'warning'}>
-                                        {factura.payment_status === 'SI' ? 'Pagada' : 'Pendiente'}
-                                    </Badge>
+                                    <Badge variant={estadoMeta.variant}>{estadoMeta.label}</Badge>
                                 </p>
                             </div>
                             <div><label className="text-sm font-medium text-gray-500">Fecha</label><p className="text-sm">{new Date(factura.date).toLocaleDateString()}</p></div>
@@ -149,7 +169,10 @@ export default function Show({ factura, warehouses }: Props) {
                             {factura.additional_discount && Number(factura.additional_discount) > 0 && <div><label className="text-sm font-medium text-gray-500">Descuento</label><p className="text-sm text-green-600">-${Number(factura.additional_discount).toFixed(2)}</p></div>}
                             <div><label className="text-sm font-medium text-gray-500">Total</label><p className="text-lg font-bold">${Number(factura.total).toFixed(2)}</p></div>
                             <div><label className="text-sm font-medium text-gray-500">Total Pagado</label><p className="text-sm font-semibold text-green-600">${totalPagado.toFixed(2)}</p></div>
-                            {saldoPendiente > 0 && <div><label className="text-sm font-medium text-muted-foreground">Saldo Pendiente</label><p className="text-lg font-bold text-destructive">${saldoPendiente.toFixed(2)}</p></div>}
+                            {/* Una venta cancelada no adeuda: lo pagado se acreditó al cliente. */}
+                            {cancelada
+                                ? totalPagado > 0 && <div><label className="text-sm font-medium text-muted-foreground">Saldo Pendiente</label><p className="text-sm text-muted-foreground">Venta cancelada — ${totalPagado.toFixed(2)} acreditados al cliente</p></div>
+                                : saldoPendiente > 0 && <div><label className="text-sm font-medium text-muted-foreground">Saldo Pendiente</label><p className="text-lg font-bold text-destructive">${saldoPendiente.toFixed(2)}</p></div>}
                         </CardContent>
                     </Card>
                 </div>
@@ -199,7 +222,7 @@ export default function Show({ factura, warehouses }: Props) {
                                                 <td className="p-2 text-right">
                                                     {can('pagos.destroy') && (
                                                         <DeleteConfirmationDialog
-                                                            url={route('pagos.destroy', payment.id)}
+                                                            url={route('payments.destroy', payment.id)}
                                                             title="Eliminar pago"
                                                             description={`¿Está seguro que desea eliminar este pago de $${Number(payment.amount).toFixed(2)}?`}
                                                             trigger={<Button variant="outline" size="sm"><Trash2 className="w-4 h-4" /></Button>}
@@ -300,7 +323,7 @@ export default function Show({ factura, warehouses }: Props) {
                                                     )}
                                                     {delivery.status === 'delivered' && can('entregas.destroy') && (
                                                         <DeleteConfirmationDialog
-                                                            url={route('entregas.destroy', delivery.id)}
+                                                            url={route('deliveries.destroy', delivery.id)}
                                                             title="Revertir entrega"
                                                             description={`¿Revertir la entrega de ${delivery.quantity} unidades de ${delivery.product.name}? Se devolverá el stock.`}
                                                             trigger={<Button variant="outline" size="sm"><Trash2 className="w-4 h-4" /></Button>}
