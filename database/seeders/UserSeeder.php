@@ -15,23 +15,20 @@ class UserSeeder extends Seeder
         Role::firstOrCreate(['name' => 'vendedor', 'guard_name' => 'web']);
         Role::firstOrCreate(['name' => 'cliente', 'guard_name' => 'web']);
 
-        $user = User::create([
+        $user = User::firstOrCreate(['email' => 'superadmin@mail.com'], [
             'name' => 'Super Admin',
-            'email' => 'superadmin@mail.com',
             'password' => bcrypt('asdf1234'),
         ]);
         $user->assignRole('superadmin');
 
-        $user = User::create([
+        $user = User::firstOrCreate(['email' => 'admin@mail.com'], [
             'name' => 'Admin',
-            'email' => 'admin@mail.com',
             'password' => bcrypt('asdf1234'),
         ]);
         $user->assignRole('admin');
 
-        $user = User::create([
+        $user = User::firstOrCreate(['email' => 'vendedor@mail.com'], [
             'name' => 'Vendedor',
-            'email' => 'vendedor@mail.com',
             'password' => bcrypt('asdf1234'),
         ]);
         $user->assignRole('vendedor');

@@ -9,8 +9,7 @@
 #   make build        Reconstruir imagen Docker
 #   make logs         Ver logs del contenedor app
 #   make shell        Abrir shell en el contenedor app
-#   make migrate      Ejecutar migraciones (base central)
-#   make tenant-migrate  Migrar todas las bases de tenants
+#   make migrate      Ejecutar migraciones
 #   make fresh        Borrar todo y empezar desde cero (¡CUIDADO!)
 #
 # PRODUCCIÓN (ejecutar en el VPS):
@@ -40,7 +39,7 @@ dev-shell:
 
 dev-rebuild: dev-down build-fresh dev-up
 
-.PHONY: up down build build-fresh logs shell migrate tenant-migrate seed demo-seed tenants-list fresh \
+.PHONY: up down build build-fresh logs shell migrate seed demo-seed fresh \
         rebuild rebuild-fresh prod-up prod-down prod-deploy migrate-prod backup \
         artisan tinker queue-work dev-up dev-down dev-logs dev-shell dev-rebuild postgres-shell
 
@@ -57,7 +56,6 @@ up:
 	$(COMPOSE) up -d
 	@echo ""
 	@echo "✓ EPOS corriendo en http://epos.lvh.me:$(APP_PORT)"
-	@echo "  Central (admin empresas): http://epos.lvh.me:$(APP_PORT)/central"
 	@echo "  MySQL disponible en:      localhost:$(DB_EXTERNAL_PORT)"
 	@echo "  Redis disponible en:      localhost:$(REDIS_EXTERNAL_PORT)"
 
@@ -86,30 +84,12 @@ postgres-shell:
 migrate:
 	$(COMPOSE) exec app php artisan migrate --force
 
-tenant-migrate:
-	$(COMPOSE) exec app php artisan tenants:migrate --force
-	@echo "✓ Migraciones ejecutadas en todas las bases de tenants"
-
 seed:
 	$(COMPOSE) exec app php artisan db:seed --force
 
-# Siembra datos demo en un tenant específico (marcas, categorías, productos, stock, clientes).
-# Uso: make demo-seed tenant=<tenant_id>
+# Siembra datos demo (marcas, categorías, productos, stock, clientes).
 demo-seed:
-	@if [ -z "$(tenant)" ]; then \
-		echo "✗ Falta el parámetro 'tenant'."; \
-		echo "  Uso: make demo-seed tenant=<tenant_id>"; \
-		echo ""; \
-		echo "  Tenants disponibles:"; \
-		$(COMPOSE) exec -T app php artisan tinker --execute="App\Models\Tenant::pluck('id')->each(fn(\$$id) => print('   - '.\$$id.PHP_EOL));" 2>/dev/null; \
-		exit 1; \
-	fi
-	$(COMPOSE) exec app php artisan tenants:run epos:seed-demo --tenants=$(tenant)
-	@echo "✓ Datos demo sembrados en tenant '$(tenant)'."
-
-# Lista los tenants existentes
-tenants-list:
-	@$(COMPOSE) exec -T app php artisan tinker --execute="App\Models\Tenant::pluck('id')->each(fn(\$$id) => print(' - '.\$$id.PHP_EOL));"
+	$(COMPOSE) exec app php artisan epos:seed-demo
 
 fresh:
 	@echo "⚠️  Esto borrará TODOS los datos. Escribe 'si' para confirmar:"
@@ -174,11 +154,7 @@ prod-deploy:
 
 migrate-prod:
 	$(COMPOSE_PROD) exec app php artisan migrate --force
-	@echo "✓ Migraciones de base central ejecutadas."
-
-tenant-migrate-prod:
-	$(COMPOSE_PROD) exec app php artisan tenants:migrate --force
-	@echo "✓ Migraciones de tenants ejecutadas."
+	@echo "✓ Migraciones ejecutadas."
 
 backup:
 	@DATE=$$(date +%Y%m%d_%H%M%S); \
