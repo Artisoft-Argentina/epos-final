@@ -52,8 +52,7 @@ class AfipWebService
 
     private function getAfipDir(): string
     {
-        $tenantId = tenancy()->tenant?->id ?? 'default';
-        return storage_path("app/private/tenants/{$tenantId}/afip");
+        return storage_path('app/private/afip');
     }
 
     private function validateTokenCuit(): void
@@ -82,8 +81,7 @@ class AfipWebService
 
     private function getAuth(string $service): array
     {
-        $tenantId  = tenancy()->tenant?->id ?? 'default';
-        $cacheKey  = "afip_auth_{$tenantId}_{$service}";
+        $cacheKey  = "afip_auth_{$service}";
         $tokenFile = $this->getAfipDir() . "/token_{$service}.json";
 
         // Intentar obtener del caché de Laravel

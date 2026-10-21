@@ -85,7 +85,7 @@ El orden de CI (`lint.yml`) es: **Pint → Prettier → ESLint**.
 
 - `.github/workflows/tests.yml` — Node 22, PHP 8.4, `npm ci`, `npm run build`, `composer install`, copiar `.env.example` → `.env`, generar key, luego `./vendor/bin/pest`.
 - `.github/workflows/lint.yml` — corre `vendor/bin/pint`, `npm run format`, `npm run lint`.
-- Workflows de deploy (`deploy-dev.yml`, `deploy-qa.yml`, `deploy-prod.yml`) existen pero son específicos por ambiente.
+- `.github/workflows/deploy-{dev,qa,prod}.yml` — deploy por rama (`dev`/`qa`/`main`); los servidores salen de la matriz `deploy/deployment-config.<env>.json`.
 
 ## Ubicaciones Clave de Archivos
 
