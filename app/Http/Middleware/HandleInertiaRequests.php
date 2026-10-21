@@ -41,34 +41,19 @@ class HandleInertiaRequests extends Middleware
         [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
 
         $user = $request->user();
-        $isTenant = tenancy()->initialized;
 
         return [
             ...parent::share($request),
             'name' => config('app.name'),
             'quote' => ['message' => trim($message), 'author' => trim($author)],
             'auth' => [
-                'user' => $isTenant
-                    ? $user?->loadMissing(['roles'])
-                    : $request->user('central'),
-                'tour_completed' => $isTenant
-                    ? ($user?->tour_completed ?? true)
-                    : true,
-                'permissions' => fn () => $isTenant && $user
-                    ? $user->getAllPermissions()->pluck('name')->toArray()
-                    : [],
-                'roles' => fn () => $isTenant && $user
-                    ? $user->roles->map(fn ($r) => ['id' => $r->id, 'name' => $r->name])->toArray()
-                    : [],
-                'is_vendedor' => fn () => $isTenant && $user
-                    ? $user->isVendedor()
-                    : false,
-                'is_admin' => fn () => $isTenant && $user
-                    ? $user->isAdmin()
-                    : false,
-                'is_superadmin' => fn () => $isTenant && $user
-                    ? $user->hasRole('superadmin')
-                    : false,
+                'user' => $user?->loadMissing(['roles']),
+                'tour_completed' => $user?->tour_completed ?? true,
+                'permissions' => fn () => $user?->getAllPermissions()->pluck('name')->toArray() ?? [],
+                'roles' => fn () => $user?->roles->map(fn ($r) => ['id' => $r->id, 'name' => $r->name])->toArray() ?? [],
+                'is_vendedor' => fn () => $user?->isVendedor() ?? false,
+                'is_admin' => fn () => $user?->isAdmin() ?? false,
+                'is_superadmin' => fn () => $user?->hasRole('superadmin') ?? false,
             ],
             'ziggy' => fn (): array => [
                 ...(new Ziggy())->toArray(),
@@ -86,10 +71,6 @@ class HandleInertiaRequests extends Middleware
 
     private function resolvePointsOfSaleProp(Request $request)
     {
-        if (! tenancy()->initialized) {
-            return [];
-        }
-
         $user = $request->user();
         if ($user && $user->isVendedor()) {
             // Vendedor: solo su PV asignado (si tiene)
@@ -103,10 +84,6 @@ class HandleInertiaRequests extends Middleware
 
     private function resolveActivePointOfSaleId(Request $request): ?int
     {
-        if (! tenancy()->initialized) {
-            return null;
-        }
-
         $user = $request->user();
         if ($user && $user->isVendedor()) {
             return $user->point_of_sale_id;

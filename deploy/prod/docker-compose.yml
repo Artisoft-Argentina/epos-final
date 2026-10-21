@@ -15,7 +15,7 @@ services:
     ports:
       - '127.0.0.1:8000:80'          # solo lo alcanza el nginx del host
     environment:
-      - RUN_MIGRATIONS=true          # migra la base CENTRAL en cada arranque (incremental)
+      - RUN_MIGRATIONS=true          # migra la base en cada arranque (incremental)
       - RUN_SEEDERS=false            # true SOLO en el primer boot (ver README §6.3)
       - DB_HOST=host.docker.internal # el entrypoint (pg_isready) lo lee del shell, no del .env
       - DB_PORT=5432

@@ -3,8 +3,7 @@
 # Uso: docker compose up -d
 #
 # Acceso:
-#   Central (admin):  http://epos.lvh.me:${APP_PORT}
-#   Tenant ejemplo:   http://empresa1.epos.lvh.me:${APP_PORT}
+#   http://epos.lvh.me:${APP_PORT}
 #
 # lvh.me es un DNS público que resuelve *.lvh.me → 127.0.0.1
 # No requiere configurar /etc/hosts.
@@ -68,8 +67,6 @@ services:
       - POSTGRES_PASSWORD=epos_password
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      # Otorga CREATEDB al usuario (requerido para multitenant)
-      - ./docker/postgres-init.sql:/docker-entrypoint-initdb.d/01-grants.sql
     ports:
       - '${DB_EXTERNAL_PORT}:5432' # Acceso local desde herramientas como TablePlus/DBeaver
     healthcheck:

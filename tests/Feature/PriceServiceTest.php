@@ -9,19 +9,9 @@ use App\Services\PriceService;
 use App\Services\ProductService;
 use Illuminate\Support\Facades\DB;
 
-/*
-|--------------------------------------------------------------------------
-| Setup
-|--------------------------------------------------------------------------
-| Los modelos de negocio (Product, PriceList, ...) viven en la BD del tenant.
-| Corremos solo las migraciones de `database/migrations/tenant` sobre la
-| conexión sqlite :memory: de testing. migrate:fresh resetea el esquema en
-| cada test. No usamos RefreshDatabase porque cargaría las migraciones
-| centrales (colisión de tablas `cache`/`sessions`).
-*/
+uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->artisan('migrate:fresh', ['--path' => 'database/migrations/tenant']);
     $this->priceService = app(PriceService::class);
 });
 

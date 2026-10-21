@@ -40,7 +40,7 @@ echo "==> Creando symlink de storage..."
 php artisan storage:link --force 2>/dev/null || true
 
 if [ "${RUN_MIGRATIONS:-false}" = "true" ]; then
-    echo "==> Ejecutando migraciones de la base central..."
+    echo "==> Ejecutando migraciones..."
     php artisan migrate --force 2>/dev/null || true
 fi
 
