@@ -1,7 +1,9 @@
 # EPOS — Entorno Local con Docker
 
+> ⚠️ **Desactualizado**: escrito para la arquitectura **multi-tenant** anterior (base `epos_central` + una base por empresa, `make tenant-migrate`, MySQL). Hoy EPOS es **single-tenant** sobre PostgreSQL: una sola base (`epos_central`, nombre que quedó de esa época) por deploy, y `php artisan migrate` alcanza — no hay comando `tenants:migrate`. Para el setup actual, ver [CLAUDE.md](CLAUDE.md) y el `Makefile`.
+
 > Guía paso a paso para levantar EPOS en tu máquina de desarrollo con Docker.
-> No requiere instalar PHP, MySQL ni Node.js de forma local.
+> No requiere instalar PHP, PostgreSQL ni Node.js de forma local.
 
 ---
 
