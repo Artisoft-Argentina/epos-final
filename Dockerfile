@@ -1,14 +1,6 @@
-# Multi-stage build para optimizar el tamaño final
-FROM node:20-alpine AS node-builder
-
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci
-
-COPY . .
-RUN npm run build
-
-# Imagen principal PHP
+# Imagen de desarrollo. docker-compose.yml monta el repo entero sobre
+# /var/www/html (bind mount), así que no se buildean assets de Vite acá:
+# un `npm run build` en el host ya queda visible dentro del contenedor.
 FROM php:8.4-fpm-alpine
 
 # Instalar dependencias del sistema
@@ -25,9 +17,7 @@ RUN apk add --no-cache \
     libzip-dev \
     icu-dev \
     oniguruma-dev \
-    libpq-dev \
-    nodejs \
-    npm
+    libpq-dev
 
 # Instalar extensiones PHP
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
@@ -60,9 +50,9 @@ WORKDIR /var/www/html
 COPY --chown=www-data:www-data composer.json composer.lock ./
 RUN composer install --optimize-autoloader --no-interaction --no-scripts
 
-# Copiar el resto de la aplicación
+# Copiar el resto de la aplicación (en dev, el bind mount lo tapa de todos
+# modos; esto solo importa si el contenedor arranca sin el volumen montado)
 COPY --chown=www-data:www-data . .
-COPY --from=node-builder --chown=www-data:www-data /app/public/build ./public/build
 
 # Ejecutar scripts post-install de Composer (eg. package:discover)
 RUN composer run-script post-autoload-dump --no-interaction 2>/dev/null || true

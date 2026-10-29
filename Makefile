@@ -17,7 +17,7 @@
 #   make prod-down    Bajar entorno de producción
 #   make prod-deploy  Pull + build + restart (deploy completo)
 #   make migrate-prod Ejecutar migraciones en producción
-#   make backup       Hacer backup de MySQL
+#   make backup       Hacer backup de PostgreSQL
 # ============================================================
 
 dev-up:
@@ -56,7 +56,7 @@ up:
 	$(COMPOSE) up -d
 	@echo ""
 	@echo "✓ EPOS corriendo en http://epos.lvh.me:$(APP_PORT)"
-	@echo "  MySQL disponible en:      localhost:$(DB_EXTERNAL_PORT)"
+	@echo "  PostgreSQL disponible en: localhost:$(DB_EXTERNAL_PORT)"
 	@echo "  Redis disponible en:      localhost:$(REDIS_EXTERNAL_PORT)"
 
 down:

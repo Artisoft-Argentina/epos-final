@@ -30,33 +30,6 @@ services:
     networks:
       - epos-network
 
-  # -------------------------------------------------------
-  # MySQL (comentado — backup por si se necesita revertir)
-  # -------------------------------------------------------
-  # mysql:
-  #   image: mysql:8.0
-  #   container_name: ${APP_ENV}-epos-mysql
-  #   restart: unless-stopped
-  #   environment:
-  #     - MYSQL_ROOT_PASSWORD=epos_root_2024
-  #     - MYSQL_DATABASE=epos_central
-  #     - MYSQL_USER=epos_user
-  #     - MYSQL_PASSWORD=epos_password
-  #   volumes:
-  #     - mysql_data:/var/lib/mysql
-  #     - ./docker/mysql.cnf:/etc/mysql/conf.d/custom.cnf
-  #     - ./docker/mysql-init.sql:/docker-entrypoint-initdb.d/01-grants.sql
-  #   ports:
-  #     - '${DB_EXTERNAL_PORT}:3306'
-  #   healthcheck:
-  #     test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-uroot', '-pepos_root_2024']
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 5
-  #     start_period: 30s
-  #   networks:
-  #     - epos-network
-
   postgres:
     image: postgres:16-alpine
     container_name: ${APP_ENV}-epos-postgres
@@ -91,7 +64,6 @@ services:
 
 volumes:
   postgres_data:
-  # mysql_data:  # comentado
   redis_data:
 
 networks:

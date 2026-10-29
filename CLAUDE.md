@@ -47,7 +47,7 @@ Sistema de gestión comercial para PyMEs argentinas. **Un deploy = una empresa**
 | Nginx + PHP-FPM + Supervisor | Servidor web dentro del contenedor |
 | GitHub Actions | CI/CD |
 | GitHub Container Registry (GHCR) | Registry de imágenes Docker |
-| Traefik | Reverse proxy + SSL wildcard automático (Let's Encrypt) |
+| Nginx (host) + Certbot | Reverse proxy + SSL (Let's Encrypt) |
 | lvh.me | DNS local para desarrollo (`*.lvh.me → 127.0.0.1`) |
 
 ---
@@ -87,9 +87,9 @@ database/
   migrations/             # Migraciones
   seeders/                # Seeders de datos iniciales
 docker/
-  nginx.conf, php.ini, supervisord.conf, entrypoint.sh
+  nginx.conf, php.ini, supervisord.conf, entrypoint.dev.sh, entrypoint.prod.sh
 deploy/
-  traefik/, dev/, qa/, prod/   # Config por ambiente en el VPS
+  dev-qa/, prod/               # Runbooks por ambiente en el VPS
 ```
 
 ---
@@ -98,7 +98,7 @@ deploy/
 
 ```bash
 # Primer setup (clonar + levantar)
-make setup
+make up
 
 # Día a día
 make up              # Levantar servicios Docker
@@ -113,7 +113,7 @@ make rebuild         # Reconstruir imagen desde cero
 ```
 
 **URLs locales:**
-- App: `http://epos.lvh.me:3000`
+- App: `http://epos.lvh.me:8080` (puerto definido por `APP_PORT` en `.env`)
 
 **Credenciales por defecto (seeder):**
 - Superadmin: `SUPERADMIN_EMAIL` / `SUPERADMIN_PASSWORD` (default dev: `principal@mail.com` / `superadmin123`)
