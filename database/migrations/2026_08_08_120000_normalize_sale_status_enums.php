@@ -25,7 +25,7 @@ return new class extends Migration
             ->whereNull('deleted_at')
             ->groupBy('sale_id')
             ->selectRaw('sale_id, SUM(amount) as total_paid')
-            ->having('total_paid', '>', 0)
+            ->havingRaw('SUM(amount) > 0') // Postgres no permite el alias del SELECT en HAVING
             ->get();
 
         foreach ($totalsPaid as $row) {
