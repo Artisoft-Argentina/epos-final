@@ -10,16 +10,17 @@
 services:
   app:
     image: ${APP_IMAGE:-ghcr.io/artisoft-argentina/epos-final:prod}
-    container_name: prod-epos-app
+    container_name: ${CONTAINER_NAME:-prod-epos-app}
     restart: unless-stopped
     ports:
-      - '127.0.0.1:8000:80'          # solo lo alcanza el nginx del host
+      - '127.0.0.1:${APP_PORT:-8000}:80'   # solo lo alcanza el nginx del host
     environment:
       - RUN_MIGRATIONS=true          # migra la base en cada arranque (incremental)
       - RUN_SEEDERS=false            # true SOLO en el primer boot (ver README §6.3)
-      - DB_HOST=host.docker.internal # el entrypoint (pg_isready) lo lee del shell, no del .env
-      - DB_PORT=5432
-      - DB_USERNAME=epos_user
+      # El entrypoint (pg_isready) lee estas vars del shell, no del .env: Compose las toma del .env del stack.
+      - DB_HOST=${DB_HOST:-host.docker.internal}
+      - DB_PORT=${DB_PORT:-5432}
+      - DB_USERNAME=${DB_USERNAME:-epos_user}
     extra_hosts:
       - "host.docker.internal:host-gateway"   # resuelve al gateway de docker0 (Postgres del host)
     volumes:
@@ -30,7 +31,4 @@ services:
 
 networks:
   epos-network:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16      # red del proyecto (no colisiona con docker0 172.16.x)
+    driver: bridge                   # subred asignada por Docker: una fija chocaría entre stacks

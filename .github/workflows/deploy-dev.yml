@@ -1,8 +1,13 @@
-name: Deploy to Hostinger VPS (Dev)
+name: Deploy to Dev
 
 on:
   push:
     branches: [dev]
+  workflow_dispatch: {}          # botón manual para redeploy
+
+concurrency:
+  group: dev-deploy
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -42,6 +47,7 @@ jobs:
     needs: build
     name: deploy ${{ matrix.server.name }}
     runs-on: ubuntu-latest
+    environment: dev
     strategy:
       fail-fast: false
       matrix:

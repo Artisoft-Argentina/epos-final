@@ -4,7 +4,7 @@
     "ip": "",
     "username": "",
     "port": "22",
-    "beforeHooks": "git config --global --add safe.directory /var/www/html/dev && git pull origin dev && export COMPOSE_FILE=docker-compose.prod.yml",
+    "beforeHooks": "",
     "afterHooks": "",
     "path": "/var/www/html/dev"
   }
