@@ -1,14 +1,5 @@
 [
   {
-    "name": "velto",
-    "ip": "",
-    "username": "",
-    "port": "22",
-    "beforeHooks": "",
-    "afterHooks": "",
-    "path": "/var/www/html/prod"
-  },
-  {
     "name": "demo",
     "ip": "",
     "username": "",
@@ -16,5 +7,14 @@
     "beforeHooks": "",
     "afterHooks": "",
     "path": "/var/www/html/demo"
+  },
+  {
+    "name": "artisoft",
+    "ip": "",
+    "username": "",
+    "port": "22",
+    "beforeHooks": "",
+    "afterHooks": "",
+    "path": "/var/www/html/artisoft"
   }
 ]

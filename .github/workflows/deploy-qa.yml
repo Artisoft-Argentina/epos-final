@@ -1,8 +1,13 @@
-name: Deploy to Hostinger VPS (QA)
+name: Deploy to QA
 
 on:
   push:
     branches: [qa]
+  workflow_dispatch: {}          # botón manual para redeploy
+
+concurrency:
+  group: qa-deploy
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -42,6 +47,7 @@ jobs:
     needs: build
     name: deploy ${{ matrix.server.name }}
     runs-on: ubuntu-latest
+    environment: qa
     strategy:
       fail-fast: false
       matrix:

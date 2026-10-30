@@ -11,6 +11,8 @@ Documentación de despliegue de EPOS. Los detalles de cada ambiente están en su
 | **qa** | `qa` | `qa.artisoft-demo.store` | Postgres en Docker | [dev-qa/README.md](dev-qa/README.md) |
 | **prod** | `main` | `epos.velto.ar` | Postgres **nativo** | [prod/README.md](prod/README.md) |
 | **demo** | `main` (réplica de prod, misma imagen `:prod`) | — | Postgres **nativo** | [prod/README.md](prod/README.md) en `/var/www/html/demo` |
+| **artisoft** | `main` (réplica de prod, misma imagen `:prod`) | `artisoft.velto.ar` | Postgres **nativo** | [prod/README.md](prod/README.md) en `/var/www/html/artisoft` |
+| **dev** | `main` (misma imagen `:prod`, mismo VPS) | `dev.velto.ar` | Postgres **nativo** | [prod/README.md](prod/README.md) en `/var/www/html/dev` |
 
 > dev y qa comparten un VPS; prod tiene el suyo dedicado.
 
