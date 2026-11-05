@@ -74,17 +74,17 @@ const mainNavItems: NavItem[] = [
         items: [
             {
                 title: 'Ventas',
-                href: '/ventas',
+                href: '/sales',
                 permission: 'ventas.index',
             },
             {
                 title: 'Presupuestos',
-                href: '/presupuestos',
+                href: '/quotes',
                 permission: 'presupuestos.index',
             },
             {
                 title: 'Entregas Pendientes',
-                href: '/entregas',
+                href: '/deliveries',
                 icon: PackageCheck,
                 permission: 'entregas.index',
             },

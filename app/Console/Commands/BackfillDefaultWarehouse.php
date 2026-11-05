@@ -9,12 +9,12 @@ class BackfillDefaultWarehouse extends Command
 {
     protected $signature = 'epos:backfill-default-warehouse';
 
-    protected $description = 'Crea el almacén "Principal" por defecto en el tenant actual si no existe';
+    protected $description = 'Crea el almacén "Principal" por defecto en la BD si no existe';
 
     public function handle(): int
     {
         if (Warehouse::isDefault()->exists()) {
-            $this->info('Ya existe un almacén default en este tenant. Skip.');
+            $this->info('Ya existe un almacén default en la BD. Skip.');
             return self::SUCCESS;
         }
 

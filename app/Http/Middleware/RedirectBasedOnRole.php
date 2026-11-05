@@ -15,7 +15,7 @@ class RedirectBasedOnRole
             $userRole = $user->primaryRole()?->name;
             
             if ($userRole === 'vendedor' && $request->routeIs('dashboard')) {
-                return redirect()->route('ventas.index');
+                return redirect()->route('sales.index');
             }
         }
 

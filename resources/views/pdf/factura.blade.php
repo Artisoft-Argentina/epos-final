@@ -97,7 +97,7 @@
             </div>
             <div class="cliente-row">
                 <div class="cliente-label">Condición de venta:</div>
-                <div class="cliente-value">{{ $factura->sale_condition }}</div>
+                <div class="cliente-value">{{ $factura->sale_condition?->label() }}</div>
             </div>
         </div>
 

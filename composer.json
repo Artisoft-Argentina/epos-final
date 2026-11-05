@@ -25,7 +25,6 @@
         "smalot/pdfparser": "^2.12",
         "spatie/laravel-activitylog": "^4.10",
         "spatie/laravel-permission": "^7.4",
-        "stancl/tenancy": "^3.9",
         "thiagoalessio/tesseract_ocr": "^2.13",
         "tightenco/ziggy": "^2.4"
     },

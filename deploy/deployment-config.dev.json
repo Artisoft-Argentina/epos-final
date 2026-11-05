@@ -1,0 +1,11 @@
+[
+  {
+    "name": "dev",
+    "ip": "",
+    "username": "",
+    "port": "22",
+    "beforeHooks": "",
+    "afterHooks": "",
+    "path": "/var/www/html/dev"
+  }
+]

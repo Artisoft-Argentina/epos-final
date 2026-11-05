@@ -48,7 +48,7 @@ export default function MercadoPago({ config }: Props) {
                         <CardHeader>
                             <CardTitle>Estado de integración</CardTitle>
                             <CardDescription>
-                                Configuración actual de MercadoPago para este tenant
+                                Configuración actual de MercadoPago para esta empresa
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -215,7 +215,7 @@ export default function MercadoPago({ config }: Props) {
                                 <li>Pegalos en el formulario de arriba y guardá</li>
                             </ol>
                             <p className="pt-1">
-                                Las credenciales quedan almacenadas en la base de datos de esta empresa y <strong className="text-foreground">no se comparten</strong> con otros tenants.
+                                Las credenciales quedan almacenadas en la base de datos de esta empresa.
                             </p>
                         </CardContent>
                     </Card>

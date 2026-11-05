@@ -2,8 +2,23 @@
 
 return [
     /**
-     * Mapa de roles → permisos (nombres de ruta).
-     * Cada permiso debe coincidir exactamente con el ->name() de la ruta en web.php.
+     * Mapa de roles → permisos.
+     *
+     * El nombre del permiso tiene que coincidir con el string del middleware
+     * `can:` de la ruta en web.php — NO necesariamente con el `->name()` de la
+     * ruta. En el módulo de ventas ya no coinciden: las rutas se pasaron a
+     * inglés (`sales.index`) y los permisos quedaron en español
+     * (`can:ventas.index`), a propósito.
+     *
+     * Los permisos se conservan en español porque están desplegados en
+     * producción: renombrarlos obliga a coordinar una migración por tenant con
+     * el deploy del código, y en la ventana entre ambos los usuarios comen 403
+     * sin que nada quede registrado como error. El beneficio sería sólo
+     * estético — nadie fuera del equipo ve estos identificadores.
+     *
+     * Por eso, al agregar un permiso nuevo: **seguí la convención en español**,
+     * aunque la ruta esté en inglés. Mezclar los dos idiomas acá es peor que
+     * cualquiera de los dos por separado, porque deja de haber una regla.
      */
 
     'superadmin' => [

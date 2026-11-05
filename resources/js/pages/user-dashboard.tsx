@@ -3,6 +3,7 @@ import { Head } from '@inertiajs/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/lib/utils';
+import { paymentStatusMeta } from '@/lib/payment-status';
 
 interface Articulo {
   nombre: string;
@@ -31,6 +32,7 @@ interface Factura {
   pagada: string;
   total_pagado: number;
   saldo_pendiente: number;
+  cancelada: boolean;
   articulos: Articulo[];
   pagos: Pago[];
   entregas: Entrega[];
@@ -40,6 +42,7 @@ interface Resumen {
   total_compras: number;
   total_pagado: number;
   saldo_pendiente: number;
+  credito: number;
   entregas_pendientes: number;
   total_facturas: number;
 }
@@ -145,8 +148,8 @@ export default function UserDashboard({
                     </div>
                     <div className="text-right">
                       <div className="text-2xl font-bold">{formatCurrency(factura.total)}</div>
-                      <Badge variant={factura.saldo_pendiente > 0 ? 'destructive' : 'default'}>
-                        {factura.saldo_pendiente > 0 ? 'Pendiente' : 'Pagada'}
+                      <Badge variant={paymentStatusMeta(factura.pagada).variant}>
+                        {paymentStatusMeta(factura.pagada).label}
                       </Badge>
                     </div>
                   </div>

@@ -17,7 +17,7 @@ class BackfillDeliveryWarehouse extends Command
         $defaultWarehouseId = Warehouse::isDefault()->value('id');
 
         if (! $defaultWarehouseId) {
-            $this->error('No existe almacén default en este tenant. Crealo primero con epos:backfill-default-warehouse.');
+            $this->error('No existe almacén default en la BD. Crealo primero con epos:backfill-default-warehouse.');
             return self::FAILURE;
         }
 

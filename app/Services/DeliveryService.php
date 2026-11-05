@@ -7,6 +7,7 @@ use App\Models\Sale;
 use App\Models\Stock;
 use App\Models\StockMovement;
 use Carbon\Carbon;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
@@ -51,15 +52,23 @@ class DeliveryService
 
     /**
      * Marca una Delivery pendiente como entregada y descuenta stock.
-     * Idempotente: si ya está delivered, no hace nada.
+     * Toma lock sobre la fila y exige estado PENDING para evitar el doble
+     * descuento por doble submit / concurrencia. Idempotente si ya está entregada.
      */
     public function markDelivered(Delivery $delivery, int $warehouseId, int $userId): void
     {
-        if ($delivery->isDelivered()) {
-            return;
-        }
-
         DB::transaction(function () use ($delivery, $warehouseId, $userId) {
+            /** @var Delivery $delivery */
+            $delivery = Delivery::lockForUpdate()->findOrFail($delivery->id);
+
+            if ($delivery->status !== Delivery::STATUS_PENDING) {
+                // Ya entregada -> idempotente; cancelada -> no se puede entregar.
+                if ($delivery->isDelivered()) {
+                    return;
+                }
+                throw new RuntimeException('La entrega no está pendiente y no puede marcarse como entregada.');
+            }
+
             $delivery->update([
                 'warehouse_id'         => $warehouseId,
                 'status'               => Delivery::STATUS_DELIVERED,
@@ -81,15 +90,7 @@ class DeliveryService
         }
 
         DB::transaction(function () use ($delivery, $reason) {
-            $stock = Stock::lockForUpdate()
-                ->where('product_id', $delivery->product_id)
-                ->where('warehouse_id', $delivery->warehouse_id)
-                ->first();
-
-            if (! $stock) {
-                $stock = Stock::forProductInWarehouse($delivery->product_id, $delivery->warehouse_id);
-                $stock = Stock::lockForUpdate()->find($stock->id);
-            }
+            $stock = $this->lockedStock($delivery->product_id, $delivery->warehouse_id);
 
             $this->movimientoService->registrar(
                 $stock,
@@ -106,15 +107,7 @@ class DeliveryService
 
     private function descontar(Delivery $delivery, int $warehouseId): void
     {
-        $stock = Stock::lockForUpdate()
-            ->where('product_id', $delivery->product_id)
-            ->where('warehouse_id', $warehouseId)
-            ->first();
-
-        if (! $stock) {
-            $stock = Stock::forProductInWarehouse($delivery->product_id, $warehouseId);
-            $stock = Stock::lockForUpdate()->find($stock->id);
-        }
+        $stock = $this->lockedStock($delivery->product_id, $warehouseId);
 
         if ($stock->quantity < $delivery->quantity) {
             $productName   = $delivery->product?->name   ?? "ID {$delivery->product_id}";
@@ -131,5 +124,33 @@ class DeliveryService
             $delivery->quantity,
             $delivery
         );
+    }
+
+    /**
+     * Obtiene (o crea) la fila de stock producto+almacén con lockForUpdate.
+     * Maneja la carrera de creación concurrente: si otra transacción crea la
+     * fila primero (viola el unique product+warehouse), la re-selecciona.
+     */
+    private function lockedStock(int $productId, int $warehouseId): Stock
+    {
+        $stock = Stock::lockForUpdate()
+            ->where('product_id', $productId)
+            ->where('warehouse_id', $warehouseId)
+            ->first();
+
+        if ($stock) {
+            return $stock;
+        }
+
+        try {
+            Stock::forProductInWarehouse($productId, $warehouseId);
+        } catch (QueryException $e) {
+            // Otra transacción creó la fila en paralelo; la tomamos abajo con lock.
+        }
+
+        return Stock::lockForUpdate()
+            ->where('product_id', $productId)
+            ->where('warehouse_id', $warehouseId)
+            ->firstOrFail();
     }
 }

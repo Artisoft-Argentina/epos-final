@@ -17,7 +17,8 @@ export interface Column<T> {
 interface DataTableProps<T> {
     columns: Column<T>[];
     data: T[];
-    keyExtractor: (row: T) => string | number;
+    /** El índice permite listar filas sin id propio (p. ej. movimientos de cuenta). */
+    keyExtractor: (row: T, index: number) => string | number;
     title?: string;
     description?: string;
     toolbar?: ReactNode;
@@ -86,9 +87,9 @@ export function DataTable<T>({
                                 </td>
                             </tr>
                         ) : (
-                            data.map((row) => (
+                            data.map((row, index) => (
                                 <tr
-                                    key={keyExtractor(row)}
+                                    key={keyExtractor(row, index)}
                                     className="bg-white hover:bg-gray-50 transition-colors"
                                 >
                                     {columns.map((col) => (

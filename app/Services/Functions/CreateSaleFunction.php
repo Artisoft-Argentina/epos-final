@@ -81,8 +81,8 @@ class CreateSaleFunction
                 'additional_discount' => 0,
                 'subtotal'       => $subtotal,
                 'total'          => $subtotal,
-                'payment_status' => 'NO',
-                'sale_condition' => 'contado',
+                'payment_status' => \App\Enums\PaymentStatus::Pending,
+                'sale_condition' => \App\Enums\SaleCondition::Cash,
                 'point_of_sale_id' => $pos->id,
                 'warehouse_id'     => $pos->warehouse_id,
             ]);

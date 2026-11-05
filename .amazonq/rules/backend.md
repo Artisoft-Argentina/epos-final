@@ -165,13 +165,9 @@ return response()->json(['error' => 'Mensaje de error'], 422);
 
 ---
 
-## Multitenant
+## Single-tenant
 
-El proyecto usa `stancl/tenancy`. Tener en cuenta:
-- Las migraciones de tenant van en `database/migrations/tenant/`
-- Las migraciones centrales van en `database/migrations/`
-- No mezclar modelos centrales con modelos de tenant
-- Al crear extensiones de PostgreSQL, hacerlo en `docker/postgres-init.sql` o via migración
+No hay multi-tenancy (se quitó `stancl/tenancy`). Cada empresa es un deploy separado, con su propia base PostgreSQL y dominio. Todas las migraciones van en `database/migrations/` (sin subcarpetas) y se corren con `php artisan migrate`.
 
 ---
 

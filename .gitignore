@@ -12,6 +12,9 @@
 .env.production
 .phpactor.json
 .phpunit.result.cache
+.php-cs-fixer.cache
+.DS_Store
+*Zone.Identifier
 Homestead.json
 Homestead.yaml
 npm-debug.log

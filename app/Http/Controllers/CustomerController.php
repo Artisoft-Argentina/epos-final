@@ -94,56 +94,136 @@ class CustomerController extends Controller
 
     public function show(Customer $customer)
     {
-        $sales = $customer->sales()->with('payments')->orderByDesc('created_at')->get();
-
-        $summary = [
-            'total_sales' => $sales->sum('total'),
-            'total_paid'  => $sales->sum(fn($s) => $s->payments->sum('amount')),
-            'balance_due' => 0,
-            'credit'      => $customer->credit,
-        ];
-        $summary['balance_due'] = $summary['total_sales'] - $summary['total_paid'];
+        [$sales, $summary] = $this->accountStatement($customer);
 
         return Inertia::render('Customers/Show', [
-            'customer' => $customer->load(['city', 'state']),
-            'sales'    => $sales,
-            'summary'  => $summary,
+            'customer'  => $customer->load(['city', 'state']),
+            'movements' => $this->accountMovements($sales),
+            'summary'   => $summary,
         ]);
     }
 
     public function exportExcel(Customer $customer)
     {
-        $sales = $customer->sales()->with('payments')->orderByDesc('created_at')->get();
-
-        $summary = [
-            'total_sales' => $sales->sum('total'),
-            'total_paid'  => $sales->sum(fn($s) => $s->payments->sum('amount')),
-            'balance_due' => 0,
-            'credit'      => $customer->credit,
-        ];
-        $summary['balance_due'] = $summary['total_sales'] - $summary['total_paid'];
+        [$sales, $summary] = $this->accountStatement($customer);
 
         return \Maatwebsite\Excel\Facades\Excel::download(
-            new \App\Exports\EstadoCuentaExport($customer, $sales, $summary),
+            new \App\Exports\EstadoCuentaExport($customer, $this->accountMovements($sales), $summary),
             'estado-cuenta-' . $customer->business_name . '.xlsx'
         );
     }
 
     public function exportPdf(Customer $customer)
     {
-        $sales = $customer->sales()->with('payments')->orderByDesc('created_at')->get();
+        [$sales, $summary] = $this->accountStatement($customer);
+        $movements         = $this->accountMovements($sales);
 
-        $summary = [
-            'total_sales' => $sales->sum('total'),
-            'total_paid'  => $sales->sum(fn($s) => $s->payments->sum('amount')),
-            'balance_due' => 0,
-            'credit'      => $customer->credit,
-        ];
-        $summary['balance_due'] = $summary['total_sales'] - $summary['total_paid'];
-
-        $pdf = \PDF::loadView('pdf.estado-cuenta', compact('customer', 'sales', 'summary'));
+        $pdf = \PDF::loadView('pdf.estado-cuenta', compact('customer', 'movements', 'summary'));
 
         return $pdf->download('estado-cuenta-' . $customer->business_name . '.pdf');
+    }
+
+    /**
+     * Estado de cuenta del cliente. Las ventas canceladas se listan (para
+     * trazabilidad) pero se excluyen del saldo; su pago ya se acreditó al crédito.
+     *
+     * @return array{0: \Illuminate\Support\Collection, 1: array}
+     */
+    private function accountStatement(Customer $customer): array
+    {
+        $sales = $customer->sales()->with('payments')->orderByDesc('created_at')->get();
+
+        $activeSales = $sales->reject(fn ($sale) => $sale->isCancelled());
+        $totalSales  = (float) $activeSales->sum('total');
+        $totalPaid   = (float) $activeSales->sum(fn ($sale) => $sale->payments->sum('amount'));
+
+        $summary = [
+            'total_sales' => $totalSales,
+            'total_paid'  => $totalPaid,
+            'balance_due' => round($totalSales - $totalPaid, 2),
+            'credit'      => $customer->credit,
+        ];
+
+        return [$sales, $summary];
+    }
+
+    /**
+     * Convierte las ventas del cliente en un libro de movimientos: cada venta es
+     * un débito, cada pago un crédito, y la anulación de una venta cancelada
+     * compensa el saldo que quedaba vivo (lo cobrado ya pasó al crédito del
+     * cliente). El saldo acumulado de la última fila coincide con balance_due.
+     *
+     * @param  \Illuminate\Support\Collection<int, \App\Models\Sale>  $sales
+     * @return \Illuminate\Support\Collection<int, array>
+     */
+    private function accountMovements($sales)
+    {
+        $movements = collect();
+
+        foreach ($sales as $sale) {
+            $reference = trim(sprintf(
+                'Factura %s %04d-%08d',
+                $sale->voucher_letter,
+                (int) $sale->pos_number,
+                (int) $sale->invoice_number
+            ));
+
+            $movements->push([
+                'date'        => optional($sale->date)->toDateString() ?? $sale->created_at->toDateString(),
+                'sort_at'     => $sale->created_at,
+                'type'        => 'sale',
+                'description' => $reference,
+                'sale_id'     => $sale->id,
+                'debit'       => round((float) $sale->total, 2),
+                'credit'      => 0.0,
+            ]);
+
+            foreach ($sale->payments as $payment) {
+                $movements->push([
+                    'date'        => optional($payment->payment_date)->toDateString() ?? $payment->created_at->toDateString(),
+                    'sort_at'     => $payment->created_at,
+                    'type'        => 'payment',
+                    'description' => 'Pago — ' . $payment->methodLabel(),
+                    'sale_id'     => $sale->id,
+                    'debit'       => 0.0,
+                    'credit'      => round((float) $payment->amount, 2),
+                ]);
+            }
+
+            if ($sale->isCancelled()) {
+                $paid = round((float) $sale->payments->sum('amount'), 2);
+
+                $movements->push([
+                    // No hay columna cancelled_at: updated_at es lo más cercano al momento de la anulación.
+                    'date'        => $sale->updated_at->toDateString(),
+                    'sort_at'     => $sale->updated_at,
+                    'type'        => 'cancellation',
+                    'description' => 'Anulación ' . $reference,
+                    'sale_id'     => $sale->id,
+                    'debit'       => 0.0,
+                    'credit'      => round((float) $sale->total - $paid, 2),
+                ]);
+            }
+        }
+
+        $balance = 0.0;
+
+        return $movements
+            ->sortBy([['date', 'asc'], ['sort_at', 'asc']])
+            ->values()
+            ->map(function (array $movement) use (&$balance) {
+                $balance = round($balance + $movement['debit'] - $movement['credit'], 2);
+
+                return [
+                    'date'        => $movement['date'],
+                    'type'        => $movement['type'],
+                    'description' => $movement['description'],
+                    'sale_id'     => $movement['sale_id'],
+                    'debit'       => $movement['debit'],
+                    'credit'      => $movement['credit'],
+                    'balance'     => $balance,
+                ];
+            });
     }
 
     private function rules(Request $request): array

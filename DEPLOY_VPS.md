@@ -1,5 +1,7 @@
 # EPOS — Despliegue en VPS Hostinger
 
+> ⚠️ **Desactualizado**: describe el deploy **multi-tenant** (wildcard SSL por subdominio, `tenants:migrate`). Esa arquitectura se quitó — EPOS es single-tenant. El runbook vigente, probado contra el deploy real, es [deploy/prod/README.md](deploy/prod/README.md) (prod, Postgres nativo) y [deploy/dev-qa/README.md](deploy/dev-qa/README.md) (dev/qa, Postgres en Docker). Este archivo queda como referencia histórica.
+
 > Guía completa para poner EPOS en producción en un VPS de Hostinger.
 > Al final tendrás el sistema corriendo con HTTPS, multitenant funcional
 > y despliegue automático vía GitHub Actions.

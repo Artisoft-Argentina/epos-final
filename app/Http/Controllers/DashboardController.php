@@ -18,13 +18,13 @@ class DashboardController extends Controller
         $fechaInicio = $request->get('fecha_inicio', Carbon::now()->startOfMonth()->format('Y-m-d'));
         $fechaFin    = $request->get('fecha_fin', Carbon::now()->endOfMonth()->format('Y-m-d'));
 
-        $totalVentas    = Sale::whereDate('date', '>=', $fechaInicio)->whereDate('date', '<=', $fechaFin)->sum('total');
+        $totalVentas    = Sale::notCancelled()->whereDate('date', '>=', $fechaInicio)->whereDate('date', '<=', $fechaFin)->sum('total');
         $clientesNuevos = Customer::whereDate('created_at', '>=', $fechaInicio)->whereDate('created_at', '<=', $fechaFin)->count();
         $ventasDelMes   = $totalVentas;
 
         $facturasImpagas = Sale::whereDate('date', '>=', $fechaInicio)
             ->whereDate('date', '<=', $fechaFin)
-            ->where('payment_status', 'NO')
+            ->whereIn('payment_status', \App\Enums\PaymentStatus::owingCases())
             ->with('payments')
             ->get();
 
@@ -33,6 +33,7 @@ class DashboardController extends Controller
         $productosVendidos = DB::table('sale_products')
             ->join('products', 'sale_products.product_id', '=', 'products.id')
             ->join('sales', 'sale_products.sale_id', '=', 'sales.id')
+            ->where('sales.payment_status', '!=', \App\Enums\PaymentStatus::Cancelled->value)
             ->whereDate('sales.date', '>=', $fechaInicio)
             ->whereDate('sales.date', '<=', $fechaFin)
             ->select('products.name', DB::raw('SUM(sale_products.quantity) as total_vendido'))
@@ -41,14 +42,14 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
-        $ventasPorDia = Sale::whereDate('date', '>=', $fechaInicio)
+        $ventasPorDia = Sale::notCancelled()->whereDate('date', '>=', $fechaInicio)
             ->whereDate('date', '<=', $fechaFin)
             ->select(DB::raw('date::date as dia'), DB::raw('SUM(total) as total_dia'))
             ->groupBy('dia')
             ->orderBy('dia')
             ->get();
 
-        $ventasPorVendedor = Sale::join('users', 'sales.user_id', '=', 'users.id')
+        $ventasPorVendedor = Sale::notCancelled()->join('users', 'sales.user_id', '=', 'users.id')
             ->whereDate('sales.date', '>=', $fechaInicio)
             ->whereDate('sales.date', '<=', $fechaFin)
             ->select('users.name', DB::raw('COUNT(*) as total_ventas'), DB::raw('SUM(sales.total) as monto_total'))
@@ -74,12 +75,12 @@ class DashboardController extends Controller
         $fechaInicio = $request->get('fecha_inicio', Carbon::now()->startOfMonth()->format('Y-m-d'));
         $fechaFin    = $request->get('fecha_fin', Carbon::now()->endOfMonth()->format('Y-m-d'));
 
-        $totalVentas    = Sale::whereDate('date', '>=', $fechaInicio)->whereDate('date', '<=', $fechaFin)->sum('total');
+        $totalVentas    = Sale::notCancelled()->whereDate('date', '>=', $fechaInicio)->whereDate('date', '<=', $fechaFin)->sum('total');
         $clientesNuevos = Customer::whereDate('created_at', '>=', $fechaInicio)->whereDate('created_at', '<=', $fechaFin)->count();
 
         $facturasImpagas = Sale::whereDate('date', '>=', $fechaInicio)
             ->whereDate('date', '<=', $fechaFin)
-            ->where('payment_status', 'NO')
+            ->whereIn('payment_status', \App\Enums\PaymentStatus::owingCases())
             ->with('payments')
             ->get();
 
@@ -88,6 +89,7 @@ class DashboardController extends Controller
         $productosVendidos = DB::table('sale_products')
             ->join('products', 'sale_products.product_id', '=', 'products.id')
             ->join('sales', 'sale_products.sale_id', '=', 'sales.id')
+            ->where('sales.payment_status', '!=', \App\Enums\PaymentStatus::Cancelled->value)
             ->whereDate('sales.date', '>=', $fechaInicio)
             ->whereDate('sales.date', '<=', $fechaFin)
             ->select('products.name', DB::raw('SUM(sale_products.quantity) as total_vendido'))
@@ -96,14 +98,14 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
-        $ventasPorDia = Sale::whereDate('date', '>=', $fechaInicio)
+        $ventasPorDia = Sale::notCancelled()->whereDate('date', '>=', $fechaInicio)
             ->whereDate('date', '<=', $fechaFin)
             ->select(DB::raw('date::date as dia'), DB::raw('SUM(total) as total_dia'))
             ->groupBy('dia')
             ->orderBy('dia')
             ->get();
 
-        $ventasPorVendedor = Sale::join('users', 'sales.user_id', '=', 'users.id')
+        $ventasPorVendedor = Sale::notCancelled()->join('users', 'sales.user_id', '=', 'users.id')
             ->whereDate('sales.date', '>=', $fechaInicio)
             ->whereDate('sales.date', '<=', $fechaFin)
             ->select('users.name', DB::raw('COUNT(*) as total_ventas'), DB::raw('SUM(sales.total) as monto_total'))
