@@ -7,14 +7,5 @@
     "beforeHooks": "",
     "afterHooks": "",
     "path": "/var/www/html/demo"
-  },
-  {
-    "name": "artisoft",
-    "ip": "",
-    "username": "",
-    "port": "22",
-    "beforeHooks": "",
-    "afterHooks": "",
-    "path": "/var/www/html/artisoft"
   }
 ]
