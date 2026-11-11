@@ -9,15 +9,15 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Warehouse {
-    id: number;
+    id: string;
     name: string;
 }
 
 interface PuntoVenta {
-    id: number;
+    id: string;
     name: string;
     pos_number: number;
-    warehouse_id: number;
+    warehouse_id: string;
     voucher_letter_default: string;
     next_invoice_number_a: number;
     next_invoice_number_b: number;

@@ -35,15 +35,15 @@ class ProductController extends Controller
         }
 
         if ($request->filled('category_id')) {
-            $query->byCategory((int) $request->category_id);
+            $query->byCategory($request->category_id);
         }
 
         if ($request->filled('brand_id')) {
-            $query->byBrand((int) $request->brand_id);
+            $query->byBrand($request->brand_id);
         }
 
         if ($request->filled('supplier_id')) {
-            $query->bySupplier((int) $request->supplier_id);
+            $query->bySupplier($request->supplier_id);
         }
 
         if ($request->filled('stock_status')) {
@@ -187,7 +187,7 @@ class ProductController extends Controller
         ]);
     }
 
-    private function rules(?int $productId = null): array
+    private function rules(?string $productId = null): array
     {
         return [
             'sku'           => 'nullable|string|max:100|unique:products,sku' . ($productId ? ",{$productId}" : ''),

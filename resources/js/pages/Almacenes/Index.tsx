@@ -11,7 +11,7 @@ import { Pagination } from '@/components/pagination';
 import { Plus, Edit, Warehouse as WarehouseIcon } from 'lucide-react';
 
 interface Warehouse {
-    id: number;
+    id: string;
     name: string;
     code: string;
     address: string | null;

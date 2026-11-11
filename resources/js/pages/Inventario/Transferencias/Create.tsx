@@ -9,20 +9,20 @@ import { Trash2, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 interface Warehouse {
-    id: number;
+    id: string;
     name: string;
 }
 
 interface StockEntry {
-    product_id: number;
+    product_id: string;
     product_name: string;
     product_sku: string;
-    warehouse_id: number;
+    warehouse_id: string;
     available: number;
 }
 
 interface TransferItem {
-    product_id: number;
+    product_id: string;
     product_name: string;
     quantity: number;
     available: number;

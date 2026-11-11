@@ -14,8 +14,8 @@ import { ChevronRight, Save, User, Building2, Phone, MapPin, Receipt, SlidersHor
 import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
 
-interface State { id: number; name: string; }
-interface City { id: number; name: string; state_id: number; }
+interface State { id: string; name: string; }
+interface City { id: string; name: string; state_id: string; }
 interface Props { states: State[]; cities: City[]; }
 
 const TAX_STATUS_OPTIONS = [

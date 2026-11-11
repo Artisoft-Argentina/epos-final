@@ -5,6 +5,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 
 return new class extends Migration
 {
@@ -13,7 +14,9 @@ return new class extends Migration
         // Asegurar que exista un almacén default antes del backfill
         $defaultWarehouseId = DB::table('warehouses')->where('is_default', true)->value('id');
         if (! $defaultWarehouseId) {
-            $defaultWarehouseId = DB::table('warehouses')->insertGetId([
+            $defaultWarehouseId = (string) Str::orderedUuid();
+            DB::table('warehouses')->insert([
+                'id'         => $defaultWarehouseId,
                 'name'       => 'Principal',
                 'code'       => 'PRINCIPAL',
                 'is_default' => true,
@@ -24,13 +27,13 @@ return new class extends Migration
         }
 
         Schema::table('stocks', function (Blueprint $table) {
-            $table->foreignId('warehouse_id')->nullable()->after('product_id')->constrained('warehouses');
+            $table->foreignUuid('warehouse_id')->nullable()->after('product_id')->constrained('warehouses');
         });
 
         DB::table('stocks')->whereNull('warehouse_id')->update(['warehouse_id' => $defaultWarehouseId]);
 
         Schema::table('stocks', function (Blueprint $table) {
-            $table->foreignId('warehouse_id')->nullable(false)->change();
+            $table->foreignUuid('warehouse_id')->nullable(false)->change();
             $table->dropUnique(['product_id']);
             $table->unique(['product_id', 'warehouse_id'], 'stocks_product_warehouse_unique');
         });

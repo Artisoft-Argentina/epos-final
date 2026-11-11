@@ -21,13 +21,13 @@ class DeliveryService
      */
     public function create(
         Sale $sale,
-        int $productId,
+        string $productId,
         int $quantity,
-        int $warehouseId,
+        string $warehouseId,
         string $status,
         ?Carbon $deliveryDate = null,
         ?string $notes = null,
-        ?int $userId = null,
+        ?string $userId = null,
     ): Delivery {
         return DB::transaction(function () use ($sale, $productId, $quantity, $warehouseId, $status, $deliveryDate, $notes, $userId) {
             $delivery = Delivery::create([
@@ -55,7 +55,7 @@ class DeliveryService
      * Toma lock sobre la fila y exige estado PENDING para evitar el doble
      * descuento por doble submit / concurrencia. Idempotente si ya está entregada.
      */
-    public function markDelivered(Delivery $delivery, int $warehouseId, int $userId): void
+    public function markDelivered(Delivery $delivery, string $warehouseId, string $userId): void
     {
         DB::transaction(function () use ($delivery, $warehouseId, $userId) {
             /** @var Delivery $delivery */
@@ -105,7 +105,7 @@ class DeliveryService
         });
     }
 
-    private function descontar(Delivery $delivery, int $warehouseId): void
+    private function descontar(Delivery $delivery, string $warehouseId): void
     {
         $stock = $this->lockedStock($delivery->product_id, $warehouseId);
 
@@ -131,7 +131,7 @@ class DeliveryService
      * Maneja la carrera de creación concurrente: si otra transacción crea la
      * fila primero (viola el unique product+warehouse), la re-selecciona.
      */
-    private function lockedStock(int $productId, int $warehouseId): Stock
+    private function lockedStock(string $productId, string $warehouseId): Stock
     {
         $stock = Stock::lockForUpdate()
             ->where('product_id', $productId)

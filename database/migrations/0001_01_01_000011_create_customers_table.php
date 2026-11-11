@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('customers', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->string('business_name');
             $table->string('fantasy_name')->nullable();
             $table->string('person_type', 20)->default('fisica'); // 'fisica' / 'juridica'
@@ -20,8 +20,8 @@ return new class extends Migration
             $table->string('email')->nullable();
             $table->string('address')->nullable();
             $table->string('zip_code', 10)->nullable();
-            $table->foreignId('city_id')->nullable()->constrained('cities')->nullOnDelete();
-            $table->foreignId('state_id')->nullable()->constrained('states')->nullOnDelete();
+            $table->foreignUuid('city_id')->nullable()->constrained('cities')->nullOnDelete();
+            $table->foreignUuid('state_id')->nullable()->constrained('states')->nullOnDelete();
             $table->string('tax_status');                          // condición IVA — NOT NULL
             $table->string('fiscal_name')->nullable();             // V2 AFIP
             $table->string('fiscal_address')->nullable();          // V2 AFIP

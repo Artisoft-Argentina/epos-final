@@ -11,13 +11,13 @@ import { Camera, Search, Package, ShoppingCart } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Articulo {
-  id: number;
+  id: string;
   sku: string;
   name: string;
   description: string;
   price: number;
-  category?: { id: number; name: string } | null;
-  brand?: { id: number; name: string } | null;
+  category?: { id: string; name: string } | null;
+  brand?: { id: string; name: string } | null;
   stock?: { quantity: number } | null;
   barcode?: string;
   qr_code?: string;

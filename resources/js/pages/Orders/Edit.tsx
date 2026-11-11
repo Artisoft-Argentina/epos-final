@@ -9,39 +9,39 @@ import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 interface Supplier {
-    id: number;
+    id: string;
     business_name: string;
 }
 
 interface Product {
-    id: number;
+    id: string;
     sku: string;
     name: string;
     price: number;
 }
 
 interface OrderProduct {
-    id: number;
-    product_id: number;
+    id: string;
+    product_id: string;
     quantity: number;
     unit_price: number;
     product: Product;
 }
 
 interface Order {
-    id: number;
+    id: string;
     pos_number: number;
     order_number: number;
     date: string;
-    supplier_id: number;
-    warehouse_id: number | null;
+    supplier_id: string;
+    warehouse_id: string | null;
     notes: string | null;
     converted_to_inventory: boolean;
     products: OrderProduct[];
 }
 
 interface Warehouse {
-    id: number;
+    id: string;
     name: string;
     is_default: boolean;
 }
@@ -53,7 +53,7 @@ interface Props {
 }
 
 interface DetalleForm {
-    articulo_id: number | null;
+    articulo_id: string | null;
     quantity: number;
     unit_price: number;
 }
@@ -265,7 +265,7 @@ export default function Edit({ order, suppliers, warehouses }: Props) {
                                             <Label>Artículo</Label>
                                             <Select
                                                 value={detalle.articulo_id?.toString() || ''}
-                                                onValueChange={(value) => actualizarDetalle(index, 'articulo_id', parseInt(value))}
+                                                onValueChange={(value) => actualizarDetalle(index, 'articulo_id', value)}
                                                 disabled={!data.supplier_id || loadingArticulos}
                                             >
                                                 <SelectTrigger>

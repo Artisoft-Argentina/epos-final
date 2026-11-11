@@ -6,12 +6,12 @@ import { Printer } from 'lucide-react';
 
 interface Etiqueta {
   articulo: {
-    id: number;
+    id: string;
     sku: string;
     name: string;
     price: number;
-    category?: { id: number; name: string } | null;
-    brand?: { id: number; name: string } | null;
+    category?: { id: string; name: string } | null;
+    brand?: { id: string; name: string } | null;
   };
   codigo_barras: string;
   codigo_qr: string;

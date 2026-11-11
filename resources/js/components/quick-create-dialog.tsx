@@ -12,7 +12,7 @@ interface QuickCreateDialogProps {
     title: string;
     placeholder: string;
     routeName: string;
-    onSuccess: (item: { id: number; name: string }) => void;
+    onSuccess: (item: { id: string; name: string }) => void;
 }
 
 export function QuickCreateDialog({ title, placeholder, routeName, onSuccess }: QuickCreateDialogProps) {

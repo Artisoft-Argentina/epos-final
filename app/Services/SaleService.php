@@ -113,7 +113,7 @@ class SaleService
 
                 $subtotal += $itemSubtotal;
 
-                $itemWarehouseId = ! empty($item['warehouse_id']) ? (int) $item['warehouse_id'] : $warehouseId;
+                $itemWarehouseId = ! empty($item['warehouse_id']) ? $item['warehouse_id'] : $warehouseId;
 
                 if ($saleType === SaleType::Ecommerce) {
                     $this->deliveryService->create(
@@ -277,14 +277,14 @@ class SaleService
         return PointOfSale::getDefault();
     }
 
-    private function resolveSaleWarehouseId(array $data, ?PointOfSale $pos = null): ?int
+    private function resolveSaleWarehouseId(array $data, ?PointOfSale $pos = null): ?string
     {
         if (! empty($data['warehouse_id'])) {
-            return (int) $data['warehouse_id'];
+            return $data['warehouse_id'];
         }
 
         if ($pos && $pos->warehouse_id) {
-            return (int) $pos->warehouse_id;
+            return $pos->warehouse_id;
         }
 
         return Warehouse::isDefault()->value('id');
@@ -296,7 +296,7 @@ class SaleService
             return null;
         }
 
-        $priceList = $product->priceLists->firstWhere('id', (int) $priceListId);
+        $priceList = $product->priceLists->firstWhere('id', $priceListId);
 
         return $priceList ? (float) $priceList->pivot->price : null;
     }

@@ -16,17 +16,17 @@ import { useEffect, useState } from 'react';
 import { usePermission } from '@/hooks/use-permission';
 
 interface Stock {
-    id: number;
+    id: string;
     quantity: number;
     calculated_quantity: number;
-    product_id: number;
-    warehouse_id: number;
+    product_id: string;
+    warehouse_id: string;
     product?: { name: string; sku: string };
-    warehouse?: { id: number; name: string; code: string };
+    warehouse?: { id: string; name: string; code: string };
 }
 
 interface WarehouseOption {
-    id: number;
+    id: string;
     name: string;
     code: string;
     is_default: boolean;
@@ -35,11 +35,11 @@ interface WarehouseOption {
 interface Props {
     inventarios: Stock[];
     warehouses: WarehouseOption[];
-    selected_warehouse_id: number | null;
+    selected_warehouse_id: string | null;
 }
 
 interface AdjustState {
-    stockId: number;
+    stockId: string;
     productName: string;
     type: 'entry' | 'exit';
     quantity: string;

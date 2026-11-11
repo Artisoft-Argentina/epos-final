@@ -82,7 +82,7 @@ class HandleInertiaRequests extends Middleware
         return PointOfSale::active()->with('warehouse:id,name')->orderBy('name')->get(['id', 'name', 'pos_number', 'warehouse_id']);
     }
 
-    private function resolveActivePointOfSaleId(Request $request): ?int
+    private function resolveActivePointOfSaleId(Request $request): ?string
     {
         $user = $request->user();
         if ($user && $user->isVendedor()) {

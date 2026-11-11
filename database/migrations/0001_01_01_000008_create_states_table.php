@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('states', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->string('name');                   // nombre → name
             $table->integer('afip_id')->nullable();   // id_afip → afip_id
             $table->softDeletes();

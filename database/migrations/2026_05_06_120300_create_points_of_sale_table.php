@@ -4,16 +4,17 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 
 return new class extends Migration
 {
     public function up(): void
     {
         Schema::create('points_of_sale', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->string('name');
             $table->unsignedSmallInteger('pos_number');
-            $table->foreignId('warehouse_id')->constrained('warehouses');
+            $table->foreignUuid('warehouse_id')->constrained('warehouses');
             $table->char('voucher_letter_default', 1)->default('B');
             $table->unsignedBigInteger('next_invoice_number_a')->default(1);
             $table->unsignedBigInteger('next_invoice_number_b')->default(1);
@@ -36,6 +37,7 @@ return new class extends Migration
             $nextC = (int) (DB::table('sales')->where('voucher_letter', 'C')->max('invoice_number') ?? 0) + 1;
 
             DB::table('points_of_sale')->insert([
+                'id'                     => (string) Str::orderedUuid(),
                 'name'                   => 'Principal',
                 'pos_number'             => $existingPosNumber,
                 'warehouse_id'           => $defaultWarehouseId,

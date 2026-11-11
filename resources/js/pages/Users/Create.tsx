@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FormField } from '@/components/form-field';
 
 interface Role { id: number; name: string; }
-interface PuntoVenta { id: number; name: string; pos_number: number; is_default: boolean; }
+interface PuntoVenta { id: string; name: string; pos_number: number; is_default: boolean; }
 interface Props { roles: Role[]; puntosVenta: PuntoVenta[]; }
 
 export default function Create({ roles, puntosVenta }: Props) {

@@ -10,18 +10,18 @@ import { Plus, Eye, ArrowLeftRight } from 'lucide-react';
 import { usePermission } from '@/hooks/use-permission';
 
 interface Warehouse {
-    id: number;
+    id: string;
     name: string;
 }
 
 interface Transfer {
-    id: number;
+    id: string;
     transfer_number: number;
     date: string;
     status: 'draft' | 'in_transit' | 'received' | 'cancelled';
     origin_warehouse: Warehouse;
     destination_warehouse: Warehouse;
-    requested_by: { id: number; name: string };
+    requested_by: { id: string; name: string };
 }
 
 interface Props {

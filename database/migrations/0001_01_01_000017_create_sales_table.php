@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('sales', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->integer('pos_number');                                  // ptoventa → pos_number
             $table->integer('voucher_code')->nullable();                    // codcomprobante → voucher_code
             $table->string('voucher_letter');                               // letracomprobante → voucher_letter
@@ -31,9 +31,9 @@ return new class extends Migration
             $table->string('payment_code')->nullable();                     // compago → payment_code
             $table->string('sale_type')->default('pos'); // valores: pos, ecommerce
             $table->boolean('afip_authorized')->default(false);            // autorizada_afip → afip_authorized
-            $table->foreignId('customer_id')->constrained('customers');
-            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
-            $table->foreignId('price_list_id')->nullable()->constrained('price_lists')->nullOnDelete();
+            $table->foreignUuid('customer_id')->constrained('customers');
+            $table->foreignUuid('user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignUuid('price_list_id')->nullable()->constrained('price_lists')->nullOnDelete();
             $table->boolean('active')->default(true);
             $table->softDeletes();
             $table->timestamps();

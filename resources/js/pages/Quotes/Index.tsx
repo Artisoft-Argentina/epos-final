@@ -12,7 +12,7 @@ import { useState } from 'react';
 import { usePermission } from '@/hooks/use-permission';
 
 interface Presupuesto {
-    id: number;
+    id: string;
     quote_number: number;
     date: string;
     total: number;
@@ -33,7 +33,7 @@ export default function Index({ presupuestos }: Props) {
         p.user.name.toLowerCase().includes(search.toLowerCase())
     );
 
-    const convertirAVenta = (id: number) => {
+    const convertirAVenta = (id: string) => {
         if (confirm('¿Convertir este presupuesto en una venta?')) router.post(route('quotes.convert-to-sale', id));
     };
 

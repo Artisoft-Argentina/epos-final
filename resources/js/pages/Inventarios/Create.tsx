@@ -8,8 +8,8 @@ import { FormField } from '@/components/form-field';
 import { toast } from 'sonner';
 import { useEffect } from 'react';
 
-interface Product { id: number; name: string; sku: string; }
-interface Warehouse { id: number; name: string; is_default: boolean; }
+interface Product { id: string; name: string; sku: string; }
+interface Warehouse { id: string; name: string; is_default: boolean; }
 interface Props { articulos: Product[]; warehouses: Warehouse[]; }
 
 export default function Create({ articulos, warehouses }: Props) {
