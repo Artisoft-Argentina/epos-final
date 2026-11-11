@@ -10,7 +10,7 @@ class SettingsSeeder extends Seeder
     public function run(): void
     {
         Setting::firstOrCreate(
-            ['id' => 1],
+            [],
             [
                 'tax_id'                => null,
                 'business_name'         => null,

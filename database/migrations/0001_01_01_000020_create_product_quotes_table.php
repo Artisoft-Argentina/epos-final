@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -9,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('product_quotes', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->default(DB::raw('gen_random_uuid()'))->primary();
             $table->string('supplier_code')->nullable();  // codprov → supplier_code
             $table->string('sku');                         // codarticulo → sku
             $table->string('name');                        // articulo → name
@@ -19,8 +20,8 @@ return new class extends Migration
             $table->decimal('discount', 12, 2);            // bonificacion → discount
             $table->decimal('tax_rate', 12, 2);            // alicuota → tax_rate
             $table->decimal('subtotal', 12, 2);
-            $table->foreignId('product_id')->constrained('products');
-            $table->foreignId('quote_id')->constrained('quotes');
+            $table->foreignUuid('product_id')->constrained('products');
+            $table->foreignUuid('quote_id')->constrained('quotes');
             $table->softDeletes();
             $table->boolean('active')->default(true);
             $table->timestamps();

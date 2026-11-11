@@ -9,9 +9,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('stock_transfer_items', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('stock_transfer_id')->constrained('stock_transfers')->cascadeOnDelete();
-            $table->foreignId('product_id')->constrained('products');
+            $table->uuid('id')->primary();
+            $table->foreignUuid('stock_transfer_id')->constrained('stock_transfers')->cascadeOnDelete();
+            $table->foreignUuid('product_id')->constrained('products');
             $table->unsignedInteger('quantity');
             $table->unsignedInteger('received_quantity')->nullable();
             $table->timestamps();

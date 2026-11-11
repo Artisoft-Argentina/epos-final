@@ -98,7 +98,7 @@ class SaleController extends Controller
      * segundo después. Las ventas canceladas quedan afuera, igual que en el
      * estado de cuenta (CustomerController::accountStatement).
      *
-     * @return array<int, float>
+     * @return array<string, float>
      */
     private function customerBalances(): array
     {
@@ -118,7 +118,7 @@ class SaleController extends Controller
 
         return $invoiced
             ->mapWithKeys(fn ($amount, $customerId) => [
-                (int) $customerId => round((float) $amount - (float) ($paid[$customerId] ?? 0), 2),
+                $customerId => round((float) $amount - (float) ($paid[$customerId] ?? 0), 2),
             ])
             ->filter(fn ($balance) => $balance > 0)
             ->all();

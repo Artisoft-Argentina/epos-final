@@ -5,7 +5,7 @@ import { QrCode, ScanLine, Download, Printer } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface CodigoDisplayProps {
-  articuloId: number;
+  articuloId: string;
   articuloNombre: string;
 }
 

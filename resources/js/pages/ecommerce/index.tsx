@@ -6,13 +6,13 @@ import { ShoppingCart, Sparkles, ArrowRight, Star } from 'lucide-react';
 import { useState } from 'react';
 
 interface Articulo {
-    id: number;
+    id: string;
     name: string;
     price: number;
-    category?: { id: number; name: string } | null;
-    brand?: { id: number; name: string } | null;
+    category?: { id: string; name: string } | null;
+    brand?: { id: string; name: string } | null;
     images?: Array<{
-        id: number;
+        id: string;
         path: string;
         url?: string;
     }>;
@@ -28,7 +28,7 @@ interface Props {
     cartCount: number;
 }
 
-function ProductCard({ articulo, onAddToCart }: { articulo: Articulo; onAddToCart: (id: number) => void }) {
+function ProductCard({ articulo, onAddToCart }: { articulo: Articulo; onAddToCart: (id: string) => void }) {
     const [isHovered, setIsHovered] = useState(false);
     const [isAdding, setIsAdding] = useState(false);
 
@@ -108,7 +108,7 @@ function ProductCard({ articulo, onAddToCart }: { articulo: Articulo; onAddToCar
 }
 
 function EcommerceIndexContent({ articulos, cartCount }: Props) {
-    const addToCart = (articuloId: number) => {
+    const addToCart = (articuloId: string) => {
         router.post(`/cart/${articuloId}`, {
             quantity: 1
         }, {

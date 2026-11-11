@@ -4,7 +4,7 @@ import { useForm, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 export interface Customer {
-    id: number;
+    id: string;
     business_name: string;
     fantasy_name?: string | null;
     tax_status?: string | null;
@@ -12,23 +12,23 @@ export interface Customer {
 }
 
 export interface Product {
-    id: number;
+    id: string;
     name: string;
     sku: string;
-    category?: { id: number; name: string } | null;
-    images?: { id: number; path: string; is_primary: boolean }[];
+    category?: { id: string; name: string } | null;
+    images?: { id: string; path: string; is_primary: boolean }[];
     // Códigos alternativos: el mostrador busca por cualquiera de ellos, igual
     // que el lector de código de barras.
     barcode?: string | null;
     ean?: string | null;
     qr_code?: string | null;
     supplier_code?: string | null;
-    brand?: { id: number; name: string } | null;
-    price_lists: { id: number; pivot: { price: number } }[];
+    brand?: { id: string; name: string } | null;
+    price_lists: { id: string; pivot: { price: number } }[];
 }
 
 export interface PriceList {
-    id: number;
+    id: string;
     name: string;
     percentage: number;
     default_pos: boolean;
@@ -36,17 +36,17 @@ export interface PriceList {
 }
 
 export interface PointOfSale {
-    id: number;
+    id: string;
     name: string;
     pos_number: number;
-    warehouse_id: number;
-    warehouse?: { id: number; name: string } | null;
+    warehouse_id: string;
+    warehouse?: { id: string; name: string } | null;
     next_invoice_number_a?: number | null;
     next_invoice_number_b?: number | null;
 }
 
 export interface Warehouse {
-    id: number;
+    id: string;
     name: string;
     is_default: boolean;
 }
@@ -66,7 +66,7 @@ export interface SaleFormProps {
 }
 
 interface PageProps {
-    activePointOfSaleId: number | null;
+    activePointOfSaleId: string | null;
     [key: string]: unknown;
 }
 
@@ -300,7 +300,7 @@ export function useSaleForm({
         [p.sku, p.barcode, p.ean, p.qr_code, p.supplier_code].filter(Boolean).map((c) => String(c).toLowerCase());
 
     const categories = useMemo(() => {
-        const found = new Map<number, string>();
+        const found = new Map<string, string>();
         products.forEach((p) => {
             if (p.category) found.set(p.category.id, p.category.name);
         });

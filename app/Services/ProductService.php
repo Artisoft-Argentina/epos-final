@@ -26,7 +26,7 @@ class ProductService
 
         $trackStock   = ! empty($data['track_stock']);
         $initialStock = (int) ($data['initial_stock'] ?? 0);
-        $warehouseId  = (int) ($data['warehouse_id'] ?? 0) ?: Warehouse::getDefault()?->id;
+        $warehouseId  = ($data['warehouse_id'] ?? null) ?: Warehouse::getDefault()?->id;
         $primaryIndex = (int) ($data['primary_image_index'] ?? 0);
         $data = Arr::except($data, ['initial_stock', 'track_stock', 'warehouse_id', 'primary_image_index']);
 
@@ -96,7 +96,7 @@ class ProductService
 
     // ─── Private ──────────────────────────────────────────────────────────────
 
-    private function initStock(Product $product, int $quantity, int $warehouseId): void
+    private function initStock(Product $product, int $quantity, string $warehouseId): void
     {
         $stock = Stock::create([
             'product_id'   => $product->id,

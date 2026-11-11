@@ -15,12 +15,12 @@ export interface SaleItem {
 }
 
 export interface LineWarehouse {
-    id: number;
+    id: string;
     name: string;
 }
 
 export interface WarehouseStock {
-    warehouse_id: number;
+    warehouse_id: string;
     warehouse_name: string;
     quantity: number;
     is_pos_warehouse: boolean;

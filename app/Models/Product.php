@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,7 +14,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Product extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, HasUuids;
 
     protected $fillable = [
         'supplier_code',
@@ -58,17 +60,17 @@ class Product extends Model
         });
     }
 
-    public function scopeByCategory(Builder $query, int $categoryId): Builder
+    public function scopeByCategory(Builder $query, string $categoryId): Builder
     {
         return $query->where('category_id', $categoryId);
     }
 
-    public function scopeByBrand(Builder $query, int $brandId): Builder
+    public function scopeByBrand(Builder $query, string $brandId): Builder
     {
         return $query->where('brand_id', $brandId);
     }
 
-    public function scopeBySupplier(Builder $query, int $supplierId): Builder
+    public function scopeBySupplier(Builder $query, string $supplierId): Builder
     {
         return $query->where('supplier_id', $supplierId);
     }

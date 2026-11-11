@@ -34,7 +34,7 @@ export interface SharedData {
 }
 
 export interface User {
-    id: number;
+    id: string;
     name: string;
     email: string;
     avatar?: string;
@@ -42,7 +42,7 @@ export interface User {
     created_at: string;
     updated_at: string;
     permissions: string[];
-    roles: { id: number; name: string }[];
+    roles: { id: string; name: string }[];
     is_vendedor: boolean;
     is_admin: boolean;
     is_superadmin: boolean;

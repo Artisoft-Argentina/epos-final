@@ -15,7 +15,7 @@ import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
 
 interface Customer {
-    id: number;
+    id: string;
     business_name: string;
     fantasy_name: string | null;
     person_type: string;
@@ -26,15 +26,15 @@ interface Customer {
     email: string | null;
     address: string | null;
     zip_code: string | null;
-    city_id: number | null;
-    state_id: number | null;
+    city_id: string | null;
+    state_id: string | null;
     tax_status: string;
     notes: string | null;
     active: boolean;
 }
 
-interface State { id: number; name: string; }
-interface City { id: number; name: string; state_id: number; }
+interface State { id: string; name: string; }
+interface City { id: string; name: string; state_id: string; }
 interface Props { customer: Customer; states: State[]; cities: City[]; }
 
 const TAX_STATUS_OPTIONS = [

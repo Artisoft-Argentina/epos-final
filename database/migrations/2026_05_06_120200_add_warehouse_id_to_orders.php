@@ -12,7 +12,7 @@ return new class extends Migration
         $defaultWarehouseId = DB::table('warehouses')->where('is_default', true)->value('id');
 
         Schema::table('orders', function (Blueprint $table) {
-            $table->foreignId('warehouse_id')->nullable()->after('supplier_id')->constrained('warehouses');
+            $table->foreignUuid('warehouse_id')->nullable()->after('supplier_id')->constrained('warehouses');
         });
 
         if ($defaultWarehouseId) {

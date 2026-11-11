@@ -16,7 +16,7 @@ class StockTransferService
     /**
      * Crear transferencia en estado draft.
      */
-    public function request(int $originWarehouseId, int $destinationWarehouseId, array $items, int $userId, ?string $notes = null): StockTransfer
+    public function request(string $originWarehouseId, string $destinationWarehouseId, array $items, string $userId, ?string $notes = null): StockTransfer
     {
         if ($originWarehouseId === $destinationWarehouseId) {
             throw new InvalidArgumentException('El almacén origen y destino no pueden ser el mismo.');

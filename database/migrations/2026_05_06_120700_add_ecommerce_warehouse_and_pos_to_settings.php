@@ -10,8 +10,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('settings', function (Blueprint $table) {
-            $table->foreignId('default_ecommerce_warehouse_id')->nullable()->after('mp_environment')->constrained('warehouses')->nullOnDelete();
-            $table->foreignId('default_ecommerce_point_of_sale_id')->nullable()->after('default_ecommerce_warehouse_id')->constrained('points_of_sale')->nullOnDelete();
+            $table->foreignUuid('default_ecommerce_warehouse_id')->nullable()->after('mp_environment')->constrained('warehouses')->nullOnDelete();
+            $table->foreignUuid('default_ecommerce_point_of_sale_id')->nullable()->after('default_ecommerce_warehouse_id')->constrained('points_of_sale')->nullOnDelete();
         });
 
         $defaultWarehouseId = DB::table('warehouses')->where('is_default', true)->value('id');

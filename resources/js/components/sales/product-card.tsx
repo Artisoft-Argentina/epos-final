@@ -5,11 +5,11 @@ import { Package, Plus } from 'lucide-react';
 export type CatalogView = 'grid' | 'list';
 
 export interface CatalogProduct {
-    id: number;
+    id: string;
     name: string;
     sku: string;
-    category?: { id: number; name: string } | null;
-    images?: { id: number; path: string; is_primary: boolean }[];
+    category?: { id: string; name: string } | null;
+    images?: { id: string; path: string; is_primary: boolean }[];
 }
 
 interface ProductCardProps {

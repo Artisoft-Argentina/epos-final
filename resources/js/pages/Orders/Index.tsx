@@ -9,13 +9,13 @@ import { Plus, Eye, SquarePen } from 'lucide-react';
 import { usePermission } from '@/hooks/use-permission';
 
 interface Order {
-    id: number;
+    id: string;
     pos_number: number;
     order_number: number;
     date: string;
     total: number;
-    supplier: { id: number; business_name: string };
-    products: { id: number }[];
+    supplier: { id: string; business_name: string };
+    products: { id: string }[];
 }
 
 interface Props { orders: Order[]; }

@@ -10,7 +10,7 @@ import { FileText, Search, Download } from 'lucide-react';
 import { useState } from 'react';
 
 interface Cliente {
-    id: number;
+    id: string;
     razonsocial: string;
     documentounico: string;
     email: string;

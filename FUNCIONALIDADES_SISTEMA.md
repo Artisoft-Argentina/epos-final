@@ -1,7 +1,9 @@
 # EPOS — Sistema de Gestión Comercial
 ## Documentación de Funcionalidades
 
-> Sistema integral de Punto de Venta y Gestión Comercial para el mercado argentino, con soporte multitenant, facturación electrónica AFIP y ecommerce integrado.
+> ⚠️ **Desactualizado**: este documento describe la arquitectura **multi-tenant** (`stancl/tenancy`) que el proyecto tuvo en una etapa anterior. Se quitó: hoy EPOS es **single-tenant** (un deploy = una empresa). Las secciones de Multitenant, Central DB/Tenant DB y `TenancyMiddleware` son históricas. Para la arquitectura actual, ver [CLAUDE.md](CLAUDE.md).
+
+> Sistema integral de Punto de Venta y Gestión Comercial para el mercado argentino, con facturación electrónica ARCA y ecommerce integrado.
 
 ---
 

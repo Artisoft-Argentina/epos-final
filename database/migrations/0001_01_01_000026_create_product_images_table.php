@@ -9,8 +9,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('product_images', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
+            $table->uuid('id')->primary();
+            $table->foreignUuid('product_id')->constrained('products')->cascadeOnDelete();
             $table->string('filename');
             $table->string('path');
             $table->string('medium_path')->nullable();

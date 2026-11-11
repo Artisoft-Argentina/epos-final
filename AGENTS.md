@@ -6,10 +6,9 @@ Notas compactas y de alto impacto para sesiones de OpenCode. Si algo es obvio po
 
 - **Backend**: Laravel 12, PHP 8.4, PostgreSQL 16, Redis 7, Pest 4.
 - **Frontend**: React 19, Inertia.js 2.1, TypeScript, Tailwind CSS 4, Vite 7.
-- **Multi-tenant**: `stancl/tenancy` 3.9. Los tenants se identifican por subdominio (`<tenant>.epos.lvh.me:3000`). Cada uno tiene su propia base PostgreSQL (`epos_<id>`).
-- **Dominio central**: `epos.lvh.me` — panel de superadministración de tenants.
+- **Single-tenant**: no hay multi-tenancy (se quitó `stancl/tenancy`). Cada empresa es un deploy separado, con su propia base PostgreSQL y dominio.
 - **DNS local**: `*.lvh.me` resuelve a `127.0.0.1` automáticamente. No se requiere editar `/etc/hosts`.
-- **Assets**: build multi-etapa de Vite dentro del Dockerfile. `FilesystemTenancyBootstrapper` está deshabilitado para que todos los tenants compartan los assets compilados.
+- **Assets en dev**: `docker-compose.yml` monta todo el repo (`.:/var/www/html`) dentro del contenedor, así que `public/build` generado con `npm run build` en el host queda visible ahí sin pasos extra.
 
 ## Comandos de Desarrollo
 
@@ -20,15 +19,13 @@ make up                    # docker compose up -d; usa las variables de .env
 
 # Día a día
 make shell                 # sh dentro del contenedor app
-make migrate               # php artisan migrate (solo BD central)
-make tenant-migrate        # php artisan tenants:migrate (todas las BD de tenant)
+make migrate               # php artisan migrate
 make fresh                 # reset destructivo + seeders (pide confirmación)
 make tinker                # Laravel Tinker dentro del contenedor
 make logs                  # tail de logs del contenedor app
 ```
 
 **Dentro del contenedor (o `make artisan cmd=...`)**:
-- `php artisan tenants:migrate` — obligatorio para cambios de schema en tenants; `php artisan migrate` **no** toca las BD de tenant.
 - `php artisan queue:work --tries=3` — ejecutar worker de colas.
 
 ## Comandos de Frontend (host o contenedor)
@@ -67,19 +64,17 @@ El orden de CI (`lint.yml`) es: **Pint → Prettier → ESLint**.
 
 - **No axios en el frontend** — a pesar de estar en `package.json`, fue removido del uso. Usar siempre `fetch` nativo con header `X-CSRF-TOKEN` (leer de `<meta name="csrf-token">`).
 - **Listas de precios**: `listas_precios.default_pos = true` es la que usa el POS. `default_ecommerce = true` es la que usa la tienda online.
-- **Certificados ARCA/AFIP**: almacenados por tenant en `storage/app/private/afip/<tenant_id>/`. En modo `homologacion` no se requiere certificado real.
+- **Certificados ARCA/AFIP**: almacenados en `storage/app/private/afip/` (`cert.pem` + `key.pem`, una sola empresa por deploy). En modo `homologacion` no se requiere certificado real.
 - **OPcache**: después de cambiar archivos PHP dentro del contenedor Docker en ejecución, reiniciar el contenedor (`docker restart epos-app`) o enviar `USR2` a php-fpm: `docker exec epos-app kill -USR2 $(pgrep -o php-fpm)`.
-- **Refresco de assets en Docker**: si se buildean assets en el host (`npm run build`) y se necesitan dentro del contenedor, copiarlos: `docker cp public/build/. epos-app:/var/www/html/public/build/`. Si existe `public/hot` en la imagen del contenedor, la app intentará cargar assets desde `:5173` en lugar de los archivos compilados.
+- **Assets en dev**: el repo entero está bind-mounteado en el contenedor, así que un `npm run build` en el host alcanza — no hace falta `docker cp`. Si existe `public/hot`, la app intentará cargar assets desde `:5173` en lugar de los archivos compilados.
 - **`make setup` no existe** — la documentación original lo menciona, pero el comando real de primera vez es `make up` (o `docker compose up -d --build`).
 
 ## Destacados del Entorno (`.env.example`)
 
-- `DB_CONNECTION=pgsql` (no MySQL; la config de MySQL está comentada en `docker-compose.yml`).
-- `CENTRAL_DOMAIN=epos.lvh.me`
-- `TENANCY_DB_PREFIX=epos_`
-- `SESSION_DOMAIN=.epos.lvh.me` (punto inicial para cookies de subdominio).
+- `DB_CONNECTION=pgsql` (no MySQL).
+- `SESSION_DOMAIN=null` (un solo dominio por deploy, sin subdominios que cubrir).
 - `AFIP_ENVIRONMENT=homologacion`
-- `AI_PROVIDER=ollama` (o `groq` en algunos entornos).
+- `AI_PROVIDER=groq` (alternativa local: `ollama`, sin internet).
 
 ## CI / CD
 
@@ -89,17 +84,16 @@ El orden de CI (`lint.yml`) es: **Pint → Prettier → ESLint**.
 
 ## Ubicaciones Clave de Archivos
 
-- Rutas tenant: `routes/web.php` (agrupadas por `role:admin,superadmin`).
-- Rutas centrales: `routes/central.php`.
+- Rutas: `routes/web.php` (agrupadas por `role:admin,superadmin`).
 - Páginas React: `resources/js/pages/<Modulo>/Index.tsx` (también `Create.tsx`, `Edit.tsx`, `Show.tsx`).
 - Componentes React: `resources/js/components/`.
-- Migraciones de tenant: `database/migrations/tenant/` — deben correrse vía `tenants:migrate`.
+- Migraciones: `database/migrations/` (sin subcarpetas; se corren con `php artisan migrate`).
 - Servicios de lógica de negocio: `app/Services/`.
 
 ## Credenciales Locales (seeders)
 
-- Central superadmin: `admin@epos.com` / `password`.
-- Tenant demo: `gepetto@mail.com` / `asdf1234`.
+- Superadmin: `SUPERADMIN_EMAIL` / `SUPERADMIN_PASSWORD` (default dev: `principal@mail.com` / `superadmin123`).
+- Demo (no prod): `superadmin@mail.com`, `admin@mail.com`, `vendedor@mail.com` / `asdf1234`.
 
 ---
 

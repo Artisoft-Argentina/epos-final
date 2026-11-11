@@ -6,15 +6,15 @@ import { ChevronLeft, Minus, Plus, ShoppingCart, Sparkles, Check, Truck, Shield,
 import { useState } from 'react';
 
 interface Articulo {
-    id: number;
+    id: string;
     name: string;
     description?: string;
     price: number;
     stock?: { quantity: number } | number;
-    category?: { id: number; name: string } | null;
-    brand?: { id: number; name: string } | null;
+    category?: { id: string; name: string } | null;
+    brand?: { id: string; name: string } | null;
     images?: Array<{
-        id: number;
+        id: string;
         path: string;
         url?: string;
     }>;

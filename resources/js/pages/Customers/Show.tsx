@@ -18,13 +18,13 @@ interface Movement {
     date: string;
     type: 'sale' | 'payment' | 'cancellation';
     description: string;
-    sale_id: number;
+    sale_id: string;
     debit: number;
     credit: number;
     balance: number;
 }
 interface Customer {
-    id: number;
+    id: string;
     business_name: string;
     fantasy_name: string | null;
     person_type: string;
@@ -40,8 +40,8 @@ interface Customer {
     active: boolean;
     credit: number;
     created_at: string;
-    city: { id: number; name: string } | null;
-    state: { id: number; name: string } | null;
+    city: { id: string; name: string } | null;
+    state: { id: string; name: string } | null;
 }
 interface Summary { total_sales: number; total_paid: number; balance_due: number; credit: number; }
 interface Props { customer: Customer; movements: Movement[]; summary: Summary; }

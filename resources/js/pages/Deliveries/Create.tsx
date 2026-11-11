@@ -9,20 +9,20 @@ import { Save, X, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 interface Warehouse {
-    id: number;
+    id: string;
     name: string;
     is_default: boolean;
 }
 
 interface Factura {
-    id: number;
+    id: string;
     invoice_number: number;
     customer: {
         business_name: string;
         fantasy_name?: string | null;
     };
     products: Array<{
-        id: number;
+        id: string;
         name: string;
         sku: string;
         pivot: {
@@ -30,8 +30,8 @@ interface Factura {
         };
     }>;
     deliveries: Array<{
-        id: number;
-        product_id: number;
+        id: string;
+        product_id: string;
         quantity: number;
         status: 'pending' | 'delivered' | 'cancelled';
         delivery_date: string;
@@ -61,13 +61,13 @@ export default function Create({ factura, warehouses }: Props) {
         observaciones: '',
     });
 
-    const getCantidadEntregada = (productId: number) => {
+    const getCantidadEntregada = (productId: string) => {
         return factura.deliveries
             .filter(d => d.product_id === productId && d.status === 'delivered')
             .reduce((sum, d) => sum + d.quantity, 0);
     };
 
-    const getCantidadPendiente = (productId: number) => {
+    const getCantidadPendiente = (productId: string) => {
         const product = factura.products.find(p => p.id === productId);
         const cantidadVendida = product?.pivot.quantity || 0;
         const cantidadEntregada = getCantidadEntregada(productId);
@@ -217,7 +217,7 @@ export default function Create({ factura, warehouses }: Props) {
                                         <Input
                                             type="number"
                                             min="1"
-                                            max={entrega.articulo_id ? getCantidadPendiente(Number(entrega.articulo_id)) : 1}
+                                            max={entrega.articulo_id ? getCantidadPendiente(entrega.articulo_id) : 1}
                                             value={entrega.cantidad}
                                             onChange={(e) => updateEntrega(index, 'cantidad', parseInt(e.target.value) || 1)}
                                         />

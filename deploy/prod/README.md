@@ -31,9 +31,9 @@ Internet ──HTTPS──► nginx (host, cert SSL) ──► App (Docker, imag
 ## 0. Prerrequisitos
 
 - VPS Ubuntu 24.04 LTS **recién creado** (Docker y nginx se instalan en el paso 1).
-- Dominio con DNS en **Cloudflare** (plan Free) — necesario para el SSL wildcard vía DNS-01.
+- Dominio con DNS en **Cloudflare** (plan Free) — necesario para el SSL vía DNS-01.
 - Un **Personal Access Token (classic)** de GitHub con scope `read:packages` (para bajar la imagen privada).
-- Un **API token de Cloudflare** con permiso `Zone:DNS:Edit` sobre la zona (para emitir el cert wildcard).
+- Un **API token de Cloudflare** con permiso `Zone:DNS:Edit` sobre la zona (para emitir el cert).
 
 ---
 
@@ -150,16 +150,17 @@ sudo tee /var/www/html/prod/docker-compose.yml > /dev/null <<'EOF'
 services:
   app:
     image: ${APP_IMAGE:-ghcr.io/artisoft-argentina/epos-final:prod}
-    container_name: prod-epos-app
+    container_name: ${CONTAINER_NAME:-prod-epos-app}
     restart: unless-stopped
     ports:
-      - '127.0.0.1:8000:80'          # solo lo alcanza el nginx del host
+      - '127.0.0.1:${APP_PORT:-8000}:80'   # solo lo alcanza el nginx del host
     environment:
       - RUN_MIGRATIONS=true          # migra la base en cada arranque (incremental)
       - RUN_SEEDERS=false            # true SOLO en el primer boot (ver paso 6)
-      - DB_HOST=host.docker.internal # el entrypoint lo necesita para esperar la BD
-      - DB_PORT=5432
-      - DB_USERNAME=epos_user
+      # El entrypoint (pg_isready) lee estas vars del shell, no del .env: Compose las toma del .env del stack.
+      - DB_HOST=${DB_HOST:-host.docker.internal}
+      - DB_PORT=${DB_PORT:-5432}
+      - DB_USERNAME=${DB_USERNAME:-epos_user}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
@@ -170,12 +171,23 @@ services:
 
 networks:
   epos-network:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16
+    driver: bridge                   # subred asignada por Docker: una fija chocaría entre stacks
 EOF
 ```
+
+> **Varios stacks en el mismo VPS** (prod, demo, artisoft, dev): el mismo compose sirve para todos.
+> Cada carpeta define en su `.env` lo que no puede repetirse:
+>
+> | Stack | `APP_PORT` | `CONTAINER_NAME` | `DB_DATABASE` |
+> |---|---|---|---|
+> | prod (`/var/www/html/prod`) | 8000 | `prod-epos-app` | `epos_central` |
+> | demo | 8001 | `demo-epos-app` | una BD propia |
+> | artisoft | 8002 | `artisoft-epos-app` | una BD propia |
+> | dev | 8003 | `dev-epos-app` | una BD propia |
+>
+> `DB_HOST`, `DB_PORT` y `DB_USERNAME` el compose los toma del mismo `.env` que usa Laravel (un solo valor,
+> sin duplicar); si faltan, usa `host.docker.internal`, `5432` y `epos_user`. El `proxy_pass` de nginx de
+> cada dominio apunta a su `APP_PORT`.
 
 ### `/var/www/html/prod/.env`
 
@@ -245,10 +257,9 @@ Debe responder **`Login Succeeded`**. (La imagen `:prod` todavía **no existe** 
 
 ---
 
-## 5. DNS + nginx + SSL wildcard
+## 5. DNS + nginx + SSL
 
-> Desde que se quitó el multitenant (1 deploy = 1 empresa) **ya no hace falta el wildcard**: alcanza un cert
-> normal para el dominio (ej. `certbot --nginx -d epos.velto.ar`). El procedimiento de abajo sigue funcionando.
+> 1 deploy = 1 empresa = 1 dominio con su propio cert (sin wildcard).
 
 ### 5.1 DNS en Cloudflare (modo "DNS only" / nube gris)
 
@@ -257,12 +268,11 @@ Debe responder **`Login Succeeded`**. (La imagen `:prod` todavía **no existe** 
 | A | `@` (velto.ar) | IP del VPS |
 | A | `www` | IP del VPS |
 | A | `epos` | IP del VPS |
-| A | `*.epos` | IP del VPS |
+| A | `demo`, `artisoft`, `dev` | IP del VPS (un registro por stack adicional) |
 
 > **Nube gris** en los registros de EPOS: el navegador llega directo al VPS y ve el cert de Let's Encrypt.
-> (Con nube naranja fallaría el wildcard anidado `*.epos.velto.ar` en el free tier.)
 
-### 5.2 Certificado wildcard (Let's Encrypt vía DNS-01 de Cloudflare)
+### 5.2 Certificado (Let's Encrypt vía DNS-01 de Cloudflare)
 
 ```bash
 sudo apt install -y certbot python3-certbot-dns-cloudflare
@@ -272,7 +282,7 @@ sudo chmod 600 /root/.secrets/cloudflare.ini
 
 sudo certbot certonly --dns-cloudflare \
   --dns-cloudflare-credentials /root/.secrets/cloudflare.ini \
-  -d 'epos.velto.ar' -d '*.epos.velto.ar' \
+  -d 'epos.velto.ar' \
   --agree-tos -m tu-email@dominio.com --non-interactive \
   --deploy-hook "systemctl reload nginx"
 ```
@@ -289,13 +299,13 @@ sudo tee /etc/nginx/sites-available/epos > /dev/null <<'EOF'
 # HTTP -> HTTPS
 server {
     listen 80;
-    server_name epos.velto.ar *.epos.velto.ar;
+    server_name epos.velto.ar;
     return 301 https://$host$request_uri;
 }
 # HTTPS
 server {
     listen 443 ssl;
-    server_name epos.velto.ar *.epos.velto.ar;
+    server_name epos.velto.ar;
 
     ssl_certificate     /etc/letsencrypt/live/epos.velto.ar/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/epos.velto.ar/privkey.pem;
@@ -334,13 +344,59 @@ sudo rm -f /etc/nginx/sites-enabled/default
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
-Verificar el cert wildcard:
+Verificar el cert:
 ```bash
 echo | openssl s_client -connect epos.velto.ar:443 -servername epos.velto.ar 2>/dev/null \
   | openssl x509 -noout -ext subjectAltName
-# → DNS:*.epos.velto.ar, DNS:epos.velto.ar
+# → DNS:epos.velto.ar
 ```
 Antes del primer deploy, `curl -sI https://epos.velto.ar` da **502** (nginx OK, app aún no desplegada) — es lo esperado.
+
+### 5.3.1 nginx para stacks adicionales (demo, artisoft, dev)
+
+Cada dominio adicional (`demo.velto.ar`, `artisoft.velto.ar`, `dev.velto.ar`) tiene su server block, que apunta
+al `APP_PORT` de su stack (tabla de §3). Cada dominio tiene su certificado: se emite con el comando de §5.2
+cambiando el `-d` (ej. `-d 'dev.velto.ar'`) y queda en `/etc/letsencrypt/live/<dominio>/`.
+
+Plantilla (reemplazar `<dominio>` y `<APP_PORT>`; ej. `dev.velto.ar` / `8003`):
+
+```nginx
+# /etc/nginx/sites-available/<dominio>
+server {
+    listen 80;
+    listen [::]:80;
+    server_name <dominio>;
+    return 301 https://$host$request_uri;
+}
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    server_name <dominio>;
+
+    ssl_certificate     /etc/letsencrypt/live/<dominio>/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/<dominio>/privkey.pem;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+
+    # Mismos security headers, límites/timeouts y buffers grandes que el bloque de §5.3
+    client_max_body_size 100M;
+
+    location / {
+        proxy_pass http://127.0.0.1:<APP_PORT>;
+        proxy_http_version 1.1;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_buffer_size       128k;
+        proxy_buffers           4 256k;
+        proxy_busy_buffers_size 256k;
+    }
+}
+```
+```bash
+sudo ln -s /etc/nginx/sites-available/<dominio> /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
+```
 
 ---
 

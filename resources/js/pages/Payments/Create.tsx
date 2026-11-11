@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Save, X } from 'lucide-react';
 
 interface Factura {
-    id: number;
+    id: string;
     invoice_number: number;
     total: number;
     customer: {
@@ -17,7 +17,7 @@ interface Factura {
         fantasy_name?: string | null;
     };
     payments: Array<{
-        id: number;
+        id: string;
         amount: number;
         payment_method: string;
         payment_date: string;

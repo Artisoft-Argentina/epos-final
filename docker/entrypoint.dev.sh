@@ -41,7 +41,7 @@ php artisan storage:link --force 2>/dev/null || true
 
 if [ "${RUN_MIGRATIONS:-false}" = "true" ]; then
     echo "==> Ejecutando migraciones..."
-    php artisan migrate --force 2>/dev/null || true
+    php artisan migrate --force
 fi
 
 if [ "${RUN_SEEDERS:-false}" = "true" ]; then

@@ -6,14 +6,14 @@ import { initMercadoPago, CardPayment } from '@mercadopago/sdk-react';
 import { ChevronLeft, Shield, Lock, CreditCard, Sparkles } from 'lucide-react';
 
 interface CartItem {
-    id: number;
+    id: string;
     quantity: number;
     articulo: {
-        id: number;
+        id: string;
         name: string;
         price: number;
         images?: Array<{
-            id: number;
+            id: string;
             path: string;
             url?: string;
         }>;

@@ -1,5 +1,7 @@
 # Plan — Almacenes y Puntos de Venta por Tenant (EPOS)
 
+> ⚠️ **Archivado**: plan ya ejecutado (`warehouses` y `points_of_sale` existen y están en uso) y escrito bajo la arquitectura **multi-tenant** anterior, que se quitó. Queda como referencia histórica del diseño, no como documentación vigente.
+
 ## Contexto
 
 EPOS es un SaaS multi-tenant donde cada empresa hoy maneja:

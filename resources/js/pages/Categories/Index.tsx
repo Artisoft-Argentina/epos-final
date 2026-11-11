@@ -17,7 +17,7 @@ import { Plus, Edit, Search } from 'lucide-react';
 import { useState } from 'react';
 
 interface Category {
-    id: number;
+    id: string;
     name: string;
     active: boolean;
 }

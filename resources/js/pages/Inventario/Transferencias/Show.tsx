@@ -7,31 +7,31 @@ import { ArrowLeftRight, Truck, PackageCheck, X } from 'lucide-react';
 import { usePermission } from '@/hooks/use-permission';
 
 interface Product {
-    id: number;
+    id: string;
     name: string;
     code?: string;
 }
 
 interface TransferItem {
-    id: number;
-    product_id: number;
+    id: string;
+    product_id: string;
     product: Product;
     quantity: number;
     received_quantity: number | null;
 }
 
 interface Warehouse {
-    id: number;
+    id: string;
     name: string;
 }
 
 interface User {
-    id: number;
+    id: string;
     name: string;
 }
 
 interface Transfer {
-    id: number;
+    id: string;
     transfer_number: number;
     date: string;
     status: 'draft' | 'in_transit' | 'received' | 'cancelled';

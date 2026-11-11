@@ -6,9 +6,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FormField } from '@/components/form-field';
 
-interface User { id: number; name: string; email: string; role_id?: number; point_of_sale_id?: number | null; }
+interface User { id: string; name: string; email: string; role_id?: number; point_of_sale_id?: string | null; }
 interface Role { id: number; name: string; }
-interface PuntoVenta { id: number; name: string; pos_number: number; is_default: boolean; }
+interface PuntoVenta { id: string; name: string; pos_number: number; is_default: boolean; }
 interface Props { user: User; roles: Role[]; puntosVenta: PuntoVenta[]; }
 
 export default function Edit({ user, roles, puntosVenta }: Props) {

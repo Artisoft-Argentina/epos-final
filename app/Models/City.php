@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class City extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, HasUuids;
 
     protected $fillable = ['name', 'state_id', 'afip_id', 'active'];
 

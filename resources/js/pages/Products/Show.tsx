@@ -14,21 +14,21 @@ import {
 } from 'lucide-react';
 import { usePermission } from '@/hooks/use-permission';
 
-interface ProductImage { id: number; url: string; url_thumb: string | null; is_primary: boolean; }
+interface ProductImage { id: string; url: string; url_thumb: string | null; is_primary: boolean; }
 interface StockMovement {
-    id: number;
+    id: string;
     type: string;
     quantity: number;
     reason: string | null;
     date: string;
     created_at: string;
-    user: { id: number; name: string } | null;
+    user: { id: string; name: string } | null;
     referenceable_type: string | null;
-    referenceable_id: number | null;
+    referenceable_id: string | null;
 }
 
 interface PriceListItem {
-    id: number;
+    id: string;
     name: string;
     percentage: string;
     pricing_strategy: 'list' | 'product';
@@ -38,7 +38,7 @@ interface PriceListItem {
 }
 
 interface Product {
-    id: number;
+    id: string;
     sku: string;
     ean: string | null;
     name: string;
