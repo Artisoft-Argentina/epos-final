@@ -5,7 +5,7 @@ import { PageHeader } from '@/components/page-header';
 import { DataTable, type Column } from '@/components/data-table';
 
 interface Activity {
-    id: string;
+    id: number;
     log_name: string;
     description: string;
     subject_type: string;
