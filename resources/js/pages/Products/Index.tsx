@@ -15,13 +15,13 @@ import { Plus, Search, Printer, Eye, Edit, Power, Package, PackageCheck, AlertTr
 import { useState, useRef } from 'react';
 import { usePermission } from '@/hooks/use-permission';
 
-interface Category { id: number; name: string; }
-interface Brand { id: number; name: string; }
-interface Supplier { id: number; business_name: string; }
+interface Category { id: string; name: string; }
+interface Brand { id: string; name: string; }
+interface Supplier { id: string; business_name: string; }
 interface PrimaryImage { url_thumb: string | null; url: string; }
 
 interface Product {
-    id: number;
+    id: string;
     sku: string;
     ean: string | null;
     name: string;
@@ -49,7 +49,7 @@ const fmt = (n: string | number) =>
 
 export default function Index({ products, filters, categories, brands, suppliers, kpis }: Props) {
     const [search, setSearch] = useState(filters.search ?? '');
-    const [selectedIds, setSelectedIds] = useState<number[]>([]);
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
     const { can } = usePermission();
 
@@ -66,7 +66,7 @@ export default function Index({ products, filters, categories, brands, suppliers
     const toggleAll = (checked: boolean) =>
         setSelectedIds(checked ? products.data.map((p) => p.id) : []);
 
-    const toggleOne = (id: number) =>
+    const toggleOne = (id: string) =>
         setSelectedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
 
     const handleToggleActive = (product: Product) =>

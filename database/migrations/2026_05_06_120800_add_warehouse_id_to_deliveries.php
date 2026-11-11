@@ -10,8 +10,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('deliveries', function (Blueprint $table) {
-            $table->foreignId('warehouse_id')->nullable()->after('product_id')->constrained('warehouses')->nullOnDelete();
-            $table->foreignId('delivered_by_user_id')->nullable()->after('actual_delivery_date')->constrained('users')->nullOnDelete();
+            $table->foreignUuid('warehouse_id')->nullable()->after('product_id')->constrained('warehouses')->nullOnDelete();
+            $table->foreignUuid('delivered_by_user_id')->nullable()->after('actual_delivery_date')->constrained('users')->nullOnDelete();
         });
 
         // Backfill: usar el warehouse_id de la sale; si no, el default warehouse
@@ -28,7 +28,7 @@ return new class extends Migration
 
         if ($defaultWarehouseId) {
             Schema::table('deliveries', function (Blueprint $table) {
-                $table->foreignId('warehouse_id')->nullable(false)->change();
+                $table->foreignUuid('warehouse_id')->nullable(false)->change();
             });
         }
     }

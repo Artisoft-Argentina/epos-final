@@ -19,7 +19,7 @@ class ImageService
     /**
      * Procesa una imagen de producto: genera 3 variantes en WebP sin recorte.
      */
-    public function processProductImage(UploadedFile $file, int $productId, int $index): array
+    public function processProductImage(UploadedFile $file, string $productId, int $index): array
     {
         $timestamp = time();
         $directory = "products/{$productId}";

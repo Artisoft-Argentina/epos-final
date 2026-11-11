@@ -14,11 +14,11 @@ import { ImageUploadPreview } from '@/components/image-upload-preview';
 import { ChevronRight, Save, Package, DollarSign, QrCode, ImagePlus, Warehouse, Tag, Layers, SlidersHorizontal } from 'lucide-react';
 import { useState } from 'react';
 
-interface Category { id: number; name: string; }
-interface Brand { id: number; name: string; }
-interface Supplier { id: number; business_name: string; }
-interface PriceList { id: number; name: string; percentage: string; pricing_strategy: 'list' | 'product'; }
-interface WarehouseOption { id: number; name: string; is_default: boolean; }
+interface Category { id: string; name: string; }
+interface Brand { id: string; name: string; }
+interface Supplier { id: string; business_name: string; }
+interface PriceList { id: string; name: string; percentage: string; pricing_strategy: 'list' | 'product'; }
+interface WarehouseOption { id: string; name: string; is_default: boolean; }
 interface Props { categories: Category[]; brands: Brand[]; suppliers: Supplier[]; priceLists: PriceList[]; warehouses: WarehouseOption[]; }
 
 const UNITS = ['Unidad', 'Kg', 'Litro', 'Metro', 'Caja', 'Pack', 'Par', 'Rollo'];

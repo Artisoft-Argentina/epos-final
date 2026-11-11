@@ -5,19 +5,19 @@ import { ArrowLeft, Package, SquarePen } from 'lucide-react';
 import { usePermission } from '@/hooks/use-permission';
 
 interface Supplier {
-    id: number;
+    id: string;
     business_name: string;
     tax_id: string;
 }
 
 interface Product {
-    id: number;
+    id: string;
     sku: string;
     name: string;
 }
 
 interface OrderProduct {
-    id: number;
+    id: string;
     quantity: number;
     unit_price: number;
     subtotal: number;
@@ -25,7 +25,7 @@ interface OrderProduct {
 }
 
 interface Order {
-    id: number;
+    id: string;
     pos_number: number;
     order_number: number;
     date: string;

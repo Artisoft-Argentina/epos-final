@@ -11,7 +11,7 @@ return new class extends Migration
         // orders = órdenes de pedido a proveedores (antes remitos)
         // supplier_receipt_number: nro de remito del proveedor, se carga al recibir la mercadería
         Schema::create('orders', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->integer('pos_number');                                  // ptoventa → pos_number
             $table->integer('order_number');                                // numremito → order_number
             $table->date('date');                                         // fecha → date
@@ -22,8 +22,8 @@ return new class extends Migration
             $table->string('supplier_receipt_number')->nullable();          // ✚ nuevo
             $table->text('notes')->nullable();                                // observaciones (fusionado desde purchases)
             $table->boolean('converted_to_inventory')->default(false);     // convertido_inventario → converted_to_inventory
-            $table->foreignId('supplier_id')->constrained('suppliers');
-            $table->foreignId('user_id')->constrained('users');
+            $table->foreignUuid('supplier_id')->constrained('suppliers');
+            $table->foreignUuid('user_id')->constrained('users');
             $table->softDeletes();
             $table->boolean('active')->default(true);
             $table->timestamps();

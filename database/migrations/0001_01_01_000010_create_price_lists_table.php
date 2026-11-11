@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('price_lists', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->string('name');                              // nombre → name
             $table->decimal('percentage', 8, 2)->default(0);    // porcentaje → percentage
             $table->enum('pricing_strategy', ['list', 'product'])->default('list');

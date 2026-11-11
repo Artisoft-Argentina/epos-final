@@ -9,18 +9,18 @@ import { Plus, Trash2, Save, X } from 'lucide-react';
 import { useState, useRef } from 'react';
 
 interface Cliente {
-    id: number;
+    id: string;
     business_name: string;
     fantasy_name?: string | null;
 }
 
 interface Articulo {
-    id: number;
+    id: string;
     name: string;
     sku: string;
     price: number;
-    category?: { id: number; name: string } | null;
-    brand?: { id: number; name: string } | null;
+    category?: { id: string; name: string } | null;
+    brand?: { id: string; name: string } | null;
 }
 
 interface Props {

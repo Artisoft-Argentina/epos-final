@@ -15,37 +15,37 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 interface Warehouse {
-    id: number;
+    id: string;
     name: string;
     is_default: boolean;
 }
 
 interface WarehouseStock {
-    warehouse_id: number;
+    warehouse_id: string;
     warehouse_name: string;
     quantity: number;
     is_pos_warehouse: boolean;
 }
 
 interface Entrega {
-    id: number;
+    id: string;
     quantity: number;
     delivery_date: string;
     actual_delivery_date: string | null;
     status: 'pending' | 'delivered' | 'cancelled';
     notes: string | null;
-    warehouse_id: number | null;
-    sale: { id: number; invoice_number: number; sale_type: string; customer: { id: number; business_name: string } };
-    product: { id: number; name: string; sku: string };
-    warehouse: { id: number; name: string } | null;
+    warehouse_id: string | null;
+    sale: { id: string; invoice_number: number; sale_type: string; customer: { id: string; business_name: string } };
+    product: { id: string; name: string; sku: string };
+    warehouse: { id: string; name: string } | null;
 }
 
 interface Props {
     entregas: { data: Entrega[]; links: any[] };
     warehouses: Warehouse[];
     selected_status: string;
-    selected_warehouse_id: number | null;
-    selected_sale_id: number | null;
+    selected_warehouse_id: string | null;
+    selected_sale_id: string | null;
 }
 
 const statusVariant: Record<string, 'warning' | 'success' | 'destructive'> = {
@@ -98,7 +98,7 @@ export default function Index({ entregas, warehouses, selected_status, selected_
         });
     };
 
-    const cancelar = (id: number) => {
+    const cancelar = (id: string) => {
         if (confirm('¿Cancelar esta entrega?')) router.post(route('deliveries.cancel', id));
     };
 

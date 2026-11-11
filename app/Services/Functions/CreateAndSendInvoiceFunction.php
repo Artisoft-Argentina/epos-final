@@ -7,7 +7,7 @@ use App\Models\Product;
 
 class CreateAndSendInvoiceFunction
 {
-    public static function execute(array $params, int $userId): array
+    public static function execute(array $params, string $userId): array
     {
         $steps = [];
         

@@ -7,8 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import AppSidebarLayout from '@/layouts/app/app-sidebar-layout';
 
 interface Empresa {
-    id?: number;
-    tax_id?: number;
+    id?: string;
+    tax_id?: string;
     business_name?: string;
     address?: string;
     phone?: string;

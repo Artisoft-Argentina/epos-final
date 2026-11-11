@@ -12,12 +12,12 @@ import { paymentStatusMeta, isCancelled } from '@/lib/payment-status';
 import { formatVoucher } from '@/lib/sale-number';
 
 interface Warehouse {
-    id: number;
+    id: string;
     name: string;
 }
 
 interface Sale {
-    id: number;
+    id: string;
     invoice_number: number;
     voucher_letter: string;
     pos_number: number;
@@ -35,26 +35,26 @@ interface Sale {
     customer: { business_name: string; };
     user: { name: string; };
     products: Array<{
-        id: number;
+        id: string;
         name: string;
         sku: string;
         pivot: { quantity: number; unit_price: number; subtotal: number; };
     }>;
     payments: Array<{
-        id: number;
+        id: string;
         amount: number;
         payment_method: string;
         payment_date: string;
         notes?: string;
     }>;
     deliveries: Array<{
-        id: number;
-        product_id: number;
+        id: string;
+        product_id: string;
         quantity: number;
         status: 'pending' | 'delivered' | 'cancelled';
         delivery_date: string;
         notes?: string;
-        warehouse_id: number | null;
+        warehouse_id: string | null;
         warehouse: Warehouse | null;
         product: { sku: string; name: string; };
     }>;
@@ -79,18 +79,18 @@ export default function Show({ factura, warehouses }: Props) {
     const totalPagado = factura.payments?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
     const saldoPendiente = Number(factura.total) - totalPagado;
 
-    const changeWarehouse = (deliveryId: number, warehouseId: string) => {
+    const changeWarehouse = (deliveryId: string, warehouseId: string) => {
         router.patch(route('deliveries.update-warehouse', deliveryId), { warehouse_id: warehouseId }, { preserveScroll: true });
     };
 
-    const marcarEntregada = (deliveryId: number, warehouseId: number | null) => {
+    const marcarEntregada = (deliveryId: string, warehouseId: string | null) => {
         if (!warehouseId) return;
         if (confirm('¿Confirmar entrega? Se descontará el stock del almacén seleccionado.')) {
             router.post(route('deliveries.mark-delivered', deliveryId), { warehouse_id: warehouseId });
         }
     };
 
-    const cancelarEntrega = (deliveryId: number) => {
+    const cancelarEntrega = (deliveryId: string) => {
         if (confirm('¿Cancelar esta entrega?')) {
             router.post(route('deliveries.cancel', deliveryId));
         }

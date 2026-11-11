@@ -17,7 +17,7 @@ import { Plus, Edit, Eye } from 'lucide-react';
 import { useState } from 'react';
 
 interface PriceList {
-    id: number;
+    id: string;
     name: string;
     percentage: number;
     pricing_strategy: 'list' | 'product';

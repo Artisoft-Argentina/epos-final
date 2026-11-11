@@ -11,15 +11,15 @@ import { Pagination } from '@/components/pagination';
 import { Plus, Edit, Store } from 'lucide-react';
 
 interface Warehouse {
-    id: number;
+    id: string;
     name: string;
 }
 
 interface PuntoVenta {
-    id: number;
+    id: string;
     name: string;
     pos_number: number;
-    warehouse_id: number;
+    warehouse_id: string;
     warehouse: Warehouse;
     voucher_letter_default: string;
     next_invoice_number_a: number;

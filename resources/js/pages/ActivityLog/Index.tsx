@@ -5,11 +5,11 @@ import { PageHeader } from '@/components/page-header';
 import { DataTable, type Column } from '@/components/data-table';
 
 interface Activity {
-    id: number;
+    id: string;
     log_name: string;
     description: string;
     subject_type: string;
-    subject_id: number;
+    subject_id: string;
     created_at: string;
     causer?: { name: string };
 }

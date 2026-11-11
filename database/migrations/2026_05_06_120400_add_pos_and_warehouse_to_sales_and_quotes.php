@@ -13,8 +13,8 @@ return new class extends Migration
         $defaultWarehouseId = DB::table('warehouses')->where('is_default', true)->value('id');
 
         Schema::table('sales', function (Blueprint $table) {
-            $table->foreignId('point_of_sale_id')->nullable()->after('user_id')->constrained('points_of_sale')->nullOnDelete();
-            $table->foreignId('warehouse_id')->nullable()->after('point_of_sale_id')->constrained('warehouses')->nullOnDelete();
+            $table->foreignUuid('point_of_sale_id')->nullable()->after('user_id')->constrained('points_of_sale')->nullOnDelete();
+            $table->foreignUuid('warehouse_id')->nullable()->after('point_of_sale_id')->constrained('warehouses')->nullOnDelete();
         });
 
         if ($defaultPosId) {
@@ -26,8 +26,8 @@ return new class extends Migration
 
         if (Schema::hasTable('quotes')) {
             Schema::table('quotes', function (Blueprint $table) {
-                $table->foreignId('point_of_sale_id')->nullable()->constrained('points_of_sale')->nullOnDelete();
-                $table->foreignId('warehouse_id')->nullable()->constrained('warehouses')->nullOnDelete();
+                $table->foreignUuid('point_of_sale_id')->nullable()->constrained('points_of_sale')->nullOnDelete();
+                $table->foreignUuid('warehouse_id')->nullable()->constrained('warehouses')->nullOnDelete();
             });
 
             if ($defaultPosId) {

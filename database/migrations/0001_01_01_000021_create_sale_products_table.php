@@ -19,8 +19,8 @@ return new class extends Migration
             $table->decimal('tax_rate', 12, 2);            // alicuota → tax_rate
             $table->decimal('unit_price', 12, 2);          // preciounitario → unit_price
             $table->decimal('subtotal', 12, 2);
-            $table->foreignId('product_id')->constrained('products');
-            $table->foreignId('sale_id')->constrained('sales');
+            $table->foreignUuid('product_id')->constrained('products');
+            $table->foreignUuid('sale_id')->constrained('sales');
             $table->softDeletes();
             $table->boolean('active')->default(true);
             $table->timestamps();

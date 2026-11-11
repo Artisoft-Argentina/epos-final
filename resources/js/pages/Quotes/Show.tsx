@@ -5,7 +5,7 @@ import { Head, Link } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';
 
 interface Presupuesto {
-    id: number;
+    id: string;
     quote_number: number;
     total: number;
     subtotal: number;
@@ -18,7 +18,7 @@ interface Presupuesto {
         name: string;
     };
     products: Array<{
-        id: number;
+        id: string;
         name: string;
         sku: string;
         pivot: {

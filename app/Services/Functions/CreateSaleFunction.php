@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\DB;
 
 class CreateSaleFunction
 {
-    public static function execute(array $params, int $userId): array
+    public static function execute(array $params, string $userId): array
     {
         try {
             $clienteId = $params['cliente_id'] ?? null;
@@ -93,9 +93,9 @@ class CreateSaleFunction
             foreach ($productsData as $productId => $data) {
                 $deliveryService->create(
                     $sale,
-                    (int) $productId,
+                    $productId,
                     (int) $data['quantity'],
-                    (int) $pos->warehouse_id,
+                    $pos->warehouse_id,
                     Delivery::STATUS_PENDING,
                     now(),
                     'Entrega pendiente - Venta por bot Telegram',

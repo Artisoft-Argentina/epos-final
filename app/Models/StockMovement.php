@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class StockMovement extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, HasUuids;
 
     const TYPE_PURCHASE_ENTRY   = 'purchase_entry';
     const TYPE_ASSISTANT_ENTRY  = 'assistant_entry';

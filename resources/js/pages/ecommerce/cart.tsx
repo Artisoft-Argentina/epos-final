@@ -5,14 +5,14 @@ import { ShoppingBag, Minus, Plus, Trash2, ShoppingCart, ArrowRight, Sparkles, S
 import { CartProvider } from '@/contexts/CartContext';
 
 interface CartItem {
-    id: number;
+    id: string;
     quantity: number;
     articulo: {
-        id: number;
+        id: string;
         name: string;
         price: number;
         images?: Array<{
-            id: number;
+            id: string;
             path: string;
             url?: string;
         }>;
@@ -36,7 +36,7 @@ export default function EcommerceCart({ cartItems }: Props) {
         }
     };
 
-    const updateQuantity = (cartItemId: number, newQuantity: number) => {
+    const updateQuantity = (cartItemId: string, newQuantity: number) => {
         if (newQuantity < 1) newQuantity = 1;
         router.patch(`/cart/${cartItemId}`, {
             quantity: newQuantity
@@ -45,7 +45,7 @@ export default function EcommerceCart({ cartItems }: Props) {
         });
     };
 
-    const removeCartItem = (cartItemId: number) => {
+    const removeCartItem = (cartItemId: string) => {
         if (confirm('¿Eliminar este producto del carrito?')) {
             router.delete(`/cart/${cartItemId}`);
         }

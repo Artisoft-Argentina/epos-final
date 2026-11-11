@@ -8,7 +8,7 @@ import { ArrowLeft, TrendingDown, TrendingUp, RefreshCw, AlertTriangle } from 'l
 import { Pagination } from '@/components/pagination';
 
 interface Articulo {
-    id: number;
+    id: string;
     sku: string;
     name: string;
     category?: { name: string };
@@ -16,23 +16,23 @@ interface Articulo {
 }
 
 interface Inventario {
-    id: number;
+    id: string;
     quantity: number;
 }
 
 interface User {
-    id: number;
+    id: string;
     name: string;
 }
 
 interface Referenciable {
-    id: number;
+    id: string;
     // campos comunes según el tipo
     [key: string]: any;
 }
 
 interface Movimiento {
-    id: number;
+    id: string;
     type: string;
     quantity: number;
     reason: string | null;
@@ -40,7 +40,7 @@ interface Movimiento {
     created_at: string;
     user: User | null;
     referenceable_type: string | null;
-    referenceable_id: number | null;
+    referenceable_id: string | null;
     referenceable: Referenciable | null;
 }
 

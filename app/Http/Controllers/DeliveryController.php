@@ -38,7 +38,7 @@ class DeliveryController extends Controller
             'warehouses'            => Warehouse::active()->orderBy('is_default', 'desc')->orderBy('name')->get(['id', 'name', 'is_default']),
             'selected_status'       => $status ?? Delivery::STATUS_PENDING,
             'selected_warehouse_id' => $warehouseId,
-            'selected_sale_id'      => $saleId ? (int) $saleId : null,
+            'selected_sale_id'      => $saleId ?: null,
         ]);
     }
 
@@ -88,7 +88,7 @@ class DeliveryController extends Controller
                 $requestedByProduct = [];
 
                 foreach ($request->entregas as $deliveryData) {
-                    $productId = (int) $deliveryData['articulo_id'];
+                    $productId = $deliveryData['articulo_id'];
                     $quantity  = (int) $deliveryData['cantidad'];
 
                     $requestedByProduct[$productId] = ($requestedByProduct[$productId] ?? 0) + $quantity;
@@ -105,7 +105,7 @@ class DeliveryController extends Controller
                         $lockedSale,
                         $productId,
                         $quantity,
-                        (int) $deliveryData['warehouse_id'],
+                        $deliveryData['warehouse_id'],
                         Delivery::STATUS_DELIVERED,
                         \Carbon\Carbon::parse($request->fecha_entrega),
                         $request->observaciones,
@@ -135,7 +135,7 @@ class DeliveryController extends Controller
         try {
             $this->deliveryService->markDelivered(
                 $delivery,
-                (int) $request->warehouse_id,
+                $request->warehouse_id,
                 auth()->id(),
             );
         } catch (\RuntimeException $e) {

@@ -86,11 +86,11 @@ class UserController extends Controller
      * PV asignado solo se persiste para vendedores.
      * Para admin/superadmin/cliente queda null.
      */
-    private function resolvePosId(Request $request, ?Role $role): ?int
+    private function resolvePosId(Request $request, ?Role $role): ?string
     {
         if ($role && $role->name === 'vendedor') {
             abort_if(! $request->point_of_sale_id, 422, 'Los vendedores deben tener un punto de venta asignado.');
-            return (int) $request->point_of_sale_id;
+            return $request->point_of_sale_id;
         }
         return null;
     }

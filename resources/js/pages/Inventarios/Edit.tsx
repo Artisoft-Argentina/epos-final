@@ -9,13 +9,13 @@ import { toast } from 'sonner';
 import { useEffect } from 'react';
 
 interface Inventario {
-    id: number;
+    id: string;
     quantity: number;
-    product_id: number;
+    product_id: string;
 }
 
 interface Product {
-    id: number;
+    id: string;
     name: string;
     sku: string;
 }

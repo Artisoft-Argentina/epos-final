@@ -19,8 +19,8 @@ return new class extends Migration
             $table->decimal('discount', 12, 2);            // bonificacion → discount
             $table->decimal('tax_rate', 12, 2);            // alicuota → tax_rate
             $table->decimal('subtotal', 12, 2);
-            $table->foreignId('product_id')->constrained('products');
-            $table->foreignId('quote_id')->constrained('quotes');
+            $table->foreignUuid('product_id')->constrained('products');
+            $table->foreignUuid('quote_id')->constrained('quotes');
             $table->softDeletes();
             $table->boolean('active')->default(true);
             $table->timestamps();
