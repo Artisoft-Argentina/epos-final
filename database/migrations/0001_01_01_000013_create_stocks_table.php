@@ -9,9 +9,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('stocks', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->unsignedInteger('quantity')->default(0);
-            $table->foreignId('product_id')->unique()->constrained('products');
+            $table->foreignUuid('product_id')->unique()->constrained('products');
             $table->softDeletes();
             $table->boolean('active')->default(true);
             $table->timestamps();

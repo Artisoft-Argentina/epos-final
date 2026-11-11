@@ -14,7 +14,7 @@ import { useState, useRef } from 'react';
 import { usePermission } from '@/hooks/use-permission';
 
 interface Customer {
-    id: number;
+    id: string;
     business_name: string;
     fantasy_name: string | null;
     person_type: string;

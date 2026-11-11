@@ -95,7 +95,7 @@ class PointOfSaleController extends Controller
     public function setActive(Request $request)
     {
         $request->validate(['point_of_sale_id' => 'required|exists:points_of_sale,id']);
-        session(['active_point_of_sale_id' => (int) $request->input('point_of_sale_id')]);
+        session(['active_point_of_sale_id' => $request->input('point_of_sale_id')]);
         return back()->with('success', 'Punto de venta activo actualizado.');
     }
 }

@@ -15,7 +15,7 @@ import { paymentStatusMeta, isOwing, isCancelled } from '@/lib/payment-status';
 import { formatVoucher } from '@/lib/sale-number';
 
 interface Sale {
-    id: number;
+    id: string;
     invoice_number: number;
     voucher_letter: string;
     pos_number: number;

@@ -9,7 +9,7 @@ import { FormField } from '@/components/form-field';
 import { ArrowLeft, AlertTriangle } from 'lucide-react';
 
 interface Factura {
-    id: number;
+    id: string;
     invoice_number: number;
     date: string;
     subtotal: number;

@@ -10,12 +10,12 @@ import { Pagination } from '@/components/pagination';
 import { Plus, Edit } from 'lucide-react';
 
 interface User {
-    id: number;
+    id: string;
     name: string;
     email: string;
     created_at: string;
     roles?: { name: string }[];
-    point_of_sale?: { id: number; name: string; pos_number: number } | null;
+    point_of_sale?: { id: string; name: string; pos_number: number } | null;
 }
 interface Props { users: { data: User[]; links: any; meta: any }; }
 

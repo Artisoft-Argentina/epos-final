@@ -2,13 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Stock extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, HasUuids;
 
     protected $fillable = [
         'quantity',
@@ -36,7 +38,7 @@ class Stock extends Model
         return $this->hasMany(StockMovement::class);
     }
 
-    public static function forProductInWarehouse(int $productId, int $warehouseId): self
+    public static function forProductInWarehouse(string $productId, string $warehouseId): self
     {
         return static::firstOrCreate(
             ['product_id' => $productId, 'warehouse_id' => $warehouseId],

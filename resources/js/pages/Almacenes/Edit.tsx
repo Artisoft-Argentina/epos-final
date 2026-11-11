@@ -8,7 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 
 interface Warehouse {
-    id: number;
+    id: string;
     name: string;
     code: string;
     address: string | null;

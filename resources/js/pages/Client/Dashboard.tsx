@@ -6,7 +6,7 @@ import { CartProvider } from '@/contexts/CartContext';
 import { paymentStatusMeta } from '@/lib/payment-status';
 
 interface Compra {
-    id: number;
+    id: string;
     invoice_number: number;
     date: string;
     total: number;

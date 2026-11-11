@@ -9,9 +9,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('cities', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->string('name');                                                          // nombre → name
-            $table->foreignId('state_id')->constrained('states')->cascadeOnDelete();        // provincia_id → state_id
+            $table->foreignUuid('state_id')->constrained('states')->cascadeOnDelete();        // provincia_id → state_id
             $table->integer('afip_id')->nullable();                                          // id_afip → afip_id
             $table->softDeletes();
             $table->boolean('active')->default(true);

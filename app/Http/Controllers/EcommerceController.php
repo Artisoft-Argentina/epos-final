@@ -127,7 +127,7 @@ class EcommerceController extends Controller
         }
     }
 
-    public function mergeSessionCart(int $userId, string $sessionId): void
+    public function mergeSessionCart(string $userId, string $sessionId): void
     {
         $sessionItems = Cart::where('session_id', $sessionId)->whereNull('user_id')->get();
 

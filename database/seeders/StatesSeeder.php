@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\City;
 use App\Models\State;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 
 class StatesSeeder extends Seeder
 {
@@ -157,6 +158,7 @@ class StatesSeeder extends Seeder
             ]);
 
             City::insert(array_map(fn($name) => [
+                'id'         => (string) Str::orderedUuid(),
                 'name'       => $name,
                 'state_id'   => $state->id,
                 'created_at' => now(),

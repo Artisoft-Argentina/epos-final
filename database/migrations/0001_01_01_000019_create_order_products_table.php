@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('order_products', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->string('supplier_code')->nullable();  // codprov → supplier_code
             $table->string('sku');                         // codarticulo → sku
             $table->string('name');                        // articulo → name
@@ -20,8 +20,8 @@ return new class extends Migration
             $table->decimal('unit_price', 12, 2);         // preciounitario → unit_price
             $table->decimal('subtotal', 12, 2);
             $table->integer('batch')->nullable();          // lote → batch
-            $table->foreignId('product_id')->constrained('products');
-            $table->foreignId('order_id')->constrained('orders');
+            $table->foreignUuid('product_id')->constrained('products');
+            $table->foreignUuid('order_id')->constrained('orders');
             $table->softDeletes();
             $table->boolean('active')->default(true);
             $table->timestamps();

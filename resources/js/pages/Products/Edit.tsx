@@ -14,14 +14,14 @@ import { ImageUploadPreview } from '@/components/image-upload-preview';
 import { ChevronRight, Save, Package, DollarSign, QrCode, ImagePlus, X, Star, Tag, Layers, SlidersHorizontal, Warehouse } from 'lucide-react';
 import { useState } from 'react';
 
-interface ProductImage { id: number; url: string; url_thumb: string | null; is_primary: boolean; }
-interface Category { id: number; name: string; }
-interface Brand { id: number; name: string; }
-interface Supplier { id: number; business_name: string; }
-interface PriceList { id: number; name: string; percentage: string; pricing_strategy: 'list' | 'product'; }
+interface ProductImage { id: string; url: string; url_thumb: string | null; is_primary: boolean; }
+interface Category { id: string; name: string; }
+interface Brand { id: string; name: string; }
+interface Supplier { id: string; business_name: string; }
+interface PriceList { id: string; name: string; percentage: string; pricing_strategy: 'list' | 'product'; }
 
 interface Product {
-    id: number;
+    id: string;
     sku: string;
     ean: string | null;
     name: string;
@@ -31,9 +31,9 @@ interface Product {
     markup_percent: string | null;
     tax_rate: string;
     min_stock: number;
-    brand_id: number | null;
-    category_id: number;
-    supplier_id: number | null;
+    brand_id: string | null;
+    category_id: string;
+    supplier_id: string | null;
     supplier_code: string | null;
     active: boolean;
     published: boolean;
@@ -85,10 +85,10 @@ export default function Edit({ product, categories, brands, suppliers, priceList
         setData('primary_image_index', primaryIndex);
     };
 
-    const deleteImage = (imageId: number) =>
+    const deleteImage = (imageId: string) =>
         router.delete(route('products.images.destroy', imageId), { preserveScroll: true });
 
-    const setPrimary = (imageId: number) =>
+    const setPrimary = (imageId: string) =>
         router.post(route('products.images.set-primary', imageId), {}, { preserveScroll: true });
 
     const submit = (e: React.FormEvent) => {

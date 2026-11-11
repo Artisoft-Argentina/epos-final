@@ -9,7 +9,7 @@ interface Activity {
     log_name: string;
     description: string;
     subject_type: string;
-    subject_id: number;
+    subject_id: string;
     created_at: string;
     causer?: { name: string };
 }

@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+
 use App\Enums\PaymentStatus;
 use App\Enums\SaleCondition;
 use App\Enums\SaleType;
@@ -12,7 +14,7 @@ use Spatie\Activitylog\LogOptions;
 
 class Sale extends Model
 {
-    use SoftDeletes, LogsActivity;
+    use SoftDeletes, LogsActivity, HasUuids;
 
     public function getActivitylogOptions(): LogOptions
     {

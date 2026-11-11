@@ -14,7 +14,7 @@ import { ChevronRight, RefreshCw, Pencil, Search } from 'lucide-react';
 import { useState } from 'react';
 
 interface PriceList {
-    id: number;
+    id: string;
     name: string;
     percentage: number;
     pricing_strategy: 'list' | 'product';
@@ -23,7 +23,7 @@ interface PriceList {
 }
 
 interface PriceListProduct {
-    id: number;
+    id: string;
     sku: string;
     name: string;
     category: string | null;

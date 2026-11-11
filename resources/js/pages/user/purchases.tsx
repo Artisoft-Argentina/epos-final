@@ -3,13 +3,13 @@ import { Head } from '@inertiajs/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface Factura {
-    id: number;
+    id: string;
     invoice_number: string;
     date: string;
     total: number;
     payment_status: string;
     products: Array<{
-        id: number;
+        id: string;
         pivot: {
             name: string;
             quantity: number;

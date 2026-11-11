@@ -25,7 +25,7 @@ interface Entrega {
 }
 
 interface Factura {
-  id: number;
+  id: string;
   numero: number;
   fecha: string;
   total: number;

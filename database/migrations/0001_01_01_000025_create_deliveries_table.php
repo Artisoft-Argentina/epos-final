@@ -9,9 +9,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('deliveries', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('sale_id')->constrained('sales');
-            $table->foreignId('product_id')->constrained('products');
+            $table->uuid('id')->primary();
+            $table->foreignUuid('sale_id')->constrained('sales');
+            $table->foreignUuid('product_id')->constrained('products');
             $table->unsignedInteger('quantity');                                                    // cantidad → quantity
             $table->date('delivery_date');                                                  // fecha_entrega → delivery_date
             $table->text('notes')->nullable();                                              // observaciones → notes

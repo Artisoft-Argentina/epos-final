@@ -3,11 +3,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Store } from 'lucide-react';
 
 interface PointOfSale {
-    id: number;
+    id: string;
     name: string;
     pos_number: number;
-    warehouse_id: number;
-    warehouse?: { id: number; name: string };
+    warehouse_id: string;
+    warehouse?: { id: string; name: string };
 }
 
 export function PointOfSaleSelector() {

@@ -9,7 +9,7 @@ import { Pagination } from '@/components/pagination';
 import { Plus, Edit } from 'lucide-react';
 import { usePermission } from '@/hooks/use-permission';
 
-interface Supplier { id: number; business_name: string; tax_id: string; address: string; phone: string; email?: string; }
+interface Supplier { id: string; business_name: string; tax_id: string; address: string; phone: string; email?: string; }
 interface Props { suppliers: { data: Supplier[]; links: any; meta: any }; }
 
 export default function Index({ suppliers }: Props) {
